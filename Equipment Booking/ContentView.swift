@@ -96,13 +96,14 @@ struct ContentView: View {
                             }
                         }
                 Spacer()
-
-                Text("Description")
-                    .font(.headline)
-                    .padding()
-
+                HStack{
+                    Text("Description")
+                        .font(.headline)
+                        .multilineTextAlignment(.leading)
+                        .padding()
+                    Spacer()
+                }
                 Spacer()
-
                 Button("Add to cart") {
                    
                 }
