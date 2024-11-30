@@ -12,6 +12,21 @@ struct ContentView: View {
         formatter.timeStyle = .none
         return formatter
     }
+    
+    func handleDateSelection(_ date: Date) {
+        if isPickingDate {
+            selectPickupDate = date
+            if selectReturnDate < selectPickupDate {
+                selectReturnDate = selectPickupDate
+            }
+        } else {
+            selectReturnDate = date
+            if selectPickupDate > selectReturnDate {
+                selectPickupDate = selectReturnDate
+            }
+        }
+        isShowingDatePicker = false
+    }
 
     var body: some View {
         ZStack {
@@ -21,7 +36,7 @@ struct ContentView: View {
                     .padding()
 
                 Image(systemName: "globe")
-                    .frame(width: 400.0, height: 400.0)
+                    .frame(width: 400.0, height: 300.0)
                     .imageScale(.large)
                     .foregroundStyle(.tint)
                     .background(Color.black)
@@ -31,53 +46,56 @@ struct ContentView: View {
                         Text("Equipment")
                             .font(.title)
                     }
-
+                    
                     Spacer()
                     VStack {
                         HStack {
                             Button("-") {
-                                // Decrease equipment count logic
+                                
                             }
                             Text("1")
                                 .font(.headline)
                                 .padding(10)
                             Button("+") {
-                                // Increase equipment count logic
+                                
                             }
                         }
-
-                        HStack {
-                            Button("Pick Pickup Date") {
-                                isPickingDate = true
-                                isShowingDatePicker.toggle()
-                            }
-                            .padding(10)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-
-                            Text(dateFormatter.string(from: selectPickupDate))
-                                .padding(.horizontal)
-                                .font(.subheadline)
-                                .foregroundColor(.black)
-
-                            Button("Pick Return Date") {
-                                isPickingDate = false
-                                isShowingDatePicker.toggle()
-                            }
-                            .padding(10)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-
-                            Text(dateFormatter.string(from: selectReturnDate))
-                                .padding(.horizontal)
-                                .font(.subheadline)
-                                .foregroundColor(.black)
-                        }
-                    }
+                    }.padding(.trailing)
                 }
-                .padding()
+                        VStack{
+                            HStack {
+                                Button("Pick Pickup Date") {
+                                    isPickingDate = true
+                                    isShowingDatePicker.toggle()
+                                }
+                                .padding(10)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                                Spacer()
+                                Text(dateFormatter.string(from: selectPickupDate))
+                                    .padding(.horizontal)
+                                    .font(.subheadline)
+                                    .foregroundColor(.black)
+                            }
+                            
+                            HStack{
+                                Button("Pick Return Date") {
+                                    isPickingDate = false
+                                    isShowingDatePicker.toggle()
+                                }
+                                .padding(10)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                                Spacer()
+                                Text(dateFormatter.string(from: selectReturnDate))
+                                    .padding(.horizontal)
+                                    .font(.subheadline)
+                                    .foregroundColor(.black)
+                            }
+                        }
+                Spacer()
 
                 Text("Description")
                     .font(.headline)
@@ -86,7 +104,7 @@ struct ContentView: View {
                 Spacer()
 
                 Button("Add to cart") {
-                    // Logic for adding to cart
+                   
                 }
                 .frame(width: 200.0, height: 50.0)
                 .background(Color.gray)
@@ -95,54 +113,41 @@ struct ContentView: View {
                 .padding()
             }
             .padding()
-
-            // DatePicker overlay
+            
             if isShowingDatePicker {
                 VStack {
-                    Text(isPickingDate ? "Select Pickup Date" : "Select Return Date")
-                        .font(.title2)
-                        .padding(.bottom)
-                        .foregroundColor(Color.white)
-
-                    DatePicker(isPickingDate ? "Select Pickup Date" : "Select Return Date",
-                        selection: isPickingDate ? $selectPickupDate : $selectReturnDate,
-                        in: Date.now..., // Ensure no past dates can be selected
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(GraphicalDatePickerStyle())
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(10)
-                    .shadow(radius: 10)
-
-                    Button("Done") {
-                        isShowingDatePicker = false
-                    }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                }
+                    DatePicker(
+                    "Select Date",
+                    selection: isPickingDate ? $selectPickupDate : $selectReturnDate,
+                    in: Date.now...,
+                displayedComponents: .date
+                )
+                .datePickerStyle(GraphicalDatePickerStyle())
                 .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.white)
+                .cornerRadius(10)
+                .shadow(radius: 10)
+                
+                    Button("Done") {
+                        handleDateSelection(isPickingDate ? selectPickupDate : selectReturnDate)
+                            }
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        }
+                .padding(.horizontal, 20.0)
+                .frame(maxWidth: .infinity , maxHeight: .infinity)
                 .background(Color.black.opacity(0.5))
-                .ignoresSafeArea()
+                
+                    }
+                }
+        
             }
+        
         }
-        .onChange(of: selectPickupDate) { newValue, oldValue in
-            // När pickup datum ändras, säkerställ att retur datum är senare
-            if selectPickupDate > selectReturnDate {
-                selectReturnDate = selectPickupDate
-            }
-        }
-        .onChange(of: selectReturnDate) { newValue, oldValue in
-            // När retur datum ändras, säkerställ att retur datum är senare än pickup datum
-            if selectReturnDate < selectPickupDate {
-                selectPickupDate = selectReturnDate
-            }
-        }
-    }
-}
+    
+
 
 #Preview {
     ContentView()
