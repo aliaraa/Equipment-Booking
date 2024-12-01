@@ -16,7 +16,7 @@ struct ContentView: View {
             Text("Development")
         }
         .padding()
-        Equipment_Details()
+      
     }
 }
 
