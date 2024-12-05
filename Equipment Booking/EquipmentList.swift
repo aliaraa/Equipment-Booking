@@ -5,6 +5,9 @@
 //  Created by Ali Ara on 2024-11-30.
 //
 
+
+// We need to use FB database
+
 import Foundation
 let toolData: [Tool] = [
     Tool(name: "Drill Machine",
