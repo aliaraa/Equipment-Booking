@@ -23,41 +23,45 @@ struct Search: View {
     }
     
     var body: some View {
-        NavigationStack{
-            VStack{
-                TextField("Search...", text: $searchText)
-                    .padding(10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-                    .padding(.horizontal)
-                List(filteredTools){tool in
-                    HStack{
-                        VStack(alignment: .leading){
-                            Text(tool.name)
-                                .font(.headline)
-                            Text(tool.description)
-                                .font(.subheadline)
-                                .foregroundColor(Color.gray)
-                            Text("Price Per Day: \(tool.price)$")
-                                .foregroundColor(Color.red)
-                                .font(.caption)
-                        }
-                        Spacer()
-                        
-                        if tool.isAvailable{
-                            Text("Available")
-                                .font(.caption)
-                                .foregroundColor(Color.green)
-                        } else {
-                            Text("Unavailable")
-                                .font(.caption)
-                                .foregroundColor(Color.red)
+        if #available(iOS 16.0, *) {
+            NavigationStack{
+                VStack{
+                    TextField("Search...", text: $searchText)
+                        .padding(10)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                        .padding(.horizontal)
+                    List(filteredTools){tool in
+                        HStack{
+                            VStack(alignment: .leading){
+                                Text(tool.name)
+                                    .font(.headline)
+                                Text(tool.description)
+                                    .font(.subheadline)
+                                    .foregroundColor(Color.gray)
+                                Text("Price Per Day: \(tool.price)$")
+                                    .foregroundColor(Color.red)
+                                    .font(.caption)
+                            }
+                            Spacer()
+                            
+                            if tool.isAvailable{
+                                Text("Available")
+                                    .font(.caption)
+                                    .foregroundColor(Color.green)
+                            } else {
+                                Text("Unavailable")
+                                    .font(.caption)
+                                    .foregroundColor(Color.red)
+                            }
+                            
                         }
                         
                     }
-                    
                 }
             }
+        } else {
+            // Fallback on earlier versions
         }
     }
 }
