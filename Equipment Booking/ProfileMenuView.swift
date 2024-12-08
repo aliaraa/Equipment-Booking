@@ -70,7 +70,7 @@ struct ProfileMenuView: View {
             .padding(.top, 30)
             .padding(.horizontal, 10)
             
-            Spacer()
+            
             
             // Sign Out Button
             Button(action: {
@@ -85,9 +85,15 @@ struct ProfileMenuView: View {
                     Text("Sign Out")
                         .fontWeight(.bold)
                 }
-                .foregroundColor(.red)
-                .padding()
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(height: 55)
+                .frame(maxWidth: .infinity)
+                .background(Color.red)
+                .cornerRadius(10)
+                .padding(.horizontal)
             }
+            Spacer()
             
         }
     }

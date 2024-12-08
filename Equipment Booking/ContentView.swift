@@ -17,7 +17,7 @@ struct ContentView: View {
             VStack {
                 // Spacer to push everything down
                 Spacer()
-                    .frame(height: 30) // Adjust height as needed
+                    .frame(height: 30) // Adjust height
                 
                 // Hamburger Menu Button (Upper-right corner)
                 HStack {
@@ -38,9 +38,8 @@ struct ContentView: View {
                 HStack {
                     // Search Text Field
                     TextField("Search", text: $searchText)
-                        .padding(.leading, 10)
-                        .padding(.vertical, 8)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.1)))
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.4)))
                         .frame(height: 40)
                     
                     // Close (X) Button to Clear the Search Field
