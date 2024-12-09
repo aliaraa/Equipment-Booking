@@ -12,10 +12,12 @@
 		A1ABAC862D0671A1009F2067 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC852D0671A1009F2067 /* FirebaseCore */; };
 		A1ABAC882D0671A1009F2067 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC872D0671A1009F2067 /* FirebaseDatabase */; };
 		A1ABAC8A2D0671A1009F2067 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC892D0671A1009F2067 /* FirebaseStorage */; };
+		A1AE486B2D0795A7004F7771 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = A1AE486A2D07957E004F7771 /* .gitignore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		5053FC3C2CF351FC008036F8 /* Equipment Booking.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Equipment Booking.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1AE486A2D07957E004F7771 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -45,6 +47,7 @@
 		5053FC332CF351FB008036F8 = {
 			isa = PBXGroup;
 			children = (
+				A1AE486A2D07957E004F7771 /* .gitignore */,
 				5053FC3E2CF351FC008036F8 /* Equipment Booking */,
 				5053FC3D2CF351FC008036F8 /* Products */,
 			);
@@ -130,6 +133,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1AE486B2D0795A7004F7771 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
