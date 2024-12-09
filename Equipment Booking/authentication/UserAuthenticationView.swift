@@ -25,15 +25,19 @@ struct UserAuthenticationView: View {
             Spacer()
         }
         .padding()
-        .navigationTitle("Sing in")
+        .navigationTitle("Sign in")
     }
 }
 
 
 struct UserAuthenticationView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationStack{
-            UserAuthenticationView()
+        if #available(iOS 16.0, *) {
+            NavigationStack{
+                UserAuthenticationView()
+            }
+        } else {
+            // Fallback on earlier versions
         }
     }
 }
