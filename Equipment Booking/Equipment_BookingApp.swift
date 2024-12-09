@@ -6,12 +6,26 @@
 //
 
 import SwiftUI
+import Firebase
 
 @main
 struct Equipment_BookingApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            // ContentView()
+            RootView () // To test authentication functions
         }
+    }
+}
+
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Initialize Firebase
+        FirebaseApp.configure()
+        // print("Configure Firebase Successfully!") // Check firebase config success
+        return true
     }
 }

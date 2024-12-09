@@ -37,6 +37,7 @@ struct UserSettingsView: View {
                 }
             }
             .navigationBarTitle("Settings")
+
         }
     }
 }
