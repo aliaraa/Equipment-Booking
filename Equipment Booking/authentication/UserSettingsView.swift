@@ -8,14 +8,12 @@
 import SwiftUI
 
 @MainActor
-
-final class UserSettingsViewModel: ObservableObject{
-    
+final class UserSettingsViewModel: ObservableObject {
     
     func signOut() throws {
-        try AuthenticationManager.shared.singOut()
-        
+        try AuthenticationManager.shared.signOut()
     }
+    
     
 }
 

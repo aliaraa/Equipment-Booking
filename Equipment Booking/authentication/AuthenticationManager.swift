@@ -22,8 +22,6 @@ struct AuthDataResultModel {
 }
 
 
-
-
 final class AuthenticationManager {
     static let shared  = AuthenticationManager()
     private init () {}
@@ -46,7 +44,7 @@ final class AuthenticationManager {
     
     //Function to sign out
     
-    func singOut () throws {
+    func signOut () throws {
         try Auth.auth().signOut()
         
     }
