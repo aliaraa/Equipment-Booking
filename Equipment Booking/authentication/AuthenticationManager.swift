@@ -1,5 +1,5 @@
 //
-//  AuthenticationManagement.swift
+//  AuthenticationManager.swift
 //  Equipment Booking
 //
 //  Created by Rene Mbanguka on 12/9/24.
@@ -24,8 +24,8 @@ struct AuthDataResultModel {
 
 
 
-final class authenticationManager {
-    static let shared  = authenticationManager()
+final class AuthenticationManager {
+    static let shared  = AuthenticationManager()
     private init () {}
     
     // Function to get user
