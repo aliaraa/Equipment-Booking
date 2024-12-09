@@ -15,10 +15,12 @@ struct Equipment_BookingApp: App {
     
     var body: some Scene {
         WindowGroup {
+                        
+            // ContentView()
             
-
-            
-            ContentView()
+            NavigationStack{
+                RootView()
+            }
             
         }
     }
