@@ -26,6 +26,19 @@ final class UserSettingsViewModel: ObservableObject {
         
     }
     
+    
+    func updateEmail () async throws {
+        let email = "test123@gmail.com"
+        try await AuthenticationManager.shared.updateEmail(email: email)
+        
+    }
+    
+    func updatePassword () async throws {
+        let password = "test123"
+        try await AuthenticationManager.shared.updatePassword(password: password)
+        
+    }
+
 }
 
 struct UserSettingsView: View {
@@ -47,7 +60,26 @@ struct UserSettingsView: View {
                     }
                 }
             }
-            
+            emailUserResetSection
+        
+            .navigationBarTitle("User Settings")
+
+        }
+    }
+}
+    
+struct UserSettingsView_Previews: PreviewProvider {
+    static var previews: some View {
+        
+        NavigationStack{
+            UserSettingsView (showSignInView: .constant(false))
+        }
+    }
+}
+
+extension UserSettingsView{
+    private var emailUserResetSection: some View{
+        Section {
             Button("Reset Password"){
                 Task {
                     do {
@@ -60,17 +92,34 @@ struct UserSettingsView: View {
                     }
                 }
             }
-            .navigationBarTitle("Settings")
-
-        }
-    }
-}
-    
-struct UserSettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        
-        NavigationStack{
-            UserSettingsView (showSignInView: .constant(false))
-        }
+            Button("Update Password"){
+                Task {
+                    do {
+                        try await viewModel.resetPassword()
+                        print("PASSWORD UPDATED")
+                    }
+                    catch{
+                        print(error)
+                        
+                    }
+                }
+            }
+            
+            Button("Update email"){
+                Task {
+                    do {
+                        try await viewModel.resetPassword()
+                        print("EMAIL UPDATED")
+                    }
+                    catch{
+                        print(error)
+                        
+                    }
+                }
+            }
+        } header: {
+            Text ("User Reset Functions)"
+                  }
+            }
     }
 }
