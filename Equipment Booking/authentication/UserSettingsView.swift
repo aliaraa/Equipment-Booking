@@ -38,7 +38,7 @@ final class UserSettingsViewModel: ObservableObject {
         try await AuthenticationManager.shared.updatePassword(password: password)
         
     }
-
+    
 }
 
 struct UserSettingsView: View {
@@ -61,13 +61,13 @@ struct UserSettingsView: View {
                 }
             }
             emailUserResetSection
-        
-            .navigationBarTitle("User Settings")
-
+            
+                .navigationBarTitle("User Settings")
+            
         }
     }
 }
-    
+
 struct UserSettingsView_Previews: PreviewProvider {
     static var previews: some View {
         
@@ -118,8 +118,8 @@ extension UserSettingsView{
                 }
             }
         } header: {
-            Text ("User Reset Functions)"
-                  }
-            }
+            Text ("User Reset Functions")
+        }
     }
 }
+
