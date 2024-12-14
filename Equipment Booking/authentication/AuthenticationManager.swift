@@ -51,6 +51,11 @@ final class AuthenticationManager {
         
     }
     
+    func resetPassword (email: String) async throws {
+        try await Auth.auth().sendPasswordReset(withEmail: email)
+    }
+    
+    
     //Function to sign out
     
     func signOut () throws {
