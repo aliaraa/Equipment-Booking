@@ -10,33 +10,22 @@ import SwiftUI
 final class SignInEmailViewModel: ObservableObject {
     @Published var  email = ""
     @Published var  password = ""
-    func signIn()  {
+    func signIn() async throws {
         guard !email.isEmpty, !password.isEmpty else {
             print("No email or password found!")
             return
         }
         
-        Task{
-            do{
-                let returnedUserData = try await
-                AuthenticationManager.shared.createUser(email: email, password: password)
-                print("Success!")
-                print(returnedUserData)
-                
-            }catch {
-                print("Error: \(error)")
-            }
-        }
+        try await AuthenticationManager.shared.createUser(email: email, password: password)
         
     }
     
 }
 
-
-
 struct UserSignInEmailView: View {
     
     @StateObject private var viewModel = SignInEmailViewModel()
+    @Binding var showSignInView: Bool
     
     var body: some View {
         
@@ -52,7 +41,14 @@ struct UserSignInEmailView: View {
                 .cornerRadius(10)
             
             Button{
-                viewModel.signIn()
+                Task{
+                    do{
+                        try await viewModel.signIn()
+                        showSignInView = false
+                    } catch{
+                        
+                    }
+                }
                 
             }label: {
                 Text("Sign In")
@@ -79,7 +75,7 @@ struct SignInEmailViewModel_Previews: PreviewProvider {
     static var previews: some View {
         if #available(iOS 16.0, *) {
             NavigationStack{
-                UserSignInEmailView()
+                UserSignInEmailView(showSignInView: .constant(false))
             }
         } else {
             // Fallback on earlier versions

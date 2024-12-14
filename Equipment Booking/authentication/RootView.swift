@@ -9,7 +9,8 @@ import SwiftUI
 
 struct RootView: View {
     
-    @State private var showSignInView: Bool = false
+    @State private var showSignInView: Bool = false // Reset to false when userAuthenticationView is dismissed
+    
     
     var body: some View {
         ZStack{
@@ -24,7 +25,7 @@ struct RootView: View {
         }
         .fullScreenCover(isPresented: $showSignInView){
             NavigationStack{
-                UserAuthenticationView ()
+                UserAuthenticationView (showSignInView: $showSignInView)
             }
         }
         

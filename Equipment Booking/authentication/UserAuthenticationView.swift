@@ -8,10 +8,13 @@
 import SwiftUI
 
 struct UserAuthenticationView: View {
+    
+    @Binding var showSignInView: Bool
+    
     var body: some View {
         VStack{
             NavigationLink{
-                UserSignInEmailView()
+                UserSignInEmailView(showSignInView: $showSignInView)
             } label: {
                 Text("Sign in With Email")
                     .font(.headline)
@@ -34,7 +37,7 @@ struct UserAuthenticationView_Previews: PreviewProvider {
     static var previews: some View {
         if #available(iOS 16.0, *) {
             NavigationStack{
-                UserAuthenticationView()
+                UserAuthenticationView(showSignInView: .constant(false))
             }
         } else {
             // Fallback on earlier versions
