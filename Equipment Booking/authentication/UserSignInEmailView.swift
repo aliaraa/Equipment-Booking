@@ -10,13 +10,26 @@ import SwiftUI
 final class SignInEmailViewModel: ObservableObject {
     @Published var  email = ""
     @Published var  password = ""
-    func signIn() async throws {
+    
+    // User signup function
+    
+    func signUp() async throws {
         guard !email.isEmpty, !password.isEmpty else {
             print("No email or password found!")
             return
         }
         
         try await AuthenticationManager.shared.createUser(email: email, password: password)
+        
+    }
+    
+    func signIn() async throws {
+        guard !email.isEmpty, !password.isEmpty else {
+            print("No email or password found!")
+            return
+        }
+        
+        try await AuthenticationManager.shared.signInUser(email: email, password: password)
         
     }
     
@@ -43,11 +56,24 @@ struct UserSignInEmailView: View {
             Button{
                 Task{
                     do{
-                        try await viewModel.signIn()
+                        try await viewModel.signUp()
                         showSignInView = false
+                        return //if user exists
                     } catch{
+                        print(error)
                         
                     }
+                    
+                    
+                    do{
+                        try await viewModel.signIn()
+                        showSignInView = false
+                        return
+                    } catch{
+                        print(error)
+                        
+                    }
+                    
                 }
                 
             }label: {
