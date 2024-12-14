@@ -48,11 +48,26 @@ final class AuthenticationManager {
         let authDataResult = try await Auth.auth().signIn(withEmail: email, password: password)
         return AuthDataResultModel(user: authDataResult.user)
         
-        
     }
-    
+    //Function to reser password
     func resetPassword (email: String) async throws {
         try await Auth.auth().sendPasswordReset(withEmail: email)
+    }
+    
+    //Function to update password
+    func updatePassword (password: String) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw URLError (.badServerResponse)
+        }
+        try await user.updatePassword(to: password)
+    }
+    
+    //Function to update email
+    func updateEmail (email: String) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw URLError (.badServerResponse)
+        }
+        try await user.updateEmail(to: email) //deprecated function
     }
     
     
