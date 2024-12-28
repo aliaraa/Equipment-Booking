@@ -12,11 +12,16 @@ struct RootView: View {
     @State private var showSignInView: Bool = false // Reset to false when userAuthenticationView is dismissed
     
     
-    var body: some View { 
+    var body: some View {
         ZStack{
-            NavigationStack {
-                UserSettingsView(showSignInView: $showSignInView)
+            if !showSignInView{
+                NavigationStack {
+                    UserSettingsView(showSignInView: $showSignInView)
+                }
+                
             }
+            
+            
         }
         .onAppear{
             let authUser = try? AuthenticationManager.shared.getAuthenticatedUser()

@@ -11,6 +11,15 @@ import SwiftUI
 
 final class UserSettingsViewModel: ObservableObject {
     
+    @Published var authProviders: [AuthProvideroption] = []
+    
+    func loadAuthProviders() {
+        if let providers = try? AuthenticationManager.shared.getProviders() {
+            authProviders = providers
+        }
+        
+    }
+    
     func signOut() throws {
         try AuthenticationManager.shared.signOut()
     }
@@ -60,13 +69,24 @@ struct UserSettingsView: View {
                     }
                 }
             }
-            emailUserResetSection
             
-                .navigationBarTitle("User Settings")
+            if viewModel.authProviders.contains(.email) {
+                emailUserResetSection
+            }
+            
             
         }
+        
+        .onAppear{
+            viewModel.loadAuthProviders()
+        }
+        
+        
+        .navigationBarTitle("User Settings")
+        
     }
 }
+
 
 struct UserSettingsView_Previews: PreviewProvider {
     static var previews: some View {
