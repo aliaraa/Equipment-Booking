@@ -8,6 +8,8 @@
 import SwiftUI
 import GoogleSignIn
 import GoogleSignInSwift
+import AuthenticationServices // for apple sign in
+
 
 @MainActor
 // View model for google sign in view
@@ -43,7 +45,7 @@ struct UserAuthenticationView: View {
                     .frame(maxWidth: .infinity)
                     .background(Color.blue)
                     .cornerRadius(10)
-            
+                
             }
             
             GoogleSignInButton(viewModel: GoogleSignInButtonViewModel(scheme: .dark, style: .wide, state: .normal)) {
@@ -58,6 +60,13 @@ struct UserAuthenticationView: View {
                 }
                 
             }
+            
+            SignInWithAppleButton { request in
+                
+            } onCompletion: { result in
+                
+            }
+            .frame(height: 55)
             
             
             
