@@ -15,6 +15,7 @@
 		A1ABAC862D0671A1009F2067 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC852D0671A1009F2067 /* FirebaseCore */; };
 		A1ABAC882D0671A1009F2067 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC872D0671A1009F2067 /* FirebaseDatabase */; };
 		A1ABAC8A2D0671A1009F2067 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC892D0671A1009F2067 /* FirebaseStorage */; };
+		A1B245202D20DD9200491EAB /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2451F2D20DD9200491EAB /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 				A13BAC9B2D20649A0028B8DE /* GoogleSignInSwift in Frameworks */,
 				A1ABAC882D0671A1009F2067 /* FirebaseDatabase in Frameworks */,
 				A1ABAC8A2D0671A1009F2067 /* FirebaseStorage in Frameworks */,
+				A1B245202D20DD9200491EAB /* FirebaseFirestore in Frameworks */,
 				A1ABAC842D0671A1009F2067 /* FirebaseAuth in Frameworks */,
 				A13BAC992D20649A0028B8DE /* GoogleSignIn in Frameworks */,
 			);
@@ -53,6 +55,7 @@
 			children = (
 				A13BAC9E2D2066B20028B8DE /* GoogleService-Info.plist */,
 				5053FC3E2CF351FC008036F8 /* Equipment Booking */,
+				A1B2451E2D20DD9200491EAB /* Frameworks */,
 				5053FC3D2CF351FC008036F8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -63,6 +66,13 @@
 				5053FC3C2CF351FC008036F8 /* Equipment Booking.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A1B2451E2D20DD9200491EAB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -92,6 +102,7 @@
 				A1ABAC892D0671A1009F2067 /* FirebaseStorage */,
 				A13BAC982D20649A0028B8DE /* GoogleSignIn */,
 				A13BAC9A2D20649A0028B8DE /* GoogleSignInSwift */,
+				A1B2451F2D20DD9200491EAB /* FirebaseFirestore */,
 			);
 			productName = "Equipment Booking";
 			productReference = 5053FC3C2CF351FC008036F8 /* Equipment Booking.app */;
@@ -415,6 +426,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1ABAC802D0671A1009F2067 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		A1B2451F2D20DD9200491EAB /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1ABAC802D0671A1009F2067 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
