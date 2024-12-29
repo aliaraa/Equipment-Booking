@@ -10,6 +10,24 @@ import GoogleSignIn
 import GoogleSignInSwift
 import AuthenticationServices // for apple sign in
 
+// apple sign in button using UIKit
+struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
+    
+    let type: ASAuthorizationAppleIDButton.ButtonType
+    let style: ASAuthorizationAppleIDButton.Style
+    
+    func updateUIView(_ uiView: ASAuthorizationAppleIDButton, context: Context) {
+    }
+    
+    
+    func makeUIView(context: Context) -> ASAuthorizationAppleIDButton {
+        ASAuthorizationAppleIDButton(authorizationButtonType: type, authorizationButtonStyle: style)
+        
+    }
+    
+    
+}
+
 
 @MainActor
 // View model for google sign in view
@@ -61,12 +79,9 @@ struct UserAuthenticationView: View {
                 
             }
             
-            SignInWithAppleButton { request in
-                
-            } onCompletion: { result in
-                
-            }
-            .frame(height: 55)
+            SignInWithAppleButtonViewRepresentable(type: .default, style: .black)
+                .allowsHitTesting(false)
+                .frame(height: 55)
             
             
             
