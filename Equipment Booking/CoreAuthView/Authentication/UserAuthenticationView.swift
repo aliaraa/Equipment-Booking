@@ -29,21 +29,6 @@ struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
 }
 
 
-@MainActor
-// View model for google sign in view
-final class AuthenticationViewModel: ObservableObject{
-    
-    //Get google sign in credentials
-    
-    func signInGoogle () async throws {
-        let helper = SignInGoogleHelper()
-        let tokens = try await helper.signIn()
-        try await AuthenticationManager.shared.signInWithGoogle(tokens: tokens)
-        
-    }
-    
-}
-
 struct UserAuthenticationView: View {
     
     //initialise google sign in viewmodel
@@ -53,6 +38,30 @@ struct UserAuthenticationView: View {
     
     var body: some View {
         VStack{
+            
+            Button(action: {
+                Task {
+                    do {
+                        try await viewModel.signInAnonymous()
+                        showSignInView = false
+                    } catch {
+                        print(error)
+                        
+                    }
+                }
+                
+            }, label: {
+                Text("Sign In Anonymously")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(height: 55)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.orange)
+                    .cornerRadius(10)
+                
+            })
+            
+            
             NavigationLink{
                 UserSignInEmailView(showSignInView: $showSignInView)
             } label: {

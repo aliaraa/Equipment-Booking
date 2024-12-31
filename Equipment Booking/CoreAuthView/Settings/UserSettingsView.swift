@@ -7,48 +7,7 @@
 
 import SwiftUI
 
-@MainActor
 
-final class UserSettingsViewModel: ObservableObject {
-    
-    @Published var authProviders: [AuthProvideroption] = []
-    
-    func loadAuthProviders() {
-        if let providers = try? AuthenticationManager.shared.getProviders() {
-            authProviders = providers
-        }
-        
-    }
-    
-    func signOut() throws {
-        try AuthenticationManager.shared.signOut()
-    }
-    
-    func resetPassword () async throws {
-        let authUser =  try AuthenticationManager.shared.getAuthenticatedUser()
-        
-        guard let email = authUser.email else {
-            
-            throw URLError(.fileDoesNotExist)
-        }
-        try await AuthenticationManager.shared.resetPassword(email: email)
-        
-    }
-    
-    
-    func updateEmail () async throws {
-        let email = "test123@gmail.com"
-        try await AuthenticationManager.shared.updateEmail(email: email)
-        
-    }
-    
-    func updatePassword () async throws {
-        let password = "test123"
-        try await AuthenticationManager.shared.updatePassword(password: password)
-        
-    }
-    
-}
 
 struct UserSettingsView: View {
     
@@ -71,7 +30,13 @@ struct UserSettingsView: View {
             }
             
             if viewModel.authProviders.contains(.email) {
-                emailUserResetSection
+                emailSection
+            }
+            
+                        
+            if viewModel.authUser?.isAnonymous == true {
+                anonymousSection
+                
             }
             
             
@@ -79,6 +44,7 @@ struct UserSettingsView: View {
         
         .onAppear{
             viewModel.loadAuthProviders()
+            viewModel.loadauthUser()
         }
         
         
@@ -98,7 +64,7 @@ struct UserSettingsView_Previews: PreviewProvider {
 }
 
 extension UserSettingsView{
-    private var emailUserResetSection: some View{
+    private var emailSection: some View{
         Section {
             Button("Reset Password"){
                 Task {
@@ -141,5 +107,52 @@ extension UserSettingsView{
             Text ("User Reset Functions")
         }
     }
+    
+    private var anonymousSection: some View{
+        Section {
+            Button("Link Google Account"){
+                Task {
+                    do {
+                        try await viewModel.linkGoogleAccount()
+                        print("GOOGLE LINKED")
+                    }
+                    catch{
+                        print(error)
+                        
+                    }
+                }
+            }
+            /*
+            Button("Link Apple Account"){
+                Task {
+                    do {
+                        try await viewModel.linkAppleAccount()
+                        print("APPLE LINKED")
+                    }
+                    catch{
+                        print(error)
+                        
+                    }
+                }
+            }
+            */
+            
+            Button("Link Email Account"){
+                Task {
+                    do {
+                        try await viewModel.linkEmailAccount()
+                        print("EMAIL LINKED")
+                    }
+                    catch{
+                        print(error)
+                        
+                    }
+                }
+            }
+        } header: {
+            Text ("Create Account")
+        }
+    }
+    
 }
 

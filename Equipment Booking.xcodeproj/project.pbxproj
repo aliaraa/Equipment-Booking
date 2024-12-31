@@ -9,18 +9,19 @@
 /* Begin PBXBuildFile section */
 		A13BAC992D20649A0028B8DE /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A13BAC982D20649A0028B8DE /* GoogleSignIn */; };
 		A13BAC9B2D20649A0028B8DE /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = A13BAC9A2D20649A0028B8DE /* GoogleSignInSwift */; };
-		A13BAC9F2D2066B20028B8DE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A13BAC9E2D2066B20028B8DE /* GoogleService-Info.plist */; };
+		A1840EE52D2470BE00CE7A1E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A1840EE42D2470BE00CE7A1E /* GoogleService-Info.plist */; };
 		A1ABAC822D0671A1009F2067 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC812D0671A1009F2067 /* FirebaseAnalytics */; };
 		A1ABAC842D0671A1009F2067 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC832D0671A1009F2067 /* FirebaseAuth */; };
 		A1ABAC862D0671A1009F2067 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC852D0671A1009F2067 /* FirebaseCore */; };
 		A1ABAC882D0671A1009F2067 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC872D0671A1009F2067 /* FirebaseDatabase */; };
 		A1ABAC8A2D0671A1009F2067 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC892D0671A1009F2067 /* FirebaseStorage */; };
 		A1B245202D20DD9200491EAB /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2451F2D20DD9200491EAB /* FirebaseFirestore */; };
+		A1B245362D20ED6100491EAB /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = A1B245352D20ED6100491EAB /* FirebaseFirestoreCombine-Community */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		5053FC3C2CF351FC008036F8 /* Equipment Booking.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Equipment Booking.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A13BAC9E2D2066B20028B8DE /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		A1840EE42D2470BE00CE7A1E /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -39,6 +40,7 @@
 				A1ABAC822D0671A1009F2067 /* FirebaseAnalytics in Frameworks */,
 				A1ABAC862D0671A1009F2067 /* FirebaseCore in Frameworks */,
 				A13BAC9B2D20649A0028B8DE /* GoogleSignInSwift in Frameworks */,
+				A1B245362D20ED6100491EAB /* FirebaseFirestoreCombine-Community in Frameworks */,
 				A1ABAC882D0671A1009F2067 /* FirebaseDatabase in Frameworks */,
 				A1ABAC8A2D0671A1009F2067 /* FirebaseStorage in Frameworks */,
 				A1B245202D20DD9200491EAB /* FirebaseFirestore in Frameworks */,
@@ -53,7 +55,7 @@
 		5053FC332CF351FB008036F8 = {
 			isa = PBXGroup;
 			children = (
-				A13BAC9E2D2066B20028B8DE /* GoogleService-Info.plist */,
+				A1840EE42D2470BE00CE7A1E /* GoogleService-Info.plist */,
 				5053FC3E2CF351FC008036F8 /* Equipment Booking */,
 				A1B2451E2D20DD9200491EAB /* Frameworks */,
 				5053FC3D2CF351FC008036F8 /* Products */,
@@ -103,6 +105,7 @@
 				A13BAC982D20649A0028B8DE /* GoogleSignIn */,
 				A13BAC9A2D20649A0028B8DE /* GoogleSignInSwift */,
 				A1B2451F2D20DD9200491EAB /* FirebaseFirestore */,
+				A1B245352D20ED6100491EAB /* FirebaseFirestoreCombine-Community */,
 			);
 			productName = "Equipment Booking";
 			productReference = 5053FC3C2CF351FC008036F8 /* Equipment Booking.app */;
@@ -151,7 +154,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A13BAC9F2D2066B20028B8DE /* GoogleService-Info.plist in Resources */,
+				A1840EE52D2470BE00CE7A1E /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -431,6 +434,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1ABAC802D0671A1009F2067 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		A1B245352D20ED6100491EAB /* FirebaseFirestoreCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1ABAC802D0671A1009F2067 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseFirestoreCombine-Community";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
