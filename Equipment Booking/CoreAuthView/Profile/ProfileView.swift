@@ -19,7 +19,21 @@ final class ProfileViewModel: ObservableObject {
         self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
     }
     
+    func toggleAdminStatus(){
+        guard let user else {return}
+        let currentValue = user.isAdmin ?? false
+        let updatedUser = DBUser(userId: user.userId, isAnonymous: user.isAnonymous, email: user.email, photoUrl: user.photoUrl, dateCreated: user.dateCreated, isAdmin: !currentValue)
+        
+        Task{
+            try await UserManager.shared.updateUserAdminStatus(user: updatedUser)
+            self.user = try await UserManager.shared.getUser(userID: user.userId)
+        }
+        
+    }
+    
 }
+
+
 
 
 struct ProfileView: View {
@@ -36,6 +50,13 @@ struct ProfileView: View {
                 
                 if let isAnonymous = user.isAnonymous{
                     Text("Is Anonymous: \(isAnonymous.description.capitalized)")
+                }
+                
+                Button{
+                    viewModel.toggleAdminStatus()
+                    
+                } label: {
+                    Text("User is Admin: \((user.isAdmin ?? false).description.capitalized)")
                 }
             }
             
