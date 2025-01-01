@@ -14,12 +14,28 @@ struct AuthDataResultModel {
     let photoUrl: String?
     let isAnonymous: Bool
     
+    // for profile data fetching
+    /*
+    let userId : String
+    let dateCreated : Date?
+    let firstName : String?
+    let lastName : String?
+    let isAdmin : Bool
+     */
     
     init(user: User) {
         self.uid = user.uid
         self.email = user.email
         self.photoUrl = user.photoURL?.absoluteString
         self.isAnonymous = user.isAnonymous
+ 
+        /*
+        self.userId = user.userId
+        self.dateCreated = user.dateCreated
+        self.firstName = user.firstName
+        self.lastName = user.lastName
+        self.isAdmin = user.isAdmin
+         */
     }
     
 }
