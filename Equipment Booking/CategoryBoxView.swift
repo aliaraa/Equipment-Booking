@@ -35,4 +35,5 @@ struct CategoryBoxView: View {
 
 #Preview {
     CategoryBoxView(category: Category(title: "Books", description: "Find your favorite books"))
+        .environmentObject(CartManager())
 }

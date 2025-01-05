@@ -12,4 +12,5 @@ struct Tool: Identifiable{
     var description: String
     var price: Int
     var isAvailable: Bool
+    var category: String
 }

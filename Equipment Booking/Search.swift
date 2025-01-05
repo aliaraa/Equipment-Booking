@@ -10,14 +10,14 @@ import SwiftUI
 struct Search: View {
     @State private var tools = toolData
     @State private var searchText = ""
+    @State private var isShowingResults = false
     
     var filteredTools: [Tool] {
         if searchText.isEmpty{
             return tools
         } else {
             return tools.filter{
-                $0.name.localizedCaseInsensitiveContains(searchText) ||
-                $0.description.localizedCaseInsensitiveContains(searchText)
+                $0.name.localizedCaseInsensitiveContains(searchText)
             }
         }
     }
@@ -26,46 +26,67 @@ struct Search: View {
         if #available(iOS 16.0, *) {
             NavigationStack{
                 VStack{
-                    TextField("Search...", text: $searchText)
-                        .padding(10)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-                        .padding(.horizontal)
-                    List(filteredTools){tool in
-                        HStack{
-                            VStack(alignment: .leading){
-                                Text(tool.name)
-                                    .font(.headline)
-                                Text(tool.description)
-                                    .font(.subheadline)
-                                    .foregroundColor(Color.gray)
-                                Text("Price Per Day: \(tool.price)$")
-                                    .foregroundColor(Color.red)
-                                    .font(.caption)
-                            }
-                            Spacer()
-                            
-                            if tool.isAvailable{
-                                Text("Available")
-                                    .font(.caption)
-                                    .foregroundColor(Color.green)
-                            } else {
-                                Text("Unavailable")
-                                    .font(.caption)
-                                    .foregroundColor(Color.red)
-                            }
-                            
-                        }
+                    HStack {
+                        TextField("Search...", text: $searchText)
+                            .frame(maxWidth: .infinity, maxHeight: 40)
+                            .padding(10)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(8)
+                            .padding([.top, .leading, .trailing])
                         
+                        Button(action: {isShowingResults = true}) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.headline)
+                                .foregroundColor(Color.white)
+                                .frame(maxWidth: 40, maxHeight: 60)
+                                .background(searchText.isEmpty ? Color.gray : Color.blue)
+                                .cornerRadius(8)
+                                .padding([.top, .trailing])
+                        }
                     }
+                    
+                    
+               
+                    NavigationLink(destination: ConstructionView()) {
+                        Text("Construction")
+                            .font(.title2)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .background(Color.orange)
+                            .cornerRadius(8)
+                            .padding([.top, .leading, .trailing])
+                    }
+                    
+                    NavigationLink(destination: IndustrialView()) {
+                        Text("Industrial")
+                            .font(.title2)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .background(Color.gray)
+                            .cornerRadius(8)
+                            .padding([.top, .leading, .trailing])
+                    }
+                        
+                    NavigationLink(destination: ElectricalView()) {
+                        Text("Electrical")
+                            .font(.title2)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .background(Color.yellow)
+                            .cornerRadius(8)
+                            .padding([.top, .leading, .trailing])
+                    }
+                    Spacer()
+                } //Vstack
+                .sheet(isPresented: $isShowingResults) {
+                    SearchResultsView(tools: filteredTools)
                 }
-            }
-        } else {
-            // Fallback on earlier versions
+            } //Navigation
         }
     }
 }
 
 #Preview {
     Search()
+        .environmentObject(CartManager())
 }

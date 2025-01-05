@@ -11,13 +11,13 @@ import SwiftUI
 struct TabsView: View {
     var body: some View {
         TabView {
-            Tab("Search", systemImage: "") {
-                
+            Tab("Search", systemImage: "magnifyingglass") {
+                Search()
             }
-            Tab("Cart", systemImage: "") {
-                
+            Tab("Cart", systemImage: "cart") {
+                CartView()
             }
-            Tab("Status", systemImage: "") {
+            Tab("Status", systemImage: "info.circle") {
                 
             }
         }
@@ -27,7 +27,6 @@ struct TabsView: View {
 #Preview {
     if #available(iOS 18.0, *) {
         TabsView()
-    } else {
-        // Fallback on earlier versions
+            .environmentObject(CartManager())
     }
 }

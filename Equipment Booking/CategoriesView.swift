@@ -61,4 +61,5 @@ struct CategoriesView: View {
 
 #Preview {
     CategoriesView()
+        .environmentObject(CartManager())
 }

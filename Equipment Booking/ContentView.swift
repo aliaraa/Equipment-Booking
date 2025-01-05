@@ -9,17 +9,16 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Development")
+        if #available(iOS 18.0, *) {
+            TabsView()
+        } else {
+            // Fallback on earlier versions
         }
-        .padding()
       
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(CartManager())
 }
