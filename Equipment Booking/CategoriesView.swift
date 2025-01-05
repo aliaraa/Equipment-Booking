@@ -36,8 +36,6 @@ struct CategoriesView: View {
                         .cornerRadius(10)
                 }
             }
-            
-            
             ScrollView {
                 LazyVGrid(columns: columns) {
                     ForEach(categories) { category in
