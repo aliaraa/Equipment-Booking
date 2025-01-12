@@ -13,17 +13,17 @@ struct EquipmentArray: Codable {
 }
 
 struct Equipment: Identifiable, Codable {
-    let equip_id: String // unique id
+    var equip_id: String // unique id
     var id: String {equip_id} // conform to Identifiable by mapping 'id' to 'equip_id'
-    let availability_status: String?
-    let description: String?
-    let equipment_main_category: String?
-    let equipment_sub_category: String?
-    let equipment_name: String?
-    let img_name: String?
-    let img_url: String?
-    let manufacturer: String?
-    let rental_price_per_day: Double
+    var availability_status: String?
+    var description: String?
+    var equipment_main_category: String?
+    var equipment_sub_category: String?
+    var equipment_name: String?
+    var img_name: String?
+    var img_url: String?
+    var manufacturer: String?
+    var rental_price_per_day: Double?
     
 }
 

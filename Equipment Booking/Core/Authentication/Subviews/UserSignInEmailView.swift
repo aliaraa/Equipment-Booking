@@ -16,16 +16,26 @@ struct UserSignInEmailView: View {
     var body: some View {
         
         VStack{
+            // Email TextField
             TextField("Email...", text: $viewModel.email)
                 .padding()
                 .background(Color.gray.opacity(0.4))
                 .cornerRadius(10)
             
+            //Passoword SecureField
             SecureField("Password...", text: $viewModel.password)
                 .padding()
                 .background(Color.gray.opacity(0.4))
                 .cornerRadius(10)
             
+            // Forgot Password Navigation Link
+            NavigationLink(destination: Text("Forgot Password View")){
+                Text("Forgot Password")
+                    .font(.footnote)
+                    .foregroundColor(.blue)
+                                             
+                                             }
+           //Sign In button
             Button{
                 Task{
                     do{
@@ -58,7 +68,7 @@ struct UserSignInEmailView: View {
                     .background(Color.blue)
                     .cornerRadius(10)
             }
-            Spacer()
+            // Spacer()
             
             
             

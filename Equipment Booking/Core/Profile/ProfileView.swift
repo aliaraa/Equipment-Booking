@@ -83,6 +83,29 @@ struct ProfileView: View {
                 
             }
         }
+        Spacer()
+        
+        NavigationView {
+            VStack{
+                NavigationLink (destination: EquipmentListingView()) {
+                    
+                    Text("Go to Equipment Listing")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(height: 55)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.green)
+                        .cornerRadius(10)
+                    
+                }
+                
+            }
+            .navigationTitle("Equipment Listing")
+        }
+        
+
+        
+        
     }
 }
 

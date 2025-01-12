@@ -9,15 +9,15 @@ import SwiftUI
 
 struct RootView: View {
     
-    @State private var showSignInView: Bool = false // Reset to false when userAuthenticationView is dismissed
+    @State private var showSignInView: Bool = true // Reset to false when userAuthenticationView is dismissed
     
     
     var body: some View {
         ZStack{
             if !showSignInView{
                 NavigationStack {
-                    //EquipmentListingView()
-                    ProfileView(showSignInView: $showSignInView)
+                    EquipmentListingView() //Navigate to EquipmentListingView
+                    // ProfileView(showSignInView: $showSignInView)
                     //UserSettingsView(showSignInView: $showSignInView)
                 }
                 

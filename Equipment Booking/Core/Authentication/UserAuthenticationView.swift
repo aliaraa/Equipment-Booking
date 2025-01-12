@@ -37,44 +37,60 @@ struct UserAuthenticationView: View {
     @Binding var showSignInView: Bool
     
     var body: some View {
-        VStack{
+        VStack(spacing: 20){
+            // Sign in anonymously test
+            //            Button(action: {
+            //                Task {
+            //                    do {
+            //                        try await viewModel.signInAnonymous()
+            //                        showSignInView = false
+            //                    } catch {
+            //                        print(error)
+            //
+            //                    }
+            //                }
+            //
+            //            }, label: {
+            //                Text("Sign In Anonymously")
+            //                    .font(.headline)
+            //                    .foregroundColor(.white)
+            //                    .frame(height: 55)
+            //                    .frame(maxWidth: .infinity)
+            //                    .background(Color.orange)
+            //                    .cornerRadius(10)
+            //
+            //            })
             
-            Button(action: {
-                Task {
-                    do {
-                        try await viewModel.signInAnonymous()
-                        showSignInView = false
-                    } catch {
-                        print(error)
-                        
-                    }
-                }
-                
-            }, label: {
-                Text("Sign In Anonymously")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(height: 55)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.orange)
-                    .cornerRadius(10)
-                
-            })
+            // Embedd userSignInEmaiView
             
-            
-            NavigationLink{
+            VStack(spacing: 10){
                 UserSignInEmailView(showSignInView: $showSignInView)
-            } label: {
-                Text("Sign in With Email")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(height: 55)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .cornerRadius(10)
+            }
+                        
+            
+            // Section devider
+            HStack{
+                Rectangle()
+                    .frame(height: 1)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 8)
+                
+                Text("or")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 8)
+                
+                Rectangle()
+                    .frame(height: 1)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 8)
                 
             }
+            .padding(.vertical, 8) // Add spacing around the divider
             
+            // Google Sign In button
             GoogleSignInButton(viewModel: GoogleSignInButtonViewModel(scheme: .dark, style: .wide, state: .normal)) {
                 Task {
                     do {
@@ -87,10 +103,23 @@ struct UserAuthenticationView: View {
                 }
                 
             }
-            
+            // Apple Sign in button
             SignInWithAppleButtonViewRepresentable(type: .default, style: .black)
                 .allowsHitTesting(false)
                 .frame(height: 55)
+                .padding(.top, 10)
+            
+            HStack{
+                Text("Need a Profile?")
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+                
+                NavigationLink(destination: UserSignInEmailView(showSignInView: $showSignInView)){
+                    Text("Sign Up")
+                        .foregroundColor(.blue)
+                        .font(.subheadline)
+                }
+            }
             
             
             
