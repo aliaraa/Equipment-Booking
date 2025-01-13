@@ -20,69 +20,85 @@ import SwiftUI
 struct EquipmentListingView: View {
     
     @StateObject private var viewModel = EquipmentListingViewModel()
+    @State private var  showUserSettings = true
+    @State private var profileImage: UIImage? = nil // Placeholder for profile image
     
     var body: some View {
         
-        
-        ScrollView {
-            
-            ForEach(viewModel.equipments) { equipment in
+        NavigationView {
+            VStack {
                 
-                HStack (alignment: .top, spacing: 12){
+                ScrollView {
                     
-                    AsyncImage(url: URL(string: equipment.img_url ?? "")) {image in image
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 75, height: 75)
-                            .cornerRadius(10)
+                    ForEach(viewModel.equipments) { equipment in
                         
-                    } placeholder: {
-                        ProgressView()
-                    }
-                    .frame(width: 80, height: 80)
-                    .shadow(radius: 10)
+                        HStack (alignment: .top, spacing: 12){
                             
-                    VStack(alignment: .leading, spacing: 4 ) {
+                            AsyncImage(url: URL(string: equipment.img_url ?? "")) {image in image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 75, height: 75)
+                                    .cornerRadius(10)
+                                
+                            } placeholder: {
+                                ProgressView()
+                            }
+                            .frame(width: 80, height: 80)
+                            .shadow(radius: 10)
+                            
+                            VStack(alignment: .leading, spacing: 4 ) {
+                                
+                                Text (equipment.equipment_name ?? "n/a")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                Text (equipment.description ?? "n/a")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(2)
+                                
+                                Text ("Price: SEK\(equipment.rental_price_per_day ?? 0, specifier: "%.2f")")
+                                    .font(.body)
+                                    .foregroundColor(.green)
+                                
+                            }
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .cornerRadius(8)
+                            .shadow(radius: 2)
+                        }
                         
-                        Text (equipment.equipment_name ?? "n/a")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        Text (equipment.description ?? "n/a")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .lineLimit(2)
-                        
-                        Text ("Price: SEK\(equipment.rental_price_per_day ?? 0, specifier: "%.2f")")
-                            .font(.body)
-                            .foregroundColor(.green)
                         
                     }
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
-                    .shadow(radius: 2)
+                    
+                }
+                Spacer()
+                
             }
             
-            
+            .navigationBarTitle("Equipment Listing", displayMode: .inline)
+            .navigationBarItems(trailing: Button(action: {
+                showUserSettings = true
+            }) {
+                if let profileImage = profileImage {
+                    Image(uiImage: profileImage)
+                        .resizable()
+                        .frame(width: 40, height: 40)
+                        .clipShape(Circle())
+                } else {
+                    Image(systemName: "person.crop.circle")
+                        .resizable()
+                        .frame(width: 40, height: 40)
+                        .foregroundColor(.blue)
+                }
+            })
+            .sheet(isPresented: $showUserSettings) {
+                UserSettingsView(showSignInView: $showUserSettings)
+            }
         }
-        
     }
-        .navigationTitle("Equipment Listing")
-        .onAppear {
-            viewModel.fetchEquipments()
-        }
-    
-    
-    }
-    
-    //        }
-    
-    
     
 }
-
-
 //        List {
 //            ForEach(viewModel.equipments) {
 //                equipment in
@@ -178,5 +194,3 @@ struct EquipmentListingView_Previews: PreviewProvider {
 //                try? await viewModel.getAllEquipments()
 //            }
 //        }
-
-

@@ -35,6 +35,7 @@ struct UserAuthenticationView: View {
     @StateObject private var viewModel = AuthenticationViewModel()
     
     @Binding var showSignInView: Bool
+    @Binding var showSignUpView: Bool
     
     var body: some View {
         VStack(spacing: 20){
@@ -64,9 +65,13 @@ struct UserAuthenticationView: View {
             // Embedd userSignInEmaiView
             
             VStack(spacing: 10){
+                Text("Welcome to Find & Rent Equipment")
+                    .font(.largeTitle)
+                    .padding(.vertical, 20)
                 UserSignInEmailView(showSignInView: $showSignInView)
             }
-                        
+            //            Spacer()
+            
             
             // Section devider
             HStack{
@@ -109,38 +114,44 @@ struct UserAuthenticationView: View {
                 .frame(height: 55)
                 .padding(.top, 10)
             
-            HStack{
-                Text("Need a Profile?")
-                    .font(.subheadline)
-                    .foregroundColor(.primary)
-                
-                NavigationLink(destination: UserSignInEmailView(showSignInView: $showSignInView)){
-                    Text("Sign Up")
-                        .foregroundColor(.blue)
-                        .font(.subheadline)
-                }
+            //            HStack{
+            //                Text("New User?")
+            //                    .font(.subheadline)
+            //                    .foregroundColor(.primary)
+            //
+            //                NavigationLink(destination: UserSignInEmailView(showSignInView: $showSignInView)){
+            //                    Text("Sign Up")
+            //                        .foregroundColor(.blue)
+            //                        .font(.subheadline)
+            //                }
+            //            }
+            Button(action: {
+                showSignInView = false
+                showSignUpView = true
+            }) {
+                Text("Don't have an account? Sign Up")
+                    .padding()
+                    .foregroundColor(.blue)
             }
-            
-            
-            
-            Spacer()
         }
         .padding()
-        .navigationTitle("Sign in")
+        
     }
+    
+    
+    
+    //        Spacer()
 }
+//        .padding()
+//        .navigationTitle("Sign in")
+
 
 
 struct UserAuthenticationView_Previews: PreviewProvider {
     static var previews: some View {
-        if #available(iOS 16.0, *) {
-            NavigationStack{
-                UserAuthenticationView(showSignInView: .constant(false))
-            }
-        } else {
-            // Fallback on earlier versions
-        }
+        UserAuthenticationView(showSignInView: .constant(true), showSignUpView: .constant(false))
     }
+    
 }
 
 //#Preview {

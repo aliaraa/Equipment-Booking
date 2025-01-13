@@ -74,7 +74,7 @@ struct UserSignInEmailView: View {
             
         }
         .padding()
-        .navigationTitle("Sign In With Email")
+//        .navigationTitle("Sign In With Email")
     }
 }
 
