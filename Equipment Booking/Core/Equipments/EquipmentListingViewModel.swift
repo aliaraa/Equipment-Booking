@@ -15,6 +15,7 @@ final class EquipmentListingViewModel: ObservableObject {
     @Published var equipments: [Equipment] = []
     
     private var db = Firestore.firestore()
+      
     
     func fetchEquipments() {
         db.collection("equipments").getDocuments {
@@ -71,6 +72,16 @@ final class EquipmentListingViewModel: ObservableObject {
         }
         
         
+    }
+    
+    //Booking ID Generation Function:
+    
+    func generateBookingID(firstName: String, lastName: String) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmm"
+        let dateStr = dateFormatter.string(from: Date())
+        let id = "\(firstName.prefix(1))\(lastName.prefix(2).uppercased())\(dateStr)"
+        return id
     }
     
 }

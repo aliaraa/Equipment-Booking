@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A126DBA72D3D8FB60037BE4A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A126DBA62D3D8FB60037BE4A /* GoogleService-Info.plist */; };
 		A13BAC992D20649A0028B8DE /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A13BAC982D20649A0028B8DE /* GoogleSignIn */; };
 		A13BAC9B2D20649A0028B8DE /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = A13BAC9A2D20649A0028B8DE /* GoogleSignInSwift */; };
-		A1840EE52D2470BE00CE7A1E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A1840EE42D2470BE00CE7A1E /* GoogleService-Info.plist */; };
 		A1ABAC822D0671A1009F2067 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC812D0671A1009F2067 /* FirebaseAnalytics */; };
 		A1ABAC842D0671A1009F2067 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC832D0671A1009F2067 /* FirebaseAuth */; };
 		A1ABAC862D0671A1009F2067 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC852D0671A1009F2067 /* FirebaseCore */; };
@@ -21,7 +21,7 @@
 
 /* Begin PBXFileReference section */
 		5053FC3C2CF351FC008036F8 /* Equipment Booking.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Equipment Booking.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A1840EE42D2470BE00CE7A1E /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		A126DBA62D3D8FB60037BE4A /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -55,10 +55,10 @@
 		5053FC332CF351FB008036F8 = {
 			isa = PBXGroup;
 			children = (
-				A1840EE42D2470BE00CE7A1E /* GoogleService-Info.plist */,
 				5053FC3E2CF351FC008036F8 /* Equipment Booking */,
 				A1B2451E2D20DD9200491EAB /* Frameworks */,
 				5053FC3D2CF351FC008036F8 /* Products */,
+				A126DBA62D3D8FB60037BE4A /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -154,7 +154,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1840EE52D2470BE00CE7A1E /* GoogleService-Info.plist in Resources */,
+				A126DBA72D3D8FB60037BE4A /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

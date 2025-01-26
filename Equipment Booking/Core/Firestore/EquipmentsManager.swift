@@ -9,7 +9,8 @@ import Foundation
 import FirebaseFirestore
 import FirebaseFirestoreCombineSwift
 
-final class EquipmentManager {
+@MainActor
+final class EquipmentManager: ObservableObject {
     
     static let shared = EquipmentManager()
     private init() {}
@@ -38,4 +39,13 @@ final class EquipmentManager {
         
     }
     
+    //Booking ID Generation Function:
+    
+    func generateBookingID(firstName: String, lastName: String) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmm"
+        let dateStr = dateFormatter.string(from: Date())
+        let id = "\(firstName.prefix(1))\(lastName.prefix(2).uppercased())\(dateStr)"
+        return id
+    }
 }

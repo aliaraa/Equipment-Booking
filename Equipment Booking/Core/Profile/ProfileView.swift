@@ -37,9 +37,6 @@ final class ProfileViewModel: ObservableObject {
     
 }
 
-
-
-
 struct ProfileView: View {
     
     @StateObject private var viewModel = ProfileViewModel()
@@ -102,10 +99,7 @@ struct ProfileView: View {
             }
             .navigationTitle("Equipment Listing")
         }
-        
-
-        
-        
+                
     }
 }
 

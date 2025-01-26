@@ -1,0 +1,5119 @@
+// Content from: ../Equipment Booking/ContentView.swift
+
+//
+//  ContentView.swift
+//  Equipment Booking
+//
+//  Created by XXXXX on 2024-11-24.
+//
+
+import SwiftUI
+
+struct ContentView: View {
+    var body: some View {
+        Text("Hello, World!")
+            .padding()
+        
+    }
+}
+
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
+}
+
+
+
+
+
+// Content from: ../Equipment Booking/Equipment_BookingApp.swift
+
+//
+//  Equipment_BookingApp.swift
+//  Equipment Booking
+//
+//  Created by XXXXX on 2024-11-24.
+//
+
+import SwiftUI
+import Firebase
+
+@main
+struct Equipment_BookingApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    
+    var body: some Scene {
+        WindowGroup {
+            // ContentView()
+            RootView () // To test authentication functions
+        }
+    }
+}
+
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Initialize Firebase
+        FirebaseApp.configure()
+        // print("Configure Firebase Successfully!") // Check firebase config success
+        return true
+    }
+}
+
+
+// Content from: ../Equipment Booking/ProfileContentView.swift
+
+//
+//  ProfileContentView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/8/24.
+//
+
+import SwiftUI
+
+struct ProfileContentView: View {
+    @State private var isMenuOpen = false // Track menu visibility
+    @State private var searchText = "" // Track the search text
+    
+    var body: some View {
+        ZStack {
+            // Main Content View
+            VStack {
+                // Spacer to push everything down
+                Spacer()
+                    .frame(height: 30) // Adjust height
+                
+                // Hamburger Menu Button (Upper-right corner)
+                HStack {
+                    Spacer() // Push the hamburger icon to the right
+                    Button(action: {
+                        withAnimation {
+                            isMenuOpen.toggle() // Toggle the menu visibility
+                        }
+                    }) {
+                        Image(systemName: "line.horizontal.3")
+                            .foregroundColor(.gray)
+                            .font(.title)
+                            .padding()
+                    }
+                }
+                
+                // Search and Filter Bar (20pt below the hamburger button)
+                HStack {
+                    // Search Text Field
+                    TextField("Search", text: $searchText)
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.4)))
+                        .frame(height: 40)
+                    
+                    // Close (X) Button to Clear the Search Field
+                    if !searchText.isEmpty {
+                        Button(action: {
+                            searchText = "" // Clear the search text
+                        }) {
+                            Image(systemName: "x.circle.fill")
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.leading, 10)
+                    }
+                    
+                    // Filter Button (with 10pt gap from the search field)
+                    Button(action: {
+                        // Handle filter action here
+                        print("Filter button tapped")
+                    }) {
+                        Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                            .font(.title)
+                            .foregroundColor(.gray)
+                            .padding(.leading, 10)
+                    }
+                }
+                .padding(.top, 20) // Space between the hamburger button and the search/filter bar
+                .padding(.horizontal, 20)
+                
+                Spacer() // Keep the rest of the screen empty
+            }
+            .background(Color.white)
+            
+            // Present the Menu Screen when the menu is open
+            if isMenuOpen {
+                ProfileMenuView(isMenuOpen: $isMenuOpen)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.white)
+                    .transition(.move(edge: .trailing)) // Slide-in effect
+                    .zIndex(1)
+            }
+        }
+        .edgesIgnoringSafeArea(.all)
+    }
+}
+
+
+#Preview {
+    ProfileContentView()
+}
+
+
+// Content from: ../Equipment Booking/ProfileMenuView.swift
+
+//
+//  ProfileMenuView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/5/24.
+//
+
+import SwiftUI
+
+struct ProfileMenuView: View {
+    @Binding var isMenuOpen: Bool // Track the menu visibility from the parent
+    
+    var body: some View {
+        VStack {
+            // Spacer to push everything down
+            Spacer()
+                .frame(height: 30) //
+            
+            // Back Button and Profile Image
+            HStack {
+                Button(action: {
+                    withAnimation {
+                        isMenuOpen = false // Close the menu
+                    }
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.title)
+                        .foregroundColor(.blue)
+                        .padding(.leading, 20)
+                }
+                Spacer()
+                
+                // Profile Image (Centered)
+                Image(systemName: "person.crop.circle")
+                    .resizable()
+                    .frame(width: 100, height: 100)
+                    .foregroundColor(.gray)
+                    // .padding(.top, 5) // Add extra padding to space it out more
+                
+                Spacer()
+                
+                // Shopping Cart Icon
+                Button(action: {
+                    // Action for shopping cart icon )
+                    print("Shopping Cart tapped")
+                }) {
+                    Image(systemName: "cart")
+                        .font(.title)
+                        .foregroundColor(.blue)
+                        .padding(.trailing, 20) // Align with the chevron button
+                }
+                        
+                
+            }
+            
+            
+            //.padding(.bottom, 30)
+            
+            
+            // Menu List with Dividers and Raised Effect
+            VStack(spacing: 5) { // Use 0 spacing to create clean divider placement
+                MenuItem(icon: "person", text: "Account", action: {})
+                // Divider()
+                MenuItem(icon: "bell", text: "Notifications", action: {})
+                //Divider()
+                MenuItem(icon: "gearshape", text: "Settings", action: {})
+                //Divider()
+                MenuItem(icon: "questionmark.circle", text: "Support", action: {})
+            }
+            .padding(.top, 30)
+            .padding(.horizontal, 10)
+            
+            
+            
+            // Sign Out Button
+            Button(action: {
+                withAnimation {
+                    isMenuOpen = false // Close the menu
+                }
+                print("Signed out and navigated back to home.")
+            }) {
+                HStack {
+                    Image(systemName: "arrow.backward.square")
+                        .font(.headline)
+                    Text("Sign Out")
+                        .fontWeight(.bold)
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(height: 55)
+                .frame(maxWidth: .infinity)
+                .background(Color.red)
+                .cornerRadius(10)
+                .padding(.horizontal)
+            }
+            Spacer()
+            
+        }
+    }
+}
+
+// Reusable Menu Item View with Action Support
+struct MenuItem: View {
+    let icon: String
+    let text: String
+    let action: () -> Void // Closure for button action
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.headline)
+                    .foregroundColor(.blue)
+                Text(text)
+                    .font(.headline)
+                    .foregroundColor(.black)
+                Spacer()
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2) // Subtle shadow for raised effect
+                            ) // Subtle shadow for raised effect
+            
+        }
+        .padding(.horizontal, 10) // Add horizontal padding to ensure items don't touch the screen edge
+    }
+}
+
+#Preview {
+    // Creating a Binding to pass into the ProfileMenuView
+    ProfileMenuView(isMenuOpen: .constant(true)) // Use .constant(true) for the preview
+}
+
+
+// Content from: ../Equipment Booking/Core/RootView.swift
+
+//
+//  RootView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/9/24.
+//
+
+import SwiftUI
+
+struct RootView: View {
+    @StateObject private var authViewModel = AuthenticationViewModel()
+
+    var body: some View {
+        ZStack {
+            if authViewModel.isAuthenticated {
+                NavigationStack {
+                    EquipmentListingView()
+                }
+            } else {
+                NavigationStack {
+                    UserAuthenticationView(showSignInView: .constant(false))
+                        .environmentObject(authViewModel)
+                }
+            }
+        }
+        .onAppear {
+            // Check authentication status on app launch
+            checkAuthenticationStatus()
+        }
+        .environmentObject(authViewModel) // Provide auth state globally
+    }
+
+    private func checkAuthenticationStatus() {
+        do {
+            let _ = try AuthenticationManager.shared.getAuthenticatedUser()
+            authViewModel.isAuthenticated = true
+        } catch {
+            authViewModel.isAuthenticated = false
+        }
+    }
+}
+
+
+//struct RootView: View {
+//    @State private var showSignInView: Bool = false
+//    @State private var showAlreadySignedInAlert: Bool = false
+//    @StateObject private var authViewModel = AuthenticationViewModel() // ✅ Ensure this is the shared instance
+//
+//    var body: some View {
+//        ZStack {
+//            if authViewModel.isAuthenticated {
+//                NavigationStack {
+//                    EquipmentListingView()
+//                }
+//                .alert("You are already signed in!", isPresented: $showAlreadySignedInAlert) {
+//                    Button("OK", role: .cancel) { }
+//                }
+//            } else {
+//                UserAuthenticationView(showSignInView: $showSignInView)
+//                    .environmentObject(authViewModel) // ✅ Inject authentication state
+//            }
+//        }
+//        .onAppear {
+//            checkAuthenticationStatus()
+//        }
+//        .environmentObject(authViewModel) // ✅ Ensure auth state is globally available
+//        .fullScreenCover(isPresented: $showSignInView) {
+//            NavigationStack {
+//                UserAuthenticationView(showSignInView: $showSignInView)
+//                    .environmentObject(authViewModel) // ✅ Inject authentication state
+//            }
+//        }
+//    }
+//
+//    /// ✅ Check if the user is signed in when the app starts
+//    private func checkAuthenticationStatus() {
+//        do {
+//            let _ = try AuthenticationManager.shared.getAuthenticatedUser()
+//            self.showSignInView = false
+//            self.showAlreadySignedInAlert = true
+//            self.authViewModel.isAuthenticated = true
+//        } catch {
+//            self.showSignInView = true
+//            self.authViewModel.isAuthenticated = false
+//            print("Error checking authentication status: \(error)")
+//        }
+//    }
+//}
+
+struct RootView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            RootView()
+        }
+    }
+}
+
+
+
+
+//import SwiftUI
+//
+//struct RootView: View {
+//    @State private var showSignInView: Bool = false
+//    @State private var showAlreadySignedInAlert: Bool = false
+//    @StateObject private var authViewModel = AuthenticationViewModel()  // ✅ Initialize as a shared instance
+//
+//    var body: some View {
+//        ZStack {
+//            // Show EquipmentListingView if user is authenticated
+//            if !showSignInView {
+//                NavigationStack {
+//                    EquipmentListingView()
+//                }
+//                .alert("You are already signed in!", isPresented: $showAlreadySignedInAlert) {
+//                    Button("OK", role: .cancel) { }
+//                }
+//            }
+//        }
+//        .onAppear {
+//            checkAuthenticationStatus()
+//        }
+//        .fullScreenCover(isPresented: $showSignInView) {
+//            NavigationStack {
+//                UserAuthenticationView(showSignInView: $showSignInView)
+//            }
+//        }
+//    }
+//
+//    private func checkAuthenticationStatus() {
+//        do {
+//            let authUser = try AuthenticationManager.shared.getAuthenticatedUser()
+//            self.showSignInView = false
+//            self.showAlreadySignedInAlert = true // Show notification if already signed in
+//        } catch {
+//            self.showSignInView = true
+//            print("Error checking authentication status: \(error)")
+//        }
+//    }
+//}
+//
+//struct RootView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            RootView()
+//        }
+//    }
+//}
+
+
+//import SwiftUI
+//
+//struct RootView: View {
+//    @State private var showSignInView: Bool = false // Initially false, will toggle based on user authentication
+//
+//    var body: some View {
+//        ZStack {
+//            // Show EquipmentListingView if the user is authenticated
+//            if !showSignInView {
+//                NavigationStack {
+//                    EquipmentListingView()
+//                }
+//            }
+//        }
+//        .onAppear {
+//            
+//            checkAuthenticationStatus()
+//            
+//        }
+//        .fullScreenCover(isPresented: $showSignInView) {
+//            NavigationStack {
+//                UserAuthenticationView(showSignInView: $showSignInView)
+//            }
+//        }
+//    }
+//
+//    private func checkAuthenticationStatus() {
+//        do {
+//            let authUser = try AuthenticationManager.shared.getAuthenticatedUser()
+//            self.showSignInView = false // Authenticated user found, proceed to main view
+//        } catch {
+//            self.showSignInView = true // Show sign-in view if there's an error or no user is authenticated
+//            print("Error checking authentication status: \(error)")
+//        }
+//    }
+//}
+//
+//struct RootView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            RootView()
+//        }
+//    }
+//}
+
+
+
+
+
+
+//import SwiftUI
+//
+//struct RootView: View {
+//    
+//    @State private var showSignInView: Bool = false // Always show UserAuthenticationView on start
+//    @State private var showSignUpView: Bool = true // SignUp off at start
+//    
+//    var body: some View {
+//        ZStack{
+//            if !showSignInView  { //&& showSignUpView
+//                NavigationStack {
+//                    EquipmentListingView() //Navigate to EquipmentListingView
+//
+//                }
+//                
+//            }
+//            
+//        }
+//        
+//        .onAppear{
+//            
+//            showSignInView = true
+//            let authUser = try? AuthenticationManager.shared.getAuthenticatedUser()
+//            self.showSignInView = authUser == nil
+//        }
+//        
+//        .fullScreenCover(isPresented: $showSignInView){
+//            NavigationStack{
+//                UserAuthenticationView (showSignInView: $showSignInView, showSignUpView: $showSignUpView)
+//            }
+//        }
+//        
+//        .fullScreenCover(isPresented: $showSignUpView){
+//            NavigationStack{
+//                SignUpView()
+//            }
+//        }
+//        
+//        
+//    }
+//}
+//
+//
+//struct RootView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            RootView()
+//        }
+//    }
+//}
+
+//import SwiftUI
+//
+//struct RootView: View {
+//    @State private var showSignInView: Bool = false // Initially false, will toggle based on user authentication
+//
+//    var body: some View {
+//        ZStack {
+//            // Show EquipmentListingView if the user is authenticated
+//            if !showSignInView {
+//                NavigationStack {
+//                    EquipmentListingView()
+//                }
+//            }
+//        }
+//        .onAppear {
+//            checkAuthenticationStatus()
+//        }
+//        .fullScreenCover(isPresented: $showSignInView) {
+//            NavigationStack {
+//                UserAuthenticationView(showSignInView: $showSignInView)
+//            }
+//        }
+//    }
+//
+//    private func checkAuthenticationStatus() {
+//        let authUser = try? AuthenticationManager.shared.getAuthenticatedUser()
+//        self.showSignInView = authUser == nil // Show sign-in view if no authenticated user is found
+//    }
+//}
+
+
+//struct RootView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            RootView()
+//        }
+//    }
+//}
+
+
+
+// Content from: ../Equipment Booking/Core/Authentication/AuthenticationViewModel.swift
+
+//
+//  AuthenticationViewModel.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/29/24.
+//
+
+import Foundation
+import FirebaseAuth
+
+@MainActor
+final class AuthenticationViewModel: ObservableObject {
+    @Published var email: String = "" // Add this property
+    @Published var password: String = "" // Include this if needed for sign-in
+    @Published var authUser: AuthDataResultModel? = nil // Track authenticated user
+    @Published var isAuthenticated: Bool = false  // Track authentication state
+    
+    
+    
+    func signInGoogle() async throws {
+        let helper = SignInGoogleHelper()
+        let tokens = try await helper.signIn()
+        let authDataResult = try await AuthenticationManager.shared.signInWithGoogle(tokens: tokens)
+        let user = DBUser(auth: authDataResult)
+        try await UserManager.shared.createNewUser(user: user)
+    }
+    
+    func signInAnonymous() async throws {
+        let authDataResult = try await AuthenticationManager.shared.signInAnonymous()
+        let user = DBUser(auth: authDataResult)
+        try await UserManager.shared.createNewUser(user: user)
+    }
+    // Sign in with email and password / checking if user is already signed in
+    
+    func signIn() async throws {
+        // Normalize the email to be case-insensitive
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        do {
+            // Check if the user is already signed in
+            if let currentUser = Auth.auth().currentUser {
+                print("User is already signed in: \(currentUser.email ?? "Unknown Email")")
+                if currentUser.email?.lowercased() == normalizedEmail {
+                    // User is already signed in with the same email
+                    self.authUser = AuthDataResultModel(user: currentUser)
+                    return // Skip sign-in and stop execution
+                } else {
+                    // Sign out the currently signed-in user if the email doesn't match
+                    try await Auth.auth().signOut()
+                }
+            }
+            
+            // Attempt to sign in with email and password
+            let authDataResult = try await AuthenticationManager.shared.signInUser(email: normalizedEmail, password: trimmedPassword)
+            
+            // Save authenticated user
+            self.authUser = authDataResult
+            print("Sign-in successful for: \(authDataResult.email ?? "Unknown Email")")
+        } catch let error as NSError {
+            print("Firebase sign-in error: \(error.code) - \(error.localizedDescription)")
+            
+            // Handle specific errors
+            switch error.code {
+            case AuthErrorCode.userNotFound.rawValue:
+                throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "The entered email is not registered."])
+            case AuthErrorCode.wrongPassword.rawValue:
+                throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "The password you entered is incorrect."])
+            case AuthErrorCode.invalidCredential.rawValue:
+                throw NSError(domain: "InvalidCredential", code: 17004, userInfo: [NSLocalizedDescriptionKey: "Invalid credentials. Please check your email and password."])
+            case AuthErrorCode.invalidEmail.rawValue:
+                throw NSError(domain: "InvalidEmail", code: 400, userInfo: [NSLocalizedDescriptionKey: "The entered email is not valid."])
+            default:
+                throw NSError(domain: "SignInError", code: error.code, userInfo: [NSLocalizedDescriptionKey: error.localizedDescription])
+            }
+        }
+    }
+    
+    // Sign up new user an login immediately
+    
+    func signUpAndLogin(email: String, password: String) async throws {
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        do {
+            // Sign up the user
+            let authDataResult = try await AuthenticationManager.shared.createUser(email: normalizedEmail, password: trimmedPassword)
+            
+            // Save authenticated user (should immediately sign them in)
+            self.authUser = authDataResult
+            
+            // Set additional profile information
+            let user = DBUser(auth: authDataResult)
+            try await UserManager.shared.createNewUser(user: user)
+            
+            // ✅ Mark user as authenticated
+            self.isAuthenticated = true
+        } catch {
+            // Handle errors during sign-up
+            print("Sign-up error: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+}
+    
+//    func signIn() async throws {
+//        // Normalize the email to be case-insensitive
+//        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+//        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+//        
+//        do {
+//            // Attempt to sign in using the AuthenticationManager
+//            let authDataResult = try await AuthenticationManager.shared.signInUser(email: normalizedEmail, password: trimmedPassword)
+//            self.authUser = authDataResult
+//            print("Sign-in successful for: \(authDataResult.email ?? "Unknown Email")")
+//        } catch let error as NSError {
+//            print("Sign-in error: \(error.code) - \(error.localizedDescription)")
+//            throw error // Propagate the error back to the view
+//        }
+//    }
+
+    
+//    func signIn() async throws {
+//        // Normalize the email to be case-insensitive
+//        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+//        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+//
+//        do {
+//            // Check if the user is already signed in
+//            if let currentUser = Auth.auth().currentUser {
+//                print("User is already signed in: \(currentUser.email ?? "Unknown Email")")
+//                self.authUser = AuthDataResultModel(user: currentUser)
+//                return // Skip sign-in
+//            }
+//
+//            // Attempt to sign in with email and password
+//            let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: trimmedPassword)
+//
+//            // Save authenticated user
+//            self.authUser = AuthDataResultModel(user: authDataResult.user)
+//            print("Sign-in successful for: \(authDataResult.user.email ?? "Unknown Email")")
+//        } catch let error as NSError {
+//            print("Firebase sign-in error: \(error.code) - \(error.localizedDescription)") // Debugging log
+//
+//            // Classify specific Firebase errors
+//            switch error.code {
+//            case AuthErrorCode.userNotFound.rawValue:
+//                throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "The entered email is not registered."])
+//            case AuthErrorCode.wrongPassword.rawValue:
+//                throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "The password you entered is incorrect."])
+//            case AuthErrorCode.invalidCredential.rawValue:
+//                throw NSError(domain: "InvalidCredential", code: 17004, userInfo: [NSLocalizedDescriptionKey: "The entered email or password is invalid. Please check your credentials."])
+//            case AuthErrorCode.invalidEmail.rawValue:
+//                throw NSError(domain: "InvalidEmail", code: 400, userInfo: [NSLocalizedDescriptionKey: "The entered email is not valid."])
+//            default:
+//                throw NSError(domain: "SignInError", code: error.code, userInfo: [NSLocalizedDescriptionKey: error.localizedDescription])
+//            }
+//        }
+//    }
+
+  
+//    func signIn() async throws {
+//        // Normalize the email to be case-insensitive
+//        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+//        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+//
+//        do {
+//            // Check if the user is already signed in
+//            if let currentUser = Auth.auth().currentUser {
+//                print("User is already signed in: \(currentUser.email ?? "Unknown Email")")
+//                self.authUser = AuthDataResultModel(user: currentUser)
+//                return // No need to sign in again
+//            }
+//
+//            // Attempt to sign in with the normalized email and password
+//            let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: trimmedPassword)
+//
+//            // Save the authenticated user
+//            self.authUser = AuthDataResultModel(user: authDataResult.user)
+//
+//            print("Sign-in successful for: \(authDataResult.user.email ?? "Unknown Email")")
+//        } catch let error as NSError {
+//            // Print error details for debugging
+//            print("Firebase sign-in error: \(error.code) - \(error.localizedDescription)")
+//
+//            // Handle specific Firebase authentication errors
+//            switch error.code {
+//            case AuthErrorCode.userNotFound.rawValue:
+//                // User not found
+//                throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "The entered email is not registered."])
+//            case AuthErrorCode.wrongPassword.rawValue:
+//                // Incorrect password
+//                throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "The password you entered is incorrect."])
+//            case AuthErrorCode.invalidCredential.rawValue:
+//                // Invalid credential (common for 17004)
+//                throw NSError(domain: "InvalidCredential", code: 17004, userInfo: [NSLocalizedDescriptionKey: "The entered email or password is invalid. Please check your credentials."])
+//            case AuthErrorCode.invalidEmail.rawValue:
+//                // Invalid email format
+//                throw NSError(domain: "InvalidEmail", code: 400, userInfo: [NSLocalizedDescriptionKey: "The entered email is not valid."])
+//            default:
+//                // Handle other Firebase errors
+//                throw NSError(domain: "SignInError", code: error.code, userInfo: [NSLocalizedDescriptionKey: error.localizedDescription])
+//            }
+//        }
+//    }
+
+   
+    
+    
+//    func signIn() async throws {
+//            // Normalize the email to be case-insensitive
+//            let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+//
+//            do {
+//                // Attempt to sign in with the normalized email and password
+//                let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: password)
+//
+//                // Save the authenticated user
+//                self.authUser = AuthDataResultModel(user: authDataResult.user)
+//
+//                print("Sign-in successful for: \(authDataResult.user.email ?? "Unknown Email")")
+//            } catch let error as NSError {
+//                // Print error details for debugging
+//                print("Firebase sign-in error: \(error.code) - \(error.localizedDescription)")
+//
+//                // Handle specific Firebase authentication errors
+//                if error.code == AuthErrorCode.userNotFound.rawValue {
+//                    // User not found
+//                    throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "The entered email is not registered."])
+//                } else if error.code == AuthErrorCode.wrongPassword.rawValue {
+//                    // Incorrect password
+//                    throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "The password you entered is incorrect."])
+//                } else {
+//                    // Handle other Firebase errors (e.g., malformed credentials)
+//                    throw NSError(domain: "SignInError", code: error.code, userInfo: [NSLocalizedDescriptionKey: error.localizedDescription])
+//                }
+//            }
+//        }
+    
+//    func signIn() async throws {
+//            // Normalize the email to be case-insensitive
+//            let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+//
+//            // Check if user is already signed in
+//            if let currentUser = Auth.auth().currentUser {
+//                // User is already signed in
+//                self.authUser = AuthDataResultModel(user: currentUser)
+//                print("User is already signed in: \(currentUser.email ?? "Unknown Email")")
+//
+//                // Navigate to EquipmentListingView (handle in the View logic)
+//                return
+//            }
+//
+//            // Proceed with sign-in if not already signed in
+//            do {
+//                // Authenticate user with normalized email and password
+//                let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: password)
+//
+//                // Save the authenticated user
+//                self.authUser = AuthDataResultModel(user: authDataResult.user)
+//
+//                print("Sign-in successful for: \(authDataResult.user.email ?? "Unknown Email")")
+//            } catch let error as NSError {
+//                // Handle specific sign-in errors
+//                if error.code == AuthErrorCode.userNotFound.rawValue {
+//                    throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "The entered email is not registered."])
+//                } else if error.code == AuthErrorCode.wrongPassword.rawValue {
+//                    throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "The password you entered is incorrect."])
+//                } else {
+//                    throw NSError(domain: "SignInError", code: error.code, userInfo: [NSLocalizedDescriptionKey: error.localizedDescription])
+//                }
+//            }
+//        }
+
+//    func signIn() async throws {
+//        guard !email.isEmpty, !password.isEmpty else {
+//            throw NSError(domain: "InputError", code: 400, userInfo: [NSLocalizedDescriptionKey: "Email and password cannot be empty."])
+//        }
+//        try await AuthenticationManager.shared.signInUser(email: email, password: password)
+//    }
+
+
+
+//@MainActor
+//// View model for google sign in view
+//final class AuthenticationViewModel: ObservableObject{
+//    
+//    //Get google sign in credentials
+//    
+//    func signInGoogle () async throws {
+//        let helper = SignInGoogleHelper()
+//        let tokens = try await helper.signIn()
+//        let authDataResult = try await AuthenticationManager.shared.signInWithGoogle(tokens: tokens)
+//        let user = DBUser(auth: authDataResult)
+//        try await UserManager.shared.createNewUser(user: user)
+//        
+//    }
+//    // func signInApple () async throws {
+//    //    let helper = SignInAppleHelper()
+//    //    let tokens = try await helper.startSignInWithAppleFlow()
+//    //    let user = DBUser(auth: authDataResult)
+//    //    try await UserManager.shared.createNewUser(user: user)
+//        
+//    // }
+//    
+//    func signInAnonymous () async throws {
+//        let authDataResult = try await AuthenticationManager.shared.signInAnonymous()
+//        let user = DBUser(auth: authDataResult)
+//        try await UserManager.shared.createNewUser(user: user)
+//        // try await UserManager.shared.createNewUser(auth: authDataResult)
+//        
+//    }
+//   
+//}
+
+
+// Content from: ../Equipment Booking/Core/Authentication/UserAuthenticationView.swift
+
+//
+//  UserAuthenticationView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/8/24.
+//
+
+import SwiftUI
+import GoogleSignIn
+import GoogleSignInSwift
+import AuthenticationServices // for apple sign in
+
+// apple sign in button using UIKit
+struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
+    
+    let type: ASAuthorizationAppleIDButton.ButtonType
+    let style: ASAuthorizationAppleIDButton.Style
+    
+    func updateUIView(_ uiView: ASAuthorizationAppleIDButton, context: Context) {
+    }
+    
+    
+    func makeUIView(context: Context) -> ASAuthorizationAppleIDButton {
+        ASAuthorizationAppleIDButton(authorizationButtonType: type, authorizationButtonStyle: style)
+        
+    }
+    
+    
+}
+
+struct UserAuthenticationView: View {
+    @StateObject private var viewModel = AuthenticationViewModel()
+    @Binding var showSignInView: Bool
+    @State private var showPassword: Bool = false
+    @State private var showSignUp: Bool = false
+    @State private var showForgotPassword: Bool = false
+    @State private var errorMessage: String? = nil
+    @State private var showInlineSignUp: Bool = false
+
+    var body: some View {
+        VStack(spacing: 20) {
+            // Welcome Message
+            Text("Welcome")
+                .font(.largeTitle)
+                .padding(.vertical, 20)
+            
+            // Sign-in Email Section
+            VStack {
+                // Email Field
+                TextField("Email...", text: $viewModel.email)
+                    .padding()
+                    .background(Color.gray.opacity(0.4))
+                    .cornerRadius(10)
+                    .autocapitalization(.none)
+                
+                // Password Field
+                HStack {
+                    if showPassword {
+                        TextField("Password...", text: $viewModel.password)
+                    } else {
+                        SecureField("Password...", text: $viewModel.password)
+                    }
+                    Button(action: { showPassword.toggle() }) {
+                        Image(systemName: showPassword ? "eye.slash" : "eye")
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.trailing, 10)
+                }
+                .padding()
+                .background(Color.gray.opacity(0.4))
+                .cornerRadius(10)
+                
+                // Error Message with Inline Buttons
+                if let errorMessage = errorMessage {
+                    VStack {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding(.bottom, 5)
+                        if showInlineSignUp {
+                            HStack {
+                                Button("New User? Sign Up") {
+                                    showSignUp = true
+                                }
+                                .foregroundColor(.blue)
+                                
+                                Spacer()
+                                
+                                Button("Forgot Password?") {
+                                    showForgotPassword = true
+                                }
+                                .foregroundColor(.blue)
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Sign In Button
+            Button {
+                Task {
+                    do {
+                        try await viewModel.signIn()
+                        showSignInView = false // Close authentication screen
+                        // Navigate to EquipmentListingView after successful sign-in
+                        DispatchQueue.main.async {
+                            NavigationStack {
+                                EquipmentListingView()
+                            }
+                        }
+                    } catch {
+                        errorMessage = "Sign-in failed. Please try again."
+                    }
+                }
+            } label: {
+                Text("Sign In")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(height: 55)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .cornerRadius(10)
+            }
+
+            
+//            Button {
+//                Task {
+//                    do {
+//                        // Attempt sign-in
+//                        try await viewModel.signIn()
+//                        
+//                        // On success, clear errors and navigate
+//                        errorMessage = nil
+//                        showInlineSignUp = false
+//                        showSignInView = false // Dismiss authentication view
+//                    } catch let error as NSError {
+//                        print("Sign-in error: \(error.domain) - \(error.localizedDescription)") // Debugging log
+//                        
+//                        // Handle specific errors
+//                        if error.domain == "EmailNotRegistered" {
+//                            errorMessage = "Email not registered. Please sign up or try again."
+//                            showInlineSignUp = true
+//                        } else if error.domain == "InvalidPassword" {
+//                            errorMessage = "Incorrect password. Please try again or reset it."
+//                            showInlineSignUp = false
+//                        } else if error.domain == "InvalidCredential" {
+//                            errorMessage = "Invalid credentials. Please check your email and password."
+//                            showInlineSignUp = false
+//                        } else {
+//                            errorMessage = error.localizedDescription
+//                            showInlineSignUp = false
+//                        }
+//                    }
+//                }
+//            } label: {
+//                Text("Sign In")
+//                    .font(.headline)
+//                    .foregroundColor(.white)
+//                    .frame(height: 55)
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.blue)
+//                    .cornerRadius(10)
+//            }
+
+            
+//            Button {
+//                Task {
+//                    do {
+//                        // Attempt sign-in
+//                        try await viewModel.signIn()
+//
+//                        // On success, clear errors and navigate
+//                        errorMessage = nil
+//                        showInlineSignUp = false
+//                        showSignInView = false // Dismiss authentication view
+//                    } catch let error as NSError {
+//                        print("Sign-in error: \(error.domain) - \(error.localizedDescription)") // Debugging log
+//
+//                        // Handle specific errors
+//                        if error.domain == "EmailNotRegistered" {
+//                            errorMessage = "Email not registered. Please sign up or try again."
+//                            showInlineSignUp = true
+//                        } else if error.domain == "InvalidPassword" {
+//                            errorMessage = "Incorrect password. Please try again or reset it."
+//                            showInlineSignUp = false
+//                        } else if error.domain == "InvalidCredential" {
+//                            errorMessage = "The entered email or password is invalid. Please check your credentials."
+//                            showInlineSignUp = false
+//                        } else {
+//                            errorMessage = error.localizedDescription // Show detailed error for debugging
+//                            showInlineSignUp = false
+//                        }
+//                    }
+//                }
+//            } label: {
+//                Text("Sign In")
+//                    .font(.headline)
+//                    .foregroundColor(.white)
+//                    .frame(height: 55)
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.blue)
+//                    .cornerRadius(10)
+//            }
+
+            
+//            Button {
+//                Task {
+//                    do {
+//                        // Attempt sign-in
+//                        try await viewModel.signIn()
+//
+//                        // If successful, navigate to EquipmentListingView
+//                        showSignInView = false
+//                    } catch let error as NSError {
+//                        print("Sign-in error in UI: \(error.domain) - \(error.localizedDescription)")
+//
+//                        if error.domain == "EmailNotRegistered" {
+//                            errorMessage = "Email not registered. Please sign up or try again."
+//                            showInlineSignUp = true
+//                        } else if error.domain == "InvalidPassword" {
+//                            errorMessage = "Incorrect password. Please try again or reset it."
+//                            showInlineSignUp = false
+//                        } else if error.domain == "InvalidCredential" {
+//                            errorMessage = "The entered email or password is invalid. Please check your credentials."
+//                            showInlineSignUp = false
+//                        } else {
+//                            errorMessage = error.localizedDescription
+//                            showInlineSignUp = false
+//                        }
+//                    }
+//                }
+//            } label: {
+//                Text("Sign In")
+//                    .font(.headline)
+//                    .foregroundColor(.white)
+//                    .frame(height: 55)
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.blue)
+//                    .cornerRadius(10)
+//            }
+//
+            
+            // Section Divider
+            HStack {
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 8)
+                
+                Text("or")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 8)
+                
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 8)
+            }
+            .padding(.vertical, 8)
+            
+            // Social Sign-In Buttons
+            VStack(spacing: 10) {
+                // Sign in with Google
+                GoogleSignInButton(viewModel: GoogleSignInButtonViewModel(scheme: .dark, style: .wide, state: .normal)) {
+                    Task {
+                        do {
+                            try await viewModel.signInGoogle()
+                            showSignInView = false // Dismiss authentication view
+                        } catch {
+                            print("Google Sign-In Error: \(error)")
+                        }
+                    }
+                }
+                .frame(height: 55)
+                
+                // Sign in with Apple
+                SignInWithAppleButtonViewRepresentable(type: .default, style: .black)
+                    .frame(height: 55)
+            }
+            
+            // Sign Up Button (below Sign in with Apple)
+            if !showInlineSignUp {
+                Button("Don't have an account? Sign Up") {
+                    showSignUp = true
+                }
+                .foregroundColor(.blue)
+                .padding(.top, 10)
+            }
+            
+            Spacer()
+            
+            // Footer with Home Button and Profile Image
+            HStack {
+                // Home Button
+                NavigationLink(destination: EquipmentListingView()) {
+                    Image(systemName: "house.fill")
+                        .resizable()
+                        .frame(width: 40, height: 40)
+                        .foregroundColor(.gray)
+                }
+
+                Spacer()
+
+                // Profile Image Button
+                NavigationLink(destination: UserProfileView()) {
+                    Image(systemName: "person.crop.circle")
+                        .resizable()
+                        .frame(width: 40, height: 40)
+                        .foregroundColor(.gray)
+                }
+            }
+            .frame(height: 60)
+            .padding(.horizontal)
+        }
+        .padding()
+        .onAppear {
+            // Reset state on appearance
+            errorMessage = nil
+            showInlineSignUp = false
+        }
+        .sheet(isPresented: $showSignUp) {
+            SignUpView()
+        }
+        .sheet(isPresented: $showForgotPassword) {
+            ForgotPasswordView(email: $viewModel.email)
+        }
+    }
+}
+
+//struct UserAuthenticationView: View {
+//    @StateObject private var viewModel = AuthenticationViewModel()
+//    @Binding var showSignInView: Bool
+//    @State private var showPassword: Bool = false
+//    @State private var showSignUp: Bool = false
+//    @State private var showForgotPassword: Bool = false
+//    @State private var errorMessage: String? = nil
+//    @State private var showInlineSignUp: Bool = false
+//
+//    var body: some View {
+//        VStack(spacing: 20) {
+//            // Welcome Message
+//            Text("Welcome")
+//                .font(.largeTitle)
+//                .padding(.vertical, 20)
+//
+//            // Sign-in Email Section
+//            VStack {
+//                // Email Field
+//                TextField("Email...", text: $viewModel.email)
+//                    .padding()
+//                    .background(Color.gray.opacity(0.4))
+//                    .cornerRadius(10)
+//
+//                // Password Field
+//                HStack {
+//                    if showPassword {
+//                        TextField("Password...", text: $viewModel.password)
+//                    } else {
+//                        SecureField("Password...", text: $viewModel.password)
+//                    }
+//                    Button(action: { showPassword.toggle() }) {
+//                        Image(systemName: showPassword ? "eye.slash" : "eye")
+//                            .foregroundColor(.gray)
+//                    }
+//                    .padding(.trailing, 10)
+//                }
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//
+//                // Error Message with Inline Buttons
+//                if let errorMessage = errorMessage {
+//                    VStack {
+//                        Text(errorMessage)
+//                            .foregroundColor(.red)
+//                            .padding(.bottom, 5)
+//                        if showInlineSignUp {
+//                            HStack {
+//                                Button("Sign Up") {
+//                                    showSignUp = true
+//                                }
+//                                .foregroundColor(.blue)
+//
+//                                Button("Forgot Password?") {
+//                                    showForgotPassword = true
+//                                }
+//                                .foregroundColor(.blue)
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//
+//            // Sign In Button
+//            //Include logic to handle the navigation when a user is already signed in:
+//
+//            Button {
+//                Task {
+//                    do {
+//                        // Attempt sign-in
+//                        try await viewModel.signIn()
+//
+//                        // If successful, navigate to EquipmentListingView
+//                        showSignInView = false
+//                    } catch let error as NSError {
+//                        if error.domain == "EmailNotRegistered" {
+//                            errorMessage = "Email not registered. Please sign up or try again."
+//                            showInlineSignUp = true
+//                        } else if error.domain == "InvalidPassword" {
+//                            errorMessage = "Incorrect password. Please try again or reset it."
+//                            showInlineSignUp = false
+//                        } else {
+//                            errorMessage = error.localizedDescription
+//                            showInlineSignUp = false
+//                        }
+//                    }
+//                }
+//            } label: {
+//                Text("Sign In")
+//                    .font(.headline)
+//                    .foregroundColor(.white)
+//                    .frame(height: 55)
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.blue)
+//                    .cornerRadius(10)
+//            }
+//
+////            Button {
+////                Task {
+////                    do {
+////                        // Attempt sign-in
+////                        try await viewModel.signIn()
+////                        
+////                        // On success, clear errors and navigate
+////                        errorMessage = nil
+////                        showInlineSignUp = false
+////                        showSignInView = false // Dismiss authentication view
+////                    } catch {
+////                        // Handle Errors
+////                        if let error = error as NSError? {
+////                            if error.domain == "EmailNotRegistered" {
+////                                errorMessage = "Email not registered. Please sign up or try again."
+////                                showInlineSignUp = true
+////                            } else if error.domain == "InvalidPassword" {
+////                                errorMessage = "Incorrect password. Please try again or reset it."
+////                                showInlineSignUp = false
+////                            } else {
+////                                errorMessage = "An unknown error occurred."
+////                                showInlineSignUp = false
+////                            }
+////                        }
+////                    }
+////                }
+////            } label: {
+////                Text("Sign In")
+////                    .font(.headline)
+////                    .foregroundColor(.white)
+////                    .frame(height: 55)
+////                    .frame(maxWidth: .infinity)
+////                    .background(Color.blue)
+////                    .cornerRadius(10)
+////            }
+//            
+//            // Section Divider
+//            HStack {
+//                Rectangle()
+//                    .frame(height: 1)
+//                    .foregroundColor(.gray)
+//                    .padding(.horizontal, 8)
+//                
+//                Text("or")
+//                    .font(.subheadline)
+//                    .foregroundColor(.gray)
+//                    .padding(.horizontal, 8)
+//                
+//                Rectangle()
+//                    .frame(height: 1)
+//                    .foregroundColor(.gray)
+//                    .padding(.horizontal, 8)
+//            }
+//            .padding(.vertical, 8)
+//            
+//            // Social Sign-In Buttons
+//            VStack(spacing: 10) {
+//                // Sign in with Google
+//                GoogleSignInButton(viewModel: GoogleSignInButtonViewModel(scheme: .dark, style: .wide, state: .normal)) {
+//                    Task {
+//                        do {
+//                            try await viewModel.signInGoogle()
+//                            showSignInView = false // Dismiss authentication view
+//                        } catch {
+//                            print("Google Sign-In Error: \(error)")
+//                        }
+//                    }
+//                }
+//                .frame(height: 55)
+//                
+//                // Sign in with Apple
+//                SignInWithAppleButtonViewRepresentable(type: .default, style: .black)
+//                    .frame(height: 55)
+//            }
+//            
+//            
+//            Spacer()
+//            
+//            // Footer with Home Button and Profile Image
+//            HStack {
+//                // Home Button
+//                NavigationLink(destination: EquipmentListingView()) {
+//                    Image(systemName: "house.fill")
+//                        .resizable()
+//                        .frame(width: 40, height: 40)
+//                        .foregroundColor(.gray)
+//                }
+//
+//                Spacer()
+//
+//                // Profile Image Button
+//                NavigationLink(destination: UserProfileView()) {
+//                    Image(systemName: "person.crop.circle")
+//                        .resizable()
+//                        .frame(width: 40, height: 40)
+//                        .foregroundColor(.gray)
+//                }
+//            }
+//            .frame(height: 60)
+//            .padding(.horizontal)
+//           
+//            
+//        }
+//        .padding()
+//        .onAppear {
+//            // Reset state on appearance
+//            errorMessage = nil
+//            showInlineSignUp = false
+//        }
+//        .sheet(isPresented: $showSignUp) {
+//            SignUpView()
+//        }
+//        .sheet(isPresented: $showForgotPassword) {
+//            ForgotPasswordView(email: $viewModel.email)
+//        }
+//    }
+//}
+
+
+struct UserAuthenticationView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            UserAuthenticationView(showSignInView: .constant(true))
+        }
+    }
+}
+
+
+
+
+
+
+
+// Content from: ../Equipment Booking/Core/Authentication/Subviews/AuthenticationManager.swift
+
+//
+//  AuthenticationManager.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/9/24.
+//
+
+import Foundation
+import FirebaseAuth
+
+struct AuthDataResultModel {
+    let uid: String
+    let email: String?
+    let photoUrl: String?
+    let isAnonymous: Bool
+    
+    // for profile data fetching
+    
+    // let userId : String
+    let dateCreated : Date?
+    let isAdmin : Bool?
+    let firstName : String?
+    let lastName : String?
+    let phone : String?
+    let address : String?
+    let companyName :String?
+    let profession : String?
+    
+    
+    
+    init(user: User) {
+        self.uid = user.uid
+        self.email = user.email
+        self.photoUrl = user.photoURL?.absoluteString
+        self.isAnonymous = user.isAnonymous
+ 
+        
+        //self.userId = user.userId
+        self.dateCreated = user.metadata.creationDate
+        self.isAdmin = nil
+        self.firstName = nil
+        self.lastName = nil
+        self.phone = nil
+        self.address = nil
+        self.companyName = nil
+        self.profession = nil
+        
+    }
+    
+}
+
+enum AuthProvideroption: String {
+    case email = "password"
+    case google = "google.com"
+    case apple = "apple.com"
+}
+
+
+final class AuthenticationManager {
+    static let shared  = AuthenticationManager()
+    private init () {}
+    
+    // Function to get user
+    
+    func getAuthenticatedUser() throws -> AuthDataResultModel {
+        guard let user = Auth.auth().currentUser else {
+            throw URLError(.badServerResponse)
+        }
+        return AuthDataResultModel(user: user)
+    }
+    
+    // Function to get provider service for sign in
+    // allows to select what to show after successful login
+    
+    
+    
+    // Provider function (login method)
+    
+    func getProviders() throws  -> [AuthProvideroption] {
+        guard let providerData = Auth.auth().currentUser?.providerData else {
+            throw URLError(.badServerResponse)
+        }
+        
+        var providers: [AuthProvideroption] = []
+        for provider in providerData {
+            if  let option = AuthProvideroption(rawValue: provider.providerID) {
+                providers.append(option)
+                
+            } else {
+                assertionFailure("Provide option not found: \(provider.providerID)")
+            }
+            //
+        }
+        return providers
+        
+    }
+    
+    
+    //Function to sign out
+    
+    func signOut () throws {
+        try Auth.auth().signOut()
+        
+    }
+    
+}
+
+// MARK: SIGN IN EMAIL
+
+extension AuthenticationManager{
+    // creates a user , not leaving the user logged in.
+    @discardableResult
+    func createUser(email: String, password: String) async throws -> AuthDataResultModel {
+        // Temporarily create a user
+        let authDataResult = try await Auth.auth().createUser(withEmail: email, password: password)
+
+        // Save user details to the database (optional, depends on your app's requirements)
+        let user = AuthDataResultModel(user: authDataResult.user)
+        
+        // Add the user to your Firestore database or wherever you're managing users
+        let userModel = AuthDataResultModel(user: authDataResult.user)
+        try await UserManager.shared.createNewUser(user: DBUser(auth: userModel))
+
+        //try await UserManager.shared.createNewUser(user: DBUser(auth: authDataResult.user))
+                
+        
+        // Immediately sign the user out after creation
+        try await Auth.auth().signOut()
+
+        return user // Return user details without leaving them signed in
+    }
+    
+//    @discardableResult
+//    func createUser(email: String, password: String) async throws -> AuthDataResultModel {
+//        let authDataResult = try await Auth.auth().createUser(withEmail: email, password: password)
+//        return AuthDataResultModel(user: authDataResult.user)
+//    }
+    
+// Sign in user function with security verification
+    @discardableResult
+    func signInUser(email: String, password: String) async throws -> AuthDataResultModel {
+        // Check if email exists in Firebase
+        let methods = try await Auth.auth().fetchSignInMethods(forEmail: email)
+        if methods.isEmpty {
+            // Throw error if email is not registered
+            throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "Email is not registered."])
+        }
+        
+        do {
+            // Attempt password-based login
+            let authDataResult = try await Auth.auth().signIn(withEmail: email, password: password)
+            return AuthDataResultModel(user: authDataResult.user)
+        } catch let error as NSError {
+            // Handle specific Firebase errors
+            switch error.code {
+            case AuthErrorCode.wrongPassword.rawValue:
+                throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "Password is incorrect."])
+            case AuthErrorCode.invalidCredential.rawValue:
+                throw NSError(domain: "InvalidCredential", code: 17004, userInfo: [NSLocalizedDescriptionKey: "Invalid credentials. Please check your email and password."])
+            default:
+                // Re-throw unknown errors
+                throw error
+            }
+        }
+    }
+
+    
+//    @discardableResult
+//        func signInUser(email: String, password: String) async throws -> AuthDataResultModel {
+//            // Check if email exists in Firebase
+//            let methods = try await Auth.auth().fetchSignInMethods(forEmail: email)
+//            if methods.isEmpty {
+//                // Throw error if email is not registered
+//                throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "Email is not registered."])
+//            }
+//            
+//            do {
+//                // Attempt password-based login
+//                let authDataResult = try await Auth.auth().signIn(withEmail: email, password: password)
+//                return AuthDataResultModel(user: authDataResult.user)
+//            } catch {
+//                // Handle incorrect password
+//                throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "Password is incorrect."])
+//            }
+//        }
+    
+//    @discardableResult
+//    func signInUser (email: String, password: String) async throws -> AuthDataResultModel {
+//        let authDataResult = try await Auth.auth().signIn(withEmail: email, password: password)
+//        return AuthDataResultModel(user: authDataResult.user)
+//        
+//    }
+    //Function to reser password
+    func resetPassword (email: String) async throws {
+        try await Auth.auth().sendPasswordReset(withEmail: email)
+    }
+    
+    //Function to update password
+    func updatePassword (password: String) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw URLError (.badServerResponse)
+        }
+        try await user.updatePassword(to: password)
+    }
+    
+    //Function to update email
+    func updateEmail (email: String) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw URLError (.badServerResponse)
+        }
+        // try await user.updateEmail(to: email) //deprecated function
+        try await user.sendEmailVerification(beforeUpdatingEmail: email)
+    }
+    
+}
+
+// MARK: SIGN IN SSO
+
+extension AuthenticationManager{
+    
+    @discardableResult
+    // function to sign in with google using auth credentials
+    func signInWithGoogle(tokens: GoogleSignInResultModel) async throws -> AuthDataResultModel {
+        let credential = GoogleAuthProvider.credential(withIDToken: tokens.idToken, accessToken: tokens.accessToken)
+        return try await signIn(credential: credential)
+        
+    }
+    
+    func signIn(credential: AuthCredential) async throws -> AuthDataResultModel {
+        let authDataResult = try await Auth.auth().signIn(with: credential)
+        return AuthDataResultModel(user: authDataResult.user)
+        
+    }
+
+}
+
+// MARK: SIGN IN ANONYMOUSLY
+
+extension AuthenticationManager{
+    @discardableResult
+    func signInAnonymous() async throws -> AuthDataResultModel {
+        let authDataResult = try await Auth.auth().signInAnonymously()
+        return AuthDataResultModel(user: authDataResult.user)
+    }
+    
+    
+    // Functions to link anonymously signed in user id with already signed in credentials (email/Password, google, apple accounts)
+    func linkEmail(email: String, password: String) async throws -> AuthDataResultModel {
+        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+        
+        return try await linkCredential(credential: credential)
+    }
+    
+    func linkGoogle(tokens: GoogleSignInResultModel) async throws -> AuthDataResultModel {
+        let credential = GoogleAuthProvider.credential(withIDToken: tokens.idToken, accessToken: tokens.accessToken)
+        
+        return try await linkCredential(credential: credential)
+    }
+
+/*
+    func linkApple(tokens: SignInWithAppleResult) async throws -> AuthDataResultModel {
+        let credential = OAuthProvider.credential(withProviderID: AuthProvideroption.apple.rawValue, idToken: tokens.token, rawNonce: tokens.nonce)
+        
+        return try await linkCredential(credential: credential)
+    }
+*/
+    
+    private func linkCredential(credential: AuthCredential) async throws -> AuthDataResultModel {
+        guard let user = Auth.auth().currentUser else {
+            throw URLError(.badURL)
+        }
+        
+        let authDataResult = try await user.link(with: credential)
+        return AuthDataResultModel(user: authDataResult.user)
+    }
+    
+    
+}
+    
+
+
+
+
+// Content from: ../Equipment Booking/Core/Authentication/Subviews/ForgotPasswordView.swift
+
+//
+//  ForgotPasswordView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 1/19/25.
+//
+
+import SwiftUI
+
+struct ForgotPasswordView: View {
+    @Binding var email: String
+    @State private var errorMessage: String?
+    @State private var isSuccess = false
+
+    var body: some View {
+        VStack {
+            Text("Reset Your Password")
+                .font(.title2)
+                .padding()
+
+            TextField("Email...", text: $email)
+                .padding()
+                .background(Color.gray.opacity(0.4))
+                .cornerRadius(10)
+
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .padding()
+            }
+
+            Button("Send Reset Link") {
+                Task {
+                    do {
+                        try await AuthenticationManager.shared.resetPassword(email: email)
+                        isSuccess = true
+                    } catch {
+                        errorMessage = "Failed to send reset link. Please try again."
+                    }
+                }
+            }
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+
+            if isSuccess {
+                Text("Reset link sent! Check your email.")
+                    .foregroundColor(.green)
+                    .padding()
+            }
+        }
+        .padding()
+    }
+
+    // Fix the initializer to explicitly take a `Binding<String>`
+    public init(email: Binding<String>) {
+        self._email = email
+    }
+}
+
+#Preview {
+    // Pass a mock binding for the `email` variable in preview
+    ForgotPasswordView(email: .constant("test@testing.com"))
+}
+
+
+
+// Content from: ../Equipment Booking/Core/Authentication/Subviews/SignInGoogleHelper.swift
+
+//
+//  SignInGoogleHelper.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/28/24.
+//
+
+import Foundation
+import GoogleSignIn
+import GoogleSignInSwift
+
+struct GoogleSignInResultModel {
+    let idToken: String
+    let accessToken: String
+    let name: String?
+    let email: String?
+    
+    
+}
+
+final class SignInGoogleHelper {
+    @MainActor
+    
+    func signIn() async throws -> GoogleSignInResultModel {
+        guard let topVC = Utilities.shared.topViewController() else {
+            throw URLError(.cannotFindHost)
+        }
+        let gidSignInresult = try await GIDSignIn.sharedInstance.signIn(withPresenting: topVC)
+        
+        guard let idToken = gidSignInresult.user.idToken?.tokenString else {
+            throw URLError(.badServerResponse)
+        }
+                
+        let accessToken: String = gidSignInresult.user.accessToken.tokenString
+        let name = gidSignInresult.user.profile?.name
+        let email = gidSignInresult.user.profile?.email
+        
+        let tokens = GoogleSignInResultModel(idToken: idToken, accessToken: accessToken, name: name, email: email)
+        
+        return tokens
+    }
+}
+
+
+// Content from: ../Equipment Booking/Core/Authentication/Subviews/SignUpView.swift
+
+//
+//  SignUpView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 1/12/25.
+//
+
+import SwiftUI
+
+struct SignUpView: View {
+    @State private var email: String = ""
+    @State private var password: String = ""
+    @State private var confirmPassword: String = ""
+    @State private var showPassword: Bool = false
+    @State private var showConfirmPassword: Bool = false
+    @State private var errorMessage: String?
+    @State private var showSuccessAlert: Bool = false
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @Environment(\.presentationMode) var presentationMode
+
+    var body: some View {
+        VStack {
+            // Email TextField
+            TextField("Email", text: $email)
+                .padding()
+                .background(Color.gray.opacity(0.4))
+                .cornerRadius(10)
+                .autocapitalization(.none)
+
+            // Password TextField with toggle
+            HStack {
+                if showPassword {
+                    TextField("Password", text: $password)
+                } else {
+                    SecureField("Password", text: $password)
+                }
+                Button(action: { showPassword.toggle() }) {
+                    Image(systemName: showPassword ? "eye.slash" : "eye")
+                        .foregroundColor(.gray)
+                }
+                .padding(.trailing, 10)
+            }
+            .padding()
+            .background(Color.gray.opacity(0.4))
+            .cornerRadius(10)
+
+            // Confirm Password TextField with toggle
+            HStack {
+                if showConfirmPassword {
+                    TextField("Confirm Password", text: $confirmPassword)
+                } else {
+                    SecureField("Confirm Password", text: $confirmPassword)
+                }
+                Button(action: { showConfirmPassword.toggle() }) {
+                    Image(systemName: showConfirmPassword ? "eye.slash" : "eye")
+                        .foregroundColor(.gray)
+                }
+                .padding(.trailing, 10)
+            }
+            .padding()
+            .background(Color.gray.opacity(0.4))
+            .cornerRadius(10)
+
+            // Error Message Display
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .padding()
+            }
+
+            // Sign Up Button
+            Button(action: handleSignUp) {
+                Text("Sign Up")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(height: 55)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .cornerRadius(10)
+            }
+
+            Spacer()
+        }
+        .padding()
+        .navigationTitle("Sign Up")
+        .alert("Registration Successful!", isPresented: $showSuccessAlert) {
+            Button("OK") {
+                authViewModel.isAuthenticated = true // Trigger navigation to `EquipmentListingView`
+            }
+        } message: {
+            Text("You have successfully signed up and are now logged in.")
+        }
+    }
+
+    private func handleSignUp() {
+        guard password == confirmPassword else {
+            errorMessage = "Passwords do not match."
+            return
+        }
+
+        Task {
+            do {
+                try await authViewModel.signUpAndLogin(email: email, password: password)
+                errorMessage = nil
+                showSuccessAlert = true // Display the alert
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+}
+
+
+
+//struct SignUpView: View {
+//    @State private var email: String = ""
+//    @State private var password: String = ""
+//    @State private var confirmPassword: String = ""
+//    @State private var errorMessage: String?
+//    @State private var showSuccessAlert: Bool = false
+//    @EnvironmentObject var authViewModel: AuthenticationViewModel  // ✅ Use shared auth state
+//
+//    var body: some View {
+//        VStack {
+//            TextField("Email", text: $email)
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//                .autocapitalization(.none)
+//
+//            SecureField("Password", text: $password)
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//
+//            SecureField("Confirm Password", text: $confirmPassword)
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//
+//            if let errorMessage = errorMessage {
+//                Text(errorMessage)
+//                    .foregroundColor(.red)
+//                    .padding()
+//            }
+//
+//            Button(action: signUp) {
+//                Text("Sign Up")
+//                    .font(.headline)
+//                    .foregroundColor(.white)
+//                    .frame(height: 55)
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.blue)
+//                    .cornerRadius(10)
+//            }
+//
+//            Spacer()
+//        }
+//        .padding()
+//        .navigationTitle("Sign Up")
+//        .alert("Registration Successful!", isPresented: $showSuccessAlert) {
+//            Button("OK") {
+//                authViewModel.isAuthenticated = true  // ✅ Update authentication state
+//            }
+//        } message: {
+//            Text("You have successfully signed up and are now logged in.")
+//        }
+//    }
+//
+//    private func signUp() {
+//        guard password == confirmPassword else {
+//            errorMessage = "Passwords do not match"
+//            return
+//        }
+//
+//        Task {
+//            do {
+//                try await authViewModel.signUpAndLogin(email: email, password: password)
+//                errorMessage = nil
+//                showSuccessAlert = true
+//            } catch {
+//                errorMessage = error.localizedDescription
+//            }
+//        }
+//    }
+//}
+//
+
+//struct SignUpView: View {
+//    @State private var email: String = ""
+//    @State private var password: String = ""
+//    @State private var confirmPassword: String = ""
+//    @State private var errorMessage: String?
+//    @State private var showSuccessAlert: Bool = false
+//    @Environment(\.presentationMode) var presentationMode
+//
+//    var body: some View {
+//        VStack {
+//            TextField("Email", text: $email)
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//                .autocapitalization(.none)
+//
+//            SecureField("Password", text: $password)
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//
+//            SecureField("Confirm Password", text: $confirmPassword)
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//
+//            if let errorMessage = errorMessage {
+//                Text(errorMessage)
+//                    .foregroundColor(.red)
+//                    .padding()
+//            }
+//
+//            Button(action: signUp) {
+//                Text("Sign Up")
+//                    .font(.headline)
+//                    .foregroundColor(.white)
+//                    .frame(height: 55)
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.blue)
+//                    .cornerRadius(10)
+//            }
+//
+//            Spacer()
+//        }
+//        .padding()
+//        .navigationTitle("Sign Up")
+//        .alert("Registration Successful!", isPresented: $showSuccessAlert) {
+//            Button("OK") {
+//                // Navigate to EquipmentListingView after dismissing the alert
+//                DispatchQueue.main.async {
+//                    presentationMode.wrappedValue.dismiss()
+//                    RootView().checkAuthenticationStatus()
+//                }
+//            }
+//        } message: {
+//            Text("You have successfully signed up and are now logged in.")
+//        }
+//    }
+//
+//    private func signUp() {
+//        guard password == confirmPassword else {
+//            errorMessage = "Passwords do not match"
+//            return
+//        }
+//
+//        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+//            if let error = error {
+//                errorMessage = error.localizedDescription
+//            } else if let user = authResult?.user {
+//                saveUserToFirestore(user)
+//                errorMessage = nil
+//                showSuccessAlert = true // Show alert upon successful sign-up
+//            }
+//        }
+//    }
+//
+//    private func saveUserToFirestore(_ user: User) {
+//        let db = Firestore.firestore()
+//        let userRef = db.collection("users").document(user.uid)
+//
+//        let userData: [String: Any] = [
+//            "email": user.email ?? "",
+//            "created_at": Timestamp(date: Date())
+//        ]
+//
+//        userRef.setData(userData) { error in
+//            if let error = error {
+//                print("Error saving user to Firestore: \(error.localizedDescription)")
+//            } else {
+//                print("User successfully added to Firestore")
+//            }
+//        }
+//    }
+//}
+
+
+//
+//struct SignUpView: View {
+//    @State private var email: String = ""
+//    @State private var password: String = ""
+//    @State private var confirmPassword: String = ""
+//    @State private var errorMessage: String?
+//    @State private var isSignUpSuccessful: Bool = false
+//    @State private var showPassword: Bool = false // Toggle for password visibility
+//    @State private var showConfirmPassword: Bool = false // Toggle for confirm password visibility
+//    @Environment(\.presentationMode) var presentationMode // For navigating back
+//
+//    var body: some View {
+//        NavigationView {
+//            VStack {
+//                TextField("Email", text: $email)
+//                    .padding()
+//                    .background(Color.gray.opacity(0.4))
+//                    .cornerRadius(10)
+//                    .keyboardType(.emailAddress)
+//                    .autocapitalization(.none)
+//
+//                // Password Field with Toggle
+//                HStack {
+//                    if showPassword {
+//                        TextField("Password", text: $password)
+//                    } else {
+//                        SecureField("Password", text: $password)
+//                    }
+//                    Button(action: { showPassword.toggle() }) {
+//                        Image(systemName: showPassword ? "eye.slash" : "eye")
+//                            .foregroundColor(.gray)
+//                    }
+//                    .padding(.trailing, 10)
+//                }
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//
+//                // Confirm Password Field with Toggle
+//                HStack {
+//                    if showConfirmPassword {
+//                        TextField("Confirm Password", text: $confirmPassword)
+//                    } else {
+//                        SecureField("Confirm Password", text: $confirmPassword)
+//                    }
+//                    Button(action: { showConfirmPassword.toggle() }) {
+//                        Image(systemName: showConfirmPassword ? "eye.slash" : "eye")
+//                            .foregroundColor(.gray)
+//                    }
+//                    .padding(.trailing, 10)
+//                }
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//
+//                if let errorMessage = errorMessage {
+//                    Text(errorMessage)
+//                        .foregroundColor(.red)
+//                        .padding()
+//                }
+//
+//                Button(action: signUp) {
+//                    Text("Sign Up")
+//                        .padding()
+//                        .frame(maxWidth: .infinity)
+//                        .background(Color.blue)
+//                        .foregroundColor(.white)
+//                        .cornerRadius(10)
+//                }
+//                .padding(.top, 10)
+//
+//                Spacer()
+//            }
+//            .padding()
+//            .navigationBarTitle("Sign Up", displayMode: .inline)
+//            .navigationBarItems(leading: Button(action: {
+//                presentationMode.wrappedValue.dismiss()
+//            }) {
+//                Image(systemName: "chevron.left")
+//                    .foregroundColor(.blue)
+//            })
+//            
+//            .alert("Success", isPresented: $isSignUpSuccessful) {
+//                Button("OK") {
+//                    presentationMode.wrappedValue.dismiss() // Navigate back to login
+//                }
+//            } message: {
+//                Text("Your account has been created successfully! You have been signed out.")
+//            }
+//
+////            .alert("Success", isPresented: $isSignUpSuccessful) {
+////                Button("OK") {
+////                    presentationMode.wrappedValue.dismiss() // Navigate back
+////                }
+////            } message: {
+////                Text("Your account has been created successfully!")
+////            }
+//        }
+//    }
+//    //
+////    updated signUp function that retains the check to verify if the user's email already exists in Firebase before proceeding with sign-up, while also ensuring the user is signed out after account creation.
+//    
+//    
+//    private func signUp() {
+//        guard password == confirmPassword else {
+//            errorMessage = "Passwords do not match"
+//            return
+//        }
+//
+//        // Check if email already exists before creating the user
+//        Auth.auth().fetchSignInMethods(forEmail: email) { signInMethods, error in
+//            if let error = error {
+//                errorMessage = "Error checking email: \(error.localizedDescription)"
+//                return
+//            }
+//
+//            if let signInMethods = signInMethods, !signInMethods.isEmpty {
+//                errorMessage = "This email is already in use. Please use a different one."
+//            } else {
+//                // Proceed with user creation
+//                Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+//                    if let error = error {
+//                        errorMessage = error.localizedDescription
+//                    } else if let user = authResult?.user {
+//                        // Success: Save user details to Firestore
+//                        saveUserToFirestore(user)
+//                        errorMessage = nil
+//                        isSignUpSuccessful = true // Show success message
+//                    }
+////                    else {
+////                        errorMessage = nil
+////                        isSignUpSuccessful = true // Show success message
+////                    }
+//                }
+//            }
+//        }
+//    }
+//    
+//    
+////    private func signUp() {
+////        guard password == confirmPassword else {
+////            errorMessage = "Passwords do not match"
+////            return
+////        }
+////
+////        // Check if email already exists before creating the user
+////        Auth.auth().fetchSignInMethods(forEmail: email) { signInMethods, error in
+////            if let error = error {
+////                errorMessage = "Error checking email: \(error.localizedDescription)"
+////                return
+////            }
+////
+////            if let signInMethods = signInMethods, !signInMethods.isEmpty {
+////                errorMessage = "This email is already in use. Please use a different one."
+////            } else {
+////                // Proceed with user creation
+////                Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+////                    if let error = error {
+////                        errorMessage = error.localizedDescription
+////                    } else if let user = authResult?.user {
+////                        // Success: Save user details to Firestore
+////                        saveUserToFirestore(user)
+////                    }
+////                }
+////            }
+////        }
+////    }
+//    
+////
+////    private func signUp() {
+////        guard password == confirmPassword else {
+////            errorMessage = "Passwords do not match"
+////            return
+////        }
+////
+////        // Check if email already exists before creating the user
+////        Auth.auth().fetchSignInMethods(forEmail: email) { signInMethods, error in
+////            if let error = error {
+////                errorMessage = "Error checking email: \(error.localizedDescription)"
+////                return
+////            }
+////
+////            if let signInMethods = signInMethods, !signInMethods.isEmpty {
+////                errorMessage = "This email is already in use. Please use a different one."
+////            } else {
+////                // Proceed with user creation
+////                Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+////                    if let error = error {
+////                        errorMessage = error.localizedDescription
+////                    } else {
+////                        errorMessage = nil
+////                        isSignUpSuccessful = true // Show success message
+////                        
+////                        // Delay before signing out to allow Firebase to register the user
+////                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+////                            do {
+////                                try Auth.auth().signOut()
+////                            } catch let signOutError {
+////                                print("Error signing out: \(signOutError.localizedDescription)")
+////                            }
+////                        }
+////                    }
+////                }
+////            }
+////        }
+////    }
+//
+//    
+////    private func signUp() {
+////        guard password == confirmPassword else {
+////            errorMessage = "Passwords do not match"
+////            return
+////        }
+////
+////        // Check if email already exists before creating the user
+////        Auth.auth().fetchSignInMethods(forEmail: email) { signInMethods, error in
+////            if let error = error {
+////                errorMessage = "Error checking email: \(error.localizedDescription)"
+////                return
+////            }
+////
+////            if let signInMethods = signInMethods, !signInMethods.isEmpty {
+////                errorMessage = "This email is already in use. Please use a different one."
+////            } else {
+////                // Proceed with user creation
+////                Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+////                    if let error = error {
+////                        errorMessage = error.localizedDescription
+////                    } else {
+////                        errorMessage = nil
+////                        isSignUpSuccessful = true // Show success message
+////                        
+////                        // Sign out the user after successful sign-up
+////                        do {
+////                            try Auth.auth().signOut()
+////                        } catch let signOutError {
+////                            print("Error signing out: \(signOutError.localizedDescription)")
+////                        }
+////                    }
+////                }
+////            }
+////        }
+////    }
+//
+//
+////    private func signUp() {
+////        guard password == confirmPassword else {
+////            errorMessage = "Passwords do not match"
+////            return
+////        }
+////
+////        // Check if email already exists before creating the user
+////        Auth.auth().fetchSignInMethods(forEmail: email) { signInMethods, error in
+////            if let error = error {
+////                errorMessage = "Error checking email: \(error.localizedDescription)"
+////                return
+////            }
+////
+////            if let signInMethods = signInMethods, !signInMethods.isEmpty {
+////                errorMessage = "This email is already in use. Please use a different one."
+////            } else {
+////                Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+////                    if let error = error {
+////                        errorMessage = error.localizedDescription
+////                    } else {
+////                        errorMessage = nil
+////                        isSignUpSuccessful = true // Show success message
+////                    }
+////                }
+////            }
+////        }
+////    }
+//    
+//    private func saveUserToFirestore(_ user: User) {
+//        let db = Firestore.firestore()
+//        let userRef = db.collection("users").document(user.uid) // Use user ID as document ID
+//        
+//        let userData: [String: Any] = [
+//            "doc_id": user.uid,         // Store user ID in 'doc_id' field
+//            "email": user.email ?? "",
+//            "isAnonymous": user.isAnonymous,
+//            "created_at": Timestamp(date: Date()), // Store the creation timestamp
+//            "lastname": "",               // Default empty string
+//            "firstname": "",              // Default empty string
+//            "is_admin": false,            // Default false
+//            "img_url": ""                 // Default empty string for profile image
+//        ]
+//        
+//        userRef.setData(userData) { error in
+//            if let error = error {
+//                print("Error saving user to Firestore: \(error.localizedDescription)")
+//            } else {
+//                print("User successfully added to Firestore with default values")
+//            }
+//        }
+//    }
+//
+//}
+//
+//struct SignUpView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        SignUpView()
+//    }
+//}
+
+
+
+
+//import SwiftUI
+//import FirebaseAuth
+//
+//struct SignUpView: View {
+//    @State private var email: String = ""
+//    @State private var password: String = ""
+//    @State private var confirmPassword: String = ""
+//    @State private var errorMessage: String?
+//    @Environment(\.presentationMode) var presentationMode // Add this line
+//
+//    var body: some View {
+//        NavigationView { // Wrap in NavigationView
+//            VStack {
+//                TextField("Email", text: $email)
+//                    .padding()
+//                    .background(Color.gray.opacity(0.4))
+//                    .cornerRadius(10)
+//                    .keyboardType(.emailAddress)
+//                    .autocapitalization(.none)
+//
+//                SecureField("Password", text: $password)
+//                    .padding()
+//                    .background(Color.gray.opacity(0.4))
+//                    .cornerRadius(10)
+//
+//                SecureField("Confirm Password", text: $confirmPassword)
+//                    .padding()
+//                    .background(Color.gray.opacity(0.4))
+//                    .cornerRadius(10)
+//
+//                if let errorMessage = errorMessage {
+//                    Text(errorMessage)
+//                        .foregroundColor(.red)
+//                        .padding()
+//                }
+//
+//                Button(action: signUp) {
+//                    Text("Sign Up")
+//                        .padding()
+//                        .background(Color.blue)
+//                        .foregroundColor(.white)
+//                        .cornerRadius(10)
+//                }
+//                Spacer()
+//                .padding(.top, 20)
+//            }
+//                    
+//            .padding()
+//            .navigationBarTitle("Sign Up", displayMode: .inline) // Add title
+//            .navigationBarItems(leading: Button(action: {
+//                presentationMode.wrappedValue.dismiss() // Add this line
+//            }) {
+//                Image(systemName: "chevron.left")
+//                    .foregroundColor(.blue)
+//            })
+//        }
+//    }
+//
+//    private func signUp() {
+//        guard password == confirmPassword else {
+//            errorMessage = "Passwords do not match"
+//            return
+//        }
+//
+//        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+//            if let error = error {
+//                errorMessage = error.localizedDescription
+//            } else {
+//                // Handle successful sign up
+//                errorMessage = nil
+//            }
+//        }
+//    }
+//}
+//
+//struct SignUpView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        SignUpView()
+//    }
+//}
+
+
+// Content from: ../Equipment Booking/Core/Authentication/Subviews/UserSignInEmailView.swift
+
+//
+//  UserSignInEmailView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/9/24.
+//
+
+import SwiftUI
+
+struct UserSignInEmailView: View {
+    @StateObject private var viewModel = SignInEmailViewModel()
+    @Binding var showSignInView: Bool
+    @Binding var showPassword: Bool
+    @State private var errorMessage: String? // For error display
+    @State private var showSignUp = false
+    @State private var showForgotPassword = false
+
+    var body: some View {
+        VStack {
+            // Email Field
+            TextField("Email...", text: $viewModel.email)
+                .padding()
+                .background(Color.gray.opacity(0.4))
+                .cornerRadius(10)
+
+            // Password Field
+            HStack {
+                if showPassword {
+                    TextField("Password...", text: $viewModel.password)
+                } else {
+                    SecureField("Password...", text: $viewModel.password)
+                }
+                Button(action: { showPassword.toggle() }) {
+                    Image(systemName: showPassword ? "eye.slash" : "eye")
+                        .foregroundColor(.gray)
+                }
+                .padding(.trailing, 10)
+            }
+            .padding()
+            .background(Color.gray.opacity(0.4))
+            .cornerRadius(10)
+
+            // Error Message Display
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .padding()
+            }
+
+            // Sign In Button
+            Button {
+                Task {
+                    do {
+                        try await viewModel.signIn()
+                        showSignInView = false
+                    } catch {
+                        // Handle Errors
+                        if let error = error as NSError? {
+                            if error.domain == "EmailNotRegistered" {
+                                errorMessage = "Email not registered. Please sign up or try again."
+                            } else if error.domain == "InvalidPassword" {
+                                errorMessage = "Incorrect password. Please try again or reset it."
+                            } else {
+                                errorMessage = "An unknown error occurred."
+                            }
+                        }
+                    }
+                }
+            } label: {
+                Text("Sign In")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(height: 55)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .cornerRadius(10)
+            }
+
+            // Options for Recovery
+            HStack {
+                Button("Sign Up") {
+                    showSignUp = true
+                }
+                .foregroundColor(.blue)
+                .padding()
+
+                Button("Forgot Password") {
+                    showForgotPassword = true
+                }
+                .foregroundColor(.blue)
+                .padding()
+            }
+        }
+        .padding()
+        .sheet(isPresented: $showSignUp) {
+            SignUpView()
+        }
+        .sheet(isPresented: $showForgotPassword) {
+            ForgotPasswordView(email: $viewModel.email) // Pass the binding properly
+        }
+
+    }
+}
+
+struct UserSignInEmailView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            UserSignInEmailView(showSignInView: .constant(false), showPassword: .constant(false))
+        }
+    }
+}
+
+
+
+//import SwiftUI
+//
+//struct UserSignInEmailView: View {
+//    @StateObject private var viewModel = SignInEmailViewModel()
+//    @Binding var showSignInView: Bool
+//    @Binding var showPassword: Bool // Password visibility toggle
+//
+//    var body: some View {
+//        VStack {
+//            // Email TextField
+//            TextField("Email...", text: $viewModel.email)
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//
+//            // Password SecureField with Toggle
+//            HStack {
+//                if showPassword {
+//                    TextField("Password...", text: $viewModel.password)
+//                } else {
+//                    SecureField("Password...", text: $viewModel.password)
+//                }
+//                Button(action: { showPassword.toggle() }) {
+//                    Image(systemName: showPassword ? "eye.slash" : "eye")
+//                        .foregroundColor(.gray)
+//                }
+//                .padding(.trailing, 10)
+//            }
+//            .padding()
+//            .background(Color.gray.opacity(0.4))
+//            .cornerRadius(10)
+//
+//            // Sign In button
+//            Button {
+//                Task {
+//                    do {
+//                        try await viewModel.signIn()
+//                        showSignInView = false
+//                    } catch {
+//                        print(error)
+//                    }
+//                }
+//            } label: {
+//                Text("Sign In")
+//                    .font(.headline)
+//                    .foregroundColor(.white)
+//                    .frame(height: 55)
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.blue)
+//                    .cornerRadius(10)
+//            }
+//        }
+//        .padding()
+//    }
+//}
+//
+//struct UserSignInEmailView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            UserSignInEmailView(showSignInView: .constant(false), showPassword: .constant(false))
+//        }
+//    }
+//}
+
+
+//import SwiftUI
+//
+//
+//struct UserSignInEmailView: View {
+//    
+//    @StateObject private var viewModel = SignInEmailViewModel()
+//    @Binding var showSignInView: Bool
+//    
+//    var body: some View {
+//        
+//        VStack{
+//            // Email TextField
+//            TextField("Email...", text: $viewModel.email)
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//            
+//            //Passoword SecureField
+//            SecureField("Password...", text: $viewModel.password)
+//                .padding()
+//                .background(Color.gray.opacity(0.4))
+//                .cornerRadius(10)
+//            
+//            // Forgot Password Navigation Link
+//            NavigationLink(destination: Text("Forgot Password View")){
+//                Text("Forgot Password")
+//                    .font(.footnote)
+//                    .foregroundColor(.blue)
+//                                             
+//                                             }
+//           //Sign In button
+//            Button{
+//                Task{
+//                    do{
+//                        try await viewModel.signUp()
+//                        showSignInView = false
+//                        return //if user exists
+//                    } catch{
+//                        print(error)
+//                        
+//                    }
+//                    
+//                    
+//                    do{
+//                        try await viewModel.signIn()
+//                        showSignInView = false
+//                        return
+//                    } catch{
+//                        print(error)
+//                        
+//                    }
+//                    
+//                }
+//                
+//            }label: {
+//                Text("Sign In")
+//                    .font(.headline)
+//                    .foregroundColor(.white)
+//                    .frame(height: 55)
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.blue)
+//                    .cornerRadius(10)
+//            }
+//            // Spacer()
+//            
+//            
+//            
+//        }
+//        .padding()
+////        .navigationTitle("Sign In With Email")
+//    }
+//}
+//
+//
+//
+//struct SignInEmailViewModel_Previews: PreviewProvider {
+//    static var previews: some View {
+//        if #available(iOS 16.0, *) {
+//            NavigationStack{
+//                UserSignInEmailView(showSignInView: .constant(false))
+//            }
+//        } else {
+//            // Fallback on earlier versions
+//        }
+//    }
+//}
+
+
+// Content from: ../Equipment Booking/Core/Authentication/Subviews/UserSignInEmailViewModel.swift
+
+//
+//  UserSignInEmailViewModel.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/29/24.
+//
+
+import Foundation
+
+@MainActor
+
+final class SignInEmailViewModel: ObservableObject {
+    @Published var  email = ""
+    @Published var  password = ""
+    
+    // User signup function
+    
+    func signUp() async throws {
+        guard !email.isEmpty, !password.isEmpty else {
+            print("No email or password found!")
+            return
+        }
+        
+        let authDataResult = try await AuthenticationManager.shared.createUser(email: email, password: password)
+        let user = DBUser(auth: authDataResult)
+        try await UserManager.shared.createNewUser(user: user)
+        
+    }
+    
+    func signIn() async throws {
+        guard !email.isEmpty, !password.isEmpty else {
+            print("No email or password found!")
+            return
+        }
+        
+        try await AuthenticationManager.shared.signInUser(email: email, password: password)
+        
+    }
+    
+}
+
+
+// Content from: ../Equipment Booking/Core/Equipments/EquipmentListingView.swift
+
+//
+//  EquipmentListingView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 1/6/25.
+//
+
+import SwiftUI
+import Firebase
+import FirebaseFirestore
+
+//@MainActor
+//final class EquipmentsViewModel: ObservableObject {
+//
+//    @Published private(set) var equipments: [Equipment] = []
+//
+//    func getAllEquipments() async throws {
+//        self.equipments = try await EquipmentManager.shared.getAllEquipments()
+//    }
+//}
+
+struct EquipmentListingView: View {
+    @StateObject private var viewModel = EquipmentListingViewModel()
+    @State private var searchText: String = ""
+    @State private var selectedCategory: String = "All"
+    @State private var showUserProfile: Bool = false // State to navigate to UserProfileView
+    
+    
+    // Filtered Equipment List
+    var filteredEquipments: [Equipment] {
+        viewModel.equipments.filter { equipment in
+            (selectedCategory == "All" || equipment.equipment_main_category == selectedCategory) &&
+            (searchText.isEmpty || equipment.equipment_name?.localizedCaseInsensitiveContains(searchText) == true)
+        }
+    }
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                // Search and Filter
+                HStack {
+                    TextField("Search equipment...", text: $searchText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding(.horizontal)
+                    
+                    Menu {
+                        Button("All", action: { selectedCategory = "All" })
+                        Button("Construction Cranes", action: { selectedCategory = "Construction Cranes" })
+                        Button("Power Tools", action: { selectedCategory = "Power Tools" })
+                    } label: {
+                        HStack {
+                            Text(selectedCategory)
+                                .font(.subheadline)
+                                .foregroundColor(.blue)
+                            Image(systemName: "arrowtriangle.down.fill")
+                                .font(.caption)
+                                .foregroundColor(.blue)
+                        }
+                        .padding(.trailing)
+                    }
+                }
+                .padding(.top)
+                
+                // Equipment List
+                List {
+                    ForEach(filteredEquipments) { equipment in
+                        HStack(alignment: .top) {
+                            // Equipment Image
+                            AsyncImage(url: URL(string: equipment.img_url ?? "")) { image in
+                                image.resizable()
+                                    .scaledToFit()
+                                    .frame(width: 100, height: 100)
+                                    .cornerRadius(10)
+                            } placeholder: {
+                                ProgressView()
+                            }
+                            .shadow(radius: 10)
+                            
+                            // Equipment Details
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(equipment.equipment_name ?? "n/a")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                Text(equipment.description ?? "No description available")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                if equipment.availability_status == "available" {
+                                    Button(action: {
+                                        addToCart(equipment: equipment)
+                                    }) {
+                                        Text("Add to Cart")
+                                            .font(.caption)
+                                            .foregroundColor(.blue)
+                                            .padding(5)
+                                            .background(Color.gray.opacity(0.2))
+                                            .cornerRadius(5)
+                                    }
+                                } else if equipment.availability_status == "rented" {
+                                    Text("Expected Return: yyyy-mm-dd")
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        }
+                    }
+                }
+                .listStyle(InsetGroupedListStyle())
+            }
+            .navigationTitle("Equipment List")
+            .toolbar {
+                // Profile Button
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: UserProfileView()) {
+                        Image(systemName: "person.circle")
+                            .font(.title2)
+                    }
+                }
+            }
+            .task {
+                try? await viewModel.fetchEquipments()
+            }
+        }
+        
+        
+    }
+    
+    
+    // Old equipListingView
+    
+    //    var body: some View {
+    //
+    //
+    //        NavigationView {
+    //            VStack {
+    //                // Search and Filter
+    //                HStack {
+    //                    TextField("Search equipment...", text: $searchText)
+    //                        .textFieldStyle(RoundedBorderTextFieldStyle())
+    //                        .padding(.horizontal)
+    //
+    //                    Menu {
+    //                        Button("All", action: { selectedCategory = "All" })
+    //                        Button("Construction Cranes", action: { selectedCategory = "Construction Cranes" })
+    //                        Button("Power Tools", action: { selectedCategory = "Power Tools" })
+    //                        // Add other categories here
+    //                    } label: {
+    //                        HStack {
+    //                            Text(selectedCategory)
+    //                                .font(.subheadline)
+    //                                .foregroundColor(.blue)
+    //                            Image(systemName: "arrowtriangle.down.fill")
+    //                                .font(.caption)
+    //                                .foregroundColor(.blue)
+    //                        }
+    //                        .padding(.trailing)
+    //                    }
+    //                }
+    //                .padding(.top)
+    //
+    //                // Equipment List
+    //                List {
+    //                    ForEach(filteredEquipments) { equipment in
+    //                        HStack(alignment: .top) {
+    //                            // Equipment Image
+    //                            AsyncImage(url: URL(string: equipment.img_url ?? "")) { image in
+    //                                image.resizable()
+    //                                    .scaledToFit()
+    //                                    .frame(width: 75, height: 75)
+    //                                    .cornerRadius(10)
+    //                            } placeholder: {
+    //                                ProgressView()
+    //                            }
+    //                            .shadow(radius: 10)
+    //
+    //                            // Equipment Details
+    //                            VStack(alignment: .leading, spacing: 4) {
+    //                                Text(equipment.equipment_name ?? "n/a")
+    //                                    .font(.headline)
+    //                                    .foregroundColor(.primary)
+    //
+    //                                Text(equipment.description ?? "No description available")
+    //                                    .font(.subheadline)
+    //                                    .foregroundColor(.secondary)
+    //
+    //                                if equipment.availability_status == "available" {
+    //                                    // Add to Cart Button
+    //                                    Button(action: {
+    //                                        addToCart(equipment: equipment)
+    //                                    }) {
+    //                                        Text("Add to Cart")
+    //                                            .font(.caption)
+    //                                            .foregroundColor(.blue)
+    //                                            .padding(5)
+    //                                            .background(Color.gray.opacity(0.2))
+    //                                            .cornerRadius(5)
+    //                                    }
+    //                                } else if equipment.availability_status == "rented" {
+    //                                    // Display Expected Return Date
+    //                                    Text("Expected Return: yyyy-mm-dd")
+    //                                        .font(.caption)
+    //                                        .foregroundColor(.red)
+    //                                }
+    //                            }
+    //                        }
+    //                    }
+    //                }
+    //                .listStyle(InsetGroupedListStyle())
+    //            }
+    //            .navigationTitle("Equipment List")
+    //            .toolbar {
+    //                // Profile Button
+    //                ToolbarItem(placement: .navigationBarTrailing) {
+    //                    NavigationLink(destination: ProfileView(showSignInView:.constant(false))) {
+    //                        Image(systemName: "person.circle")
+    //                            .font(.title2)
+    //                    }
+    //                }
+    //            }
+    //            .task {
+    //                try? await viewModel.fetchEquipments()
+    //            }
+    //        }
+    //    }
+    
+    
+    // Function to Handle Adding to Cart
+    private func addToCart(equipment: Equipment) {
+        guard let authUser = try? AuthenticationManager.shared.getAuthenticatedUser() else { return }
+        
+        // Generate Booking ID
+        let bookingID = EquipmentManager.shared.generateBookingID(firstName: authUser.firstName ?? "Guest", lastName: authUser.lastName ?? "User")
+        
+        // Create Rental Data
+        let rental: [String: Any] = [
+            "Date_out": Date(),
+            "rented_items": [equipment.equip_id],
+            "expected_return_date": Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date(),
+            "user_id": authUser.uid
+        ]
+        
+        // Save to Firebase Rentals Collection
+        Firestore.firestore().collection("rentals").document(bookingID).setData(rental) { error in
+            if let error = error {
+                print("Error adding rental: \(error)")
+                return
+            }
+            
+            // Update Equipment Status to "booked"
+            Firestore.firestore().collection("equipments").document(equipment.equip_id).updateData(["availability_status": "booked"]) { error in
+                if let error = error {
+                    print("Error updating equipment status: \(error)")
+                }
+            }
+        }
+    }
+}
+
+
+//        List {
+//            ForEach(viewModel.equipments) {
+//                equipment in
+//                HStack (alignment: .top){
+//
+//                    AsyncImage(url: URL(string: equipment.img_url ?? "")) {image in image
+//                            .resizable()
+//                            .scaledToFit()
+//                            .frame(width: 75, height: 75)
+//                            .cornerRadius(10)
+//
+//                    } placeholder: {
+//                        ProgressView()
+//                    }
+//                }
+//
+//                .frame(width: 75, height: 75)
+//                .shadow(radius: 10)
+//
+//                VStack(alignment: .leading, spacing: 4) {
+//                    HStack{
+//                        Text(equipment.equipment_name ?? "n/a")
+//                            .font(.headline)
+//                            .foregroundColor(.primary)
+//                        Text(equipment.availability_status ?? "n/a")
+//                    }
+//                    // Text(equipment.description ?? "n/a")
+//                    Text(equipment.description ?? "n/a")
+//                        .font(.callout)
+//                        .foregroundColor(.secondary)
+//
+//                }
+//
+//            }
+//            .navigationTitle("Equipments")
+//
+//            .task {
+//                try? await viewModel.getAllEquipments()
+//            }
+//        }
+
+
+struct EquipmentListingView_Previews: PreviewProvider {
+    static var previews: some View {
+        if #available(iOS 16.0, *) {
+            NavigationStack{
+                EquipmentListingView ()
+            }
+        } else {
+            // Fallback on earlier versions
+        }
+    }
+}
+
+
+// Content from: ../Equipment Booking/Core/Equipments/EquipmentListingViewModel.swift
+
+//
+//  EquipmentListingViewModel.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 1/6/25.
+//
+
+import Foundation
+import Firebase
+import FirebaseFirestore
+
+@MainActor
+final class EquipmentListingViewModel: ObservableObject {
+    
+    @Published var equipments: [Equipment] = []
+    
+    private var db = Firestore.firestore()
+      
+    
+    func fetchEquipments() {
+        db.collection("equipments").getDocuments {
+            (snapshot, error) in
+            if let error = error {
+                print("Error fetching equipments: \(error)")
+                return
+                
+            }
+            
+            guard let documents = snapshot?.documents else {
+                print("No document found")
+                
+                return
+            }
+            
+            self.equipments = documents.compactMap { document -> Equipment? in
+                let data = document.data()
+
+                // Safely unwrap and cast each field
+                let equip_id = data["equip_id"] as? String ?? "unknown"
+                let availability_status = data["availability_status"] as? String
+                let description = data["description"] as? String
+                let equipment_main_category = data["equipment_main_category"] as? String
+                let equipment_sub_category = data["equipment_sub_category"] as? String
+                let equipment_name = data["equipment_name"] as? String
+                let img_name = data["img_name"] as? String
+                let img_url = data["img_url"] as? String
+                let manufacturer = data["manufacturer"] as? String
+
+                // Handle rental_price_per_day as Double? or nil
+                var rental_price_per_day: Double? = nil
+                if let price = data["rental_price_per_day"] as? Double {
+                    rental_price_per_day = price
+                } else if let priceString = data["rental_price_per_day"] as? String, let price = Double(priceString) {
+                    rental_price_per_day = price
+                }
+
+                return Equipment(
+                    equip_id: equip_id,
+                    availability_status: availability_status,
+                    description: description,
+                    equipment_main_category: equipment_main_category,
+                    equipment_sub_category: equipment_sub_category,
+                    equipment_name: equipment_name,
+                    img_name: img_name,
+                    img_url: img_url,
+                    manufacturer: manufacturer,
+                    rental_price_per_day: rental_price_per_day
+                )
+            }
+            
+            
+        }
+        
+        
+    }
+    
+    //Booking ID Generation Function:
+    
+    func generateBookingID(firstName: String, lastName: String) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmm"
+        let dateStr = dateFormatter.string(from: Date())
+        let id = "\(firstName.prefix(1))\(lastName.prefix(2).uppercased())\(dateStr)"
+        return id
+    }
+    
+}
+
+
+
+// Content from: ../Equipment Booking/Core/Firestore/EquipmentsManager.swift
+
+//
+//  EquipmentsManager.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 1/6/25.
+//
+
+import Foundation
+import FirebaseFirestore
+import FirebaseFirestoreCombineSwift
+
+@MainActor
+final class EquipmentManager: ObservableObject {
+    
+    static let shared = EquipmentManager()
+    private init() {}
+    
+    private let equipmentsCollection = Firestore.firestore().collection("equipments")
+    
+    //function to get document/equipment for a given equipmentId
+    private func equipmentDocument(equipmentId: String) -> DocumentReference {
+        equipmentsCollection.document(equipmentId)
+    }
+    
+    func uploadEquipment(equipment: Equipment) async throws {
+        try equipmentDocument(equipmentId: equipment.equip_id).setData(from: equipment, merge: false)
+    }
+    
+    func getAllEquipments() async throws -> [Equipment] {
+        let snapshot = try await equipmentsCollection.getDocuments()
+        
+        var equipments: [Equipment] = []
+        for document in snapshot.documents {
+            let equipment = try document.data(as: Equipment.self)
+            equipments.append(equipment)
+        }
+        
+        return equipments
+        
+    }
+    
+    //Booking ID Generation Function:
+    
+    func generateBookingID(firstName: String, lastName: String) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmm"
+        let dateStr = dateFormatter.string(from: Date())
+        let id = "\(firstName.prefix(1))\(lastName.prefix(2).uppercased())\(dateStr)"
+        return id
+    }
+}
+
+
+// Content from: ../Equipment Booking/Core/Firestore/UserManager.swift
+
+//
+//  UserManager.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/29/24.
+//
+
+import Foundation
+import FirebaseFirestore
+import FirebaseFirestoreCombineSwift
+
+
+//struct DBUser: Codable {
+//    let userId: String
+//    let isAnonymous: Bool?
+//    let email: String?
+//    let photoUrl: String?
+//    let dateCreated: Date?
+//    let isAdmin: Bool?
+//    let firstName: String?
+//    let lastName: String?
+//    let phone: String?          // New field
+//    let address: String?        // New field
+//    let companyName: String?    // New field
+//    let profession: String?     // New field
+//
+//    init(auth: AuthDataResultModel) {
+//        self.userId = auth.uid
+//        self.isAnonymous = auth.isAnonymous
+//        self.email = auth.email
+//        self.photoUrl = auth.photoUrl
+//        self.dateCreated = Date()
+//        self.isAdmin = false
+//        self.firstName = auth.firstName
+//        self.lastName = auth.lastName
+//        self.phone = ""
+//        self.address = ""
+//        self.companyName = ""
+//        self.profession = ""
+//    }
+//
+//    enum CodingKeys: String, CodingKey {
+//        case userId = "doc_id"
+//        case isAnonymous = "is_anonymous"
+//        case email = "email"
+//        case photoUrl = "img_url"
+//        case dateCreated = "date_created"
+//        case isAdmin = "is_admin"
+//        case firstName = "firstname"
+//        case lastName = "lastname"
+//        case phone = "phone"
+//        case address = "address"
+//        case companyName = "company_name"
+//        case profession = "profession"
+//    }
+//}
+
+
+struct DBUser: Codable {
+    let userId: String
+    let isAnonymous: Bool?
+    let email: String?
+    let photoUrl: String? // Corresponds to 'img_url'
+    let dateCreated: Date? // Optional, as Firestore does not provide this by default
+    let isAdmin: Bool? // Corresponds to 'is_admin', decoded from both string and boolean
+    let firstName: String? // Corresponds to 'firstname'
+    let lastName: String? // Corresponds to 'lastname'
+    let phone: String?
+    let address: String?
+    let companyName: String?
+    let profession: String?
+    
+
+    init(auth: AuthDataResultModel) {
+        self.userId = auth.uid
+        self.isAnonymous = auth.isAnonymous
+        self.email = auth.email
+        self.photoUrl = auth.photoUrl
+        self.dateCreated = Date() // Placeholder, as Firestore does not include dateCreated
+        self.isAdmin = false // Default to false for new users
+        self.firstName = auth.firstName ?? ""
+        self.lastName = auth.lastName ?? ""
+        self.phone = auth.phone ?? ""
+        self.address = auth.address ?? ""
+        self.companyName = auth.companyName ?? ""
+        self.profession = auth.profession ?? ""
+    }
+
+    init(
+        userId: String,
+        isAnonymous: Bool? = nil,
+        email: String? = nil,
+        photoUrl: String? = nil,
+        dateCreated: Date? = nil,
+        isAdmin: Bool? = nil,
+        firstName: String? = nil,
+        lastName: String? = nil,
+        phone: String? = nil,
+        address: String? = nil,
+        companyName: String? = nil,
+        profession: String? = nil
+        
+        
+    ) {
+        self.userId = userId
+        self.isAnonymous = isAnonymous
+        self.email = email
+        self.photoUrl = photoUrl
+        self.dateCreated = dateCreated
+        self.isAdmin = isAdmin
+        self.firstName = firstName
+        self.lastName = lastName
+        self.phone = phone
+        self.address = address
+        self.companyName = companyName
+        self.profession = profession
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.userId = try container.decode(String.self, forKey: .userId)
+        self.isAnonymous = try container.decodeIfPresent(Bool.self, forKey: .isAnonymous)
+        self.email = try container.decodeIfPresent(String.self, forKey: .email)
+        self.photoUrl = try container.decodeIfPresent(String.self, forKey: .photoUrl)
+        self.dateCreated = try container.decodeIfPresent(Date.self, forKey: .dateCreated)
+        
+        // Decode 'is_admin' as either Bool or String
+        if let isAdminBool = try? container.decode(Bool.self, forKey: .isAdmin) {
+            self.isAdmin = isAdminBool
+        } else if let isAdminString = try? container.decode(String.self, forKey: .isAdmin), let isAdminBool = Bool(isAdminString) {
+            self.isAdmin = isAdminBool
+        } else {
+            self.isAdmin = nil
+        }
+
+        self.firstName = try container.decodeIfPresent(String.self, forKey: .firstName)
+        self.lastName = try container.decodeIfPresent(String.self, forKey: .lastName)
+        self.phone = try container.decodeIfPresent(String.self, forKey: .phone)
+        self.address = try container.decodeIfPresent(String.self, forKey: .address)
+        self.companyName = try container.decodeIfPresent(String.self, forKey: .companyName)
+        self.profession = try container.decodeIfPresent(String.self, forKey: .profession)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case userId = "doc_id"
+        case isAnonymous = "is_anonymous"
+        case email = "email"
+        case photoUrl = "img_url"
+        case dateCreated = "date_created"
+        case isAdmin = "is_admin" // Matches 'is_admin' in Firestore
+        case firstName = "firstname"
+        case lastName = "lastname"
+        case phone = "phone"
+        case address = "address"
+        case companyName = "company_name" // Matches 'companty_name' in Firestore
+        case profession = "profession"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.userId, forKey: .userId)
+        try container.encodeIfPresent(self.isAnonymous, forKey: .isAnonymous)
+        try container.encodeIfPresent(self.email, forKey: .email)
+        try container.encodeIfPresent(self.photoUrl, forKey: .photoUrl)
+        try container.encodeIfPresent(self.dateCreated, forKey: .dateCreated)
+        try container.encodeIfPresent(self.isAdmin, forKey: .isAdmin)
+        try container.encodeIfPresent(self.firstName, forKey: .firstName)
+        try container.encodeIfPresent(self.lastName, forKey: .lastName)
+        try container.encodeIfPresent(self.phone, forKey: .phone)
+        try container.encodeIfPresent(self.address, forKey: .address)
+        try container.encodeIfPresent(self.companyName, forKey: .companyName)
+        try container.encodeIfPresent(self.profession, forKey: .profession)
+    }
+}
+
+
+
+final class UserManager {
+    
+    static let shared = UserManager()
+    private init() {}
+    
+    private let userCollection = Firestore.firestore().collection("users")
+    
+    //function to get document/user for a given userID
+    private func userDocument(userId: String) -> DocumentReference {
+        userCollection.document(userId)
+    }
+
+    // replaced by encoding/decoding mapping (L72-120)
+//    private let encoder: Firestore.Encoder = {
+//        let encoder = Firestore.Encoder()
+//        encoder.keyEncodingStrategy = .convertToSnakeCase
+//        return encoder
+//    } ()
+//    
+//    private let decoder: Firestore.Decoder = {
+//        let decoder = Firestore.Decoder()
+//        decoder.keyDecodingStrategy = .convertFromSnakeCase
+//        return decoder
+//    } ()
+    
+    func createNewUser(user: DBUser) async  throws {
+        try userDocument(userId: user.userId).setData(from: user, merge: false )
+        
+    }
+    
+    func getUser(userID: String) async throws -> DBUser {
+        let documentSnapshot = try await userDocument(userId: userID).getDocument()
+        print("Raw Firestore data: \(documentSnapshot.data() ?? [:])") // Debugging line
+
+        do {
+            return try documentSnapshot.data(as: DBUser.self) // Decode to DBUser format
+        } catch {
+            print("Decoding error: \(error)")
+            throw error
+        }
+    }
+
+
+    
+//    func getUser(userID: String) async throws -> DBUser {
+//        try await userDocument(userId: userID).getDocument(as: DBUser.self ) //Decode to DBUser format
+//        
+//    }
+     
+    
+    func updateUserAdminStatus(userId: String, isAdmin: Bool) async throws {
+        let data: [String:Any] = [
+            DBUser.CodingKeys.isAdmin.rawValue: isAdmin
+        ]
+        try userDocument(userId: userId).updateData(data)
+    }
+    
+}
+
+
+// Content from: ../Equipment Booking/Core/Profile/ProfileView.swift
+
+//
+//  ProfileView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/29/24.
+//
+
+
+import SwiftUI
+
+@MainActor
+
+final class ProfileViewModel: ObservableObject {
+    
+    @Published private(set) var user: DBUser? = nil
+    
+    func loadCurrentUser() async throws {
+        let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
+        self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
+    }
+    
+    func toggleAdminStatus(){
+        guard let user else {return}
+        let currentValue = user.isAdmin ?? false
+        
+        
+//        let currentValue = user.isAdmin ?? false
+//        let updatedUser = DBUser(userId: user.userId, isAnonymous: user.isAnonymous, email: user.email, photoUrl: user.photoUrl, dateCreated: user.dateCreated, isAdmin: !currentValue)
+        //let updatedUser = user.toggleAdminStatus()
+        
+        Task{
+            try await UserManager.shared.updateUserAdminStatus(userId: user.userId, isAdmin:!currentValue)
+            self.user = try await UserManager.shared.getUser(userID: user.userId)
+        }
+        
+    }
+    
+}
+
+struct ProfileView: View {
+    
+    @StateObject private var viewModel = ProfileViewModel()
+    @Binding var showSignInView: Bool
+    
+    
+    var body: some View {
+        List {
+            
+            if let user = viewModel.user {
+                Text("userID: \(user.userId)")
+                
+                if let isAnonymous = user.isAnonymous{
+                    Text("Is Anonymous: \(isAnonymous.description.capitalized)")
+                }
+                
+                Button{
+                    viewModel.toggleAdminStatus()
+                    
+                } label: {
+                    Text("User is Admin: \((user.isAdmin ?? false).description.capitalized)")
+                }
+            }
+            
+            
+        }
+        .task {
+            try? await viewModel.loadCurrentUser()
+            
+        }
+        .navigationTitle("Profile")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink{
+                    UserSettingsView(showSignInView: $showSignInView)
+                } label: {
+                    Image(systemName: "gear")
+                        .font(.headline)
+                }
+                
+                
+            }
+        }
+        Spacer()
+        
+        NavigationView {
+            VStack{
+                NavigationLink (destination: EquipmentListingView()) {
+                    
+                    Text("Go to Equipment Listing")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(height: 55)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.green)
+                        .cornerRadius(10)
+                    
+                }
+                
+            }
+            .navigationTitle("Equipment Listing")
+        }
+                
+    }
+}
+
+#Preview {
+    NavigationStack {
+        ProfileView(showSignInView: .constant(false))
+    }
+    
+}
+
+
+// Content from: ../Equipment Booking/Core/Profile/UserProfileEditView.swift
+
+//
+//  UserProfileEditView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 1/20/25.
+//
+
+import SwiftUI
+import Firebase
+
+struct UserProfileEditView: View {
+    @StateObject private var viewModel = UserProfileViewModel()
+    @Environment(\.presentationMode) var presentationMode
+    
+    @State private var firstName: String = ""
+    @State private var lastName: String = ""
+    @State private var phone: String = ""
+    @State private var address: String = ""
+    @State private var companyName: String = ""
+    @State private var profession: String = ""
+    
+    @State private var isEditing: Bool = false
+    @State private var errorMessage: String?
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                // User Information Section
+                Section(header: Text("User Information")) {
+                    TextField("First Name", text: $firstName)
+                        .disabled(!isEditing)
+                    
+                    TextField("Last Name", text: $lastName)
+                        .disabled(!isEditing)
+                    
+                    Text(viewModel.user?.email ?? "No Email") // Email (non-editable)
+                        .foregroundColor(.gray)
+                }
+                
+                // Additional Attributes
+                Section(header: Text("Additional Details")) {
+                    TextField("Phone Number", text: $phone)
+                        .disabled(!isEditing)
+                    
+                    TextField("Mailing Address", text: $address)
+                        .disabled(!isEditing)
+                    
+                    TextField("Company Name", text: $companyName)
+                        .disabled(!isEditing)
+                    
+                    TextField("Profession", text: $profession)
+                        .disabled(!isEditing)
+                }
+                
+                // Edit & Save Button
+                Section {
+                    if isEditing {
+                        Button("Save Changes") {
+                            saveProfileChanges()
+                        }
+                        .foregroundColor(.green)
+                    } else {
+                        Button("Edit Profile") {
+                            isEditing.toggle()
+                        }
+                        .foregroundColor(.blue)
+                    }
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .onAppear {
+                loadUserData()
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    // Load user data from Firestore
+    private func loadUserData() {
+        Task {
+            await viewModel.loadCurrentUser()
+            if let user = viewModel.user {
+                firstName = user.firstName ?? ""
+                lastName = user.lastName ?? ""
+                phone = user.phone ?? ""
+                address = user.address ?? ""
+                companyName = user.companyName ?? ""
+                profession = user.profession ?? ""
+            }
+        }
+    }
+    
+    // Save user changes to Firestore
+    private func saveProfileChanges() {
+        Task {
+            do {
+                try await viewModel.updateUserProfile(
+                    firstName: firstName,
+                    lastName: lastName,
+                    phone: phone,
+                    address: address,
+                    companyName: companyName,
+                    profession: profession
+                )
+                isEditing = false
+            } catch {
+                errorMessage = "Failed to update profile: \(error.localizedDescription)"
+            }
+        }
+    }
+}
+
+
+
+// Content from: ../Equipment Booking/Core/Profile/UserProfileView.swift
+
+//
+//  UserProfileView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 1/18/25.
+//
+import SwiftUI
+import FirebaseAuth
+import FirebaseFirestore
+
+@MainActor
+final class UserProfileViewModel: ObservableObject {
+    @Published private(set) var user: DBUser? = nil
+    @Published var authUser: AuthDataResultModel? = nil
+        
+    
+    func loadCurrentUser() async {
+        do {
+            let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
+            self.authUser = authDataResult
+            self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
+
+            // Handle missing first name and last name
+            if user?.firstName == nil || user?.lastName == nil {
+                if let googleProfile = Auth.auth().currentUser?.providerData.first(where: { $0.providerID == "google.com" }) {
+                    // Try to get names and photo from Google profile
+                    let firstName = googleProfile.displayName?.components(separatedBy: " ").first
+                    let lastName = googleProfile.displayName?.components(separatedBy: " ").dropFirst().joined(separator: " ")
+                    let photoUrl = googleProfile.photoURL?.absoluteString
+                    
+                    // Update user instance
+                    self.user = DBUser(
+                        userId: authDataResult.uid,
+                        email: authDataResult.email,
+                        photoUrl: photoUrl ?? authDataResult.photoUrl,
+                        firstName: firstName ?? authDataResult.email,
+                        lastName: lastName
+                        
+                    )
+                } else {
+                    // Default to email if name is missing
+                    self.user = DBUser(
+                        userId: authDataResult.uid,
+                        email: authDataResult.email,
+                        photoUrl: authDataResult.photoUrl,
+                        firstName: authDataResult.email,
+                        lastName: nil
+                        
+                    )
+                }
+            }
+        } catch {
+            print("Failed to load user: \(error.localizedDescription)")
+            self.user = DBUser(
+                userId: "unknown",
+                email: "Unknown User",
+                firstName: "Anonymous",
+                lastName: "User"
+            )
+        }
+    }
+    
+    func updateUserProfile(firstName: String, lastName: String, phone: String, address: String, companyName: String, profession: String) async throws {
+            guard let userId = user?.userId else { return }
+
+            let db = Firestore.firestore()
+            let userRef = db.collection("users").document(userId)
+
+            let updatedData: [String: Any] = [
+                "firstname": firstName,
+                "lastname": lastName,
+                "phone": phone,
+                "address": address,
+                "company_name": companyName,
+                "profession": profession
+            ]
+
+            try await userRef.updateData(updatedData)
+            print("User profile updated successfully.")
+        }
+    
+}
+
+
+//import SwiftUI
+//
+//@MainActor
+//final class UserProfileViewModel: ObservableObject {
+//    @Published private(set) var user: DBUser? = nil
+//    @Published var authUser: AuthDataResultModel? = nil
+//    
+//
+//    func loadCurrentUser() async {
+//        do {
+//            let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
+//            self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
+//        } catch {
+//            print("Failed to load user: \(error.localizedDescription)")
+//            self.user = DBUser(
+//                userId: "unknown",
+//                photoUrl: nil,
+//                isAdmin: false,
+//                firstName: "Anonymous",
+//                lastName: "User"
+//            )
+//        }
+//    }
+//    
+//    
+//}
+
+
+
+struct UserProfileView: View {
+    @StateObject private var viewModel = UserProfileViewModel()
+    @Environment(\.presentationMode) var presentationMode
+    @State private var navigateToSignIn = false // State to trigger navigation
+
+    var body: some View {
+        NavigationStack {
+            VStack {
+                if let user = viewModel.user {
+                    // User Profile Image
+                    AsyncImage(url: URL(string: user.photoUrl ?? "")) { image in
+                        image.resizable()
+                            .frame(width: 100, height: 100)
+                            .clipShape(Circle())
+                            .padding(.top)
+                    } placeholder: {
+                        Image(systemName: "person.crop.circle")
+                            .resizable()
+                            .frame(width: 100, height: 100)
+                            .foregroundColor(.gray)
+                            .padding(.top)
+                    }
+
+                    // Display user's name or email if name is missing
+                    Text(user.firstName ?? user.email ?? "Anonymous User")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .padding(.top, 4)
+
+                    Divider()
+                        .padding(.vertical)
+
+                    // Menu Items
+                    List {
+
+                        Button("My Rentals") {
+                            print("My Rentals tapped")
+                        }
+
+                        NavigationLink(destination: UserSettingsView(showSignInView: $navigateToSignIn)) {
+                            Text("Settings")
+                        }
+
+                        Button("Contact us") {
+                            print("Support tapped")
+                        }
+                        
+                        Button("Privacy & Policy") {
+                            print("Privacy & Policy tapped")
+                        }
+                    }
+                    .listStyle(InsetGroupedListStyle())
+                } else {
+                    ProgressView("Loading user data...")
+                        .task {
+                            await viewModel.loadCurrentUser()
+                        }
+                }
+                Spacer()
+                Button {
+                    Task {
+                        do {
+                            try AuthenticationManager.shared.signOut()
+                            navigateToSignIn = true // Set state to navigate
+                        } catch {
+                            print("Error during sign-out: \(error)")
+                        }
+                    }
+                }
+                label: {
+                    Text("Log out")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(height: 55)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.orange)
+                        .cornerRadius(10)
+                }
+                .padding()
+            }
+            .navigationTitle("User Profile")
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+            .navigationDestination(isPresented: $navigateToSignIn) {
+                UserAuthenticationView(showSignInView: $navigateToSignIn) // Navigate to sign-in view
+            }
+        }
+    }
+}
+
+struct UserProfileView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            UserProfileView()
+        }
+    }
+}
+
+
+//
+//struct UserProfileView: View {
+//    @StateObject private var viewModel = UserProfileViewModel()
+//    @Environment(\.presentationMode) var presentationMode
+//    @State private var navigateToSignIn = false // State to trigger navigation
+//
+//    var body: some View {
+//        NavigationStack {
+//            VStack {
+//                if let user = viewModel.user {
+//                    // User Profile Image
+//                    AsyncImage(url: URL(string: user.photoUrl ?? "")) { image in
+//                        image.resizable()
+//                            .frame(width: 100, height: 100)
+//                            .clipShape(Circle())
+//                            .padding(.top)
+//                    } placeholder: {
+//                        Image(systemName: "person.crop.circle")
+//                            .resizable()
+//                            .frame(width: 100, height: 100)
+//                            .foregroundColor(.gray)
+//                            .padding(.top)
+//                    }
+//
+//                    // User's Name
+//                    Text("\(user.firstName ?? "Anonymous") \(user.lastName ?? "User")")
+//                        .font(.title2)
+//                        .fontWeight(.semibold)
+//                        .padding(.top, 4)
+//
+//                    Divider()
+//                        .padding(.vertical)
+//
+//                    // Menu Items
+//                    List {
+//                        Button("Messages") {
+//                            print("Messages tapped")
+//                        }
+//
+//                        Button("My Rentals") {
+//                            print("My Rentals tapped")
+//                        }
+//
+//                        Button("User Settings") {
+//                            print("User Settings tapped")
+//                        }
+//
+//                        Button("Support") {
+//                            print("Support tapped")
+//                        }
+//
+//                    }
+//                    .listStyle(InsetGroupedListStyle())
+//                } else {
+//                    ProgressView("Loading user data...")
+//                        .task {
+//                            await viewModel.loadCurrentUser()
+//                        }
+//                }
+//                Spacer()
+//                Button {
+//                    Task {
+//                        do {
+//                            try AuthenticationManager.shared.signOut()
+//                            navigateToSignIn = true // Set state to navigate
+//                        } catch {
+//                            print("Error during sign-out: \(error)")
+//                        }
+//                    }
+//                }
+//                label: {
+//                    Text("Log out")
+//                        .font(.headline)
+//                        .foregroundColor(.white)
+//                        .frame(height: 55)
+//                        .frame(maxWidth: .infinity)
+//                        .background(Color.orange)
+//                        .cornerRadius(10)
+//                }
+//                .padding()
+//            }
+//            .navigationTitle("User Profile")
+//            .navigationBarBackButtonHidden(true)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    Button(action: {
+//                        presentationMode.wrappedValue.dismiss()
+//                    }) {
+//                        Image(systemName: "chevron.left")
+//                            .font(.headline)
+//                            .foregroundColor(.blue)
+//                    }
+//                }
+//            }
+//            .navigationDestination(isPresented: $navigateToSignIn) {
+//                UserAuthenticationView(showSignInView: $navigateToSignIn) // Navigate to sign-in view
+//            }
+//        }
+//    }
+//}
+//
+//struct UserProfileView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            UserProfileView()
+//        }
+//    }
+//}
+
+
+
+//struct UserProfileView: View {
+//    @StateObject private var viewModel = UserProfileViewModel()
+//    @Environment(\.presentationMode) var presentationMode
+//    @Binding var showSignInView: Bool // handle navigation after logout
+//
+//    var body: some View {
+//        VStack {
+//            if let user = viewModel.user {
+//                // User Profile Image
+//                AsyncImage(url: URL(string: user.photoUrl ?? "")) { image in
+//                    image.resizable()
+//                        .frame(width: 100, height: 100)
+//                        .clipShape(Circle())
+//                        .padding(.top)
+//                } placeholder: {
+//                    Image(systemName: "person.crop.circle")
+//                        .resizable()
+//                        .frame(width: 100, height: 100)
+//                        .foregroundColor(.gray)
+//                        .padding(.top)
+//                }
+//
+//                // User's Name
+//                Text("\(user.firstName ?? "Anonymous") \(user.lastName ?? "User")")
+//                    .font(.title2)
+//                    .fontWeight(.semibold)
+//                    .padding(.top, 4)
+//
+//                Divider()
+//                    .padding(.vertical)
+//
+//                // Menu Items
+//                List {
+//                    Button("Messages") {
+//                        //print("Messages tapped")
+//                    }
+//
+//                    Button("My Rentals") {
+//                        //print("My Rentals tapped")
+//                    }
+//
+//                    Button("User Settings") {
+//                        //print("User Settings tapped")
+//                    }
+//
+//                    Button("Support") {
+//                        //print("Support tapped")
+//                    }
+//
+//                    Spacer()
+//
+////                    Button("Log out") {
+////                        print("Log out tapped")
+////                    }
+////                    .foregroundColor(.red)
+//                    
+//                    Button{
+//                        Task {
+//                            do {
+//                                try AuthenticationManager.shared.signOut()
+//                                showSignInView = true // Navigate back to sign-in view
+//                            } catch {
+//                                print("Error during sign-out: \(error)")
+//                            }
+//                        }
+//                    }
+//                    label: {
+//                        Text("Log out")
+//                            .font(.headline)
+//                            .foregroundColor(.white)
+//                            .frame(height: 55)
+//                            .frame(maxWidth: .infinity)
+//                            .background(Color.orange)
+//                            .cornerRadius(10)
+//                    }
+////
+//                    
+//                }
+//                .listStyle(InsetGroupedListStyle())
+//            } else {
+//                ProgressView("Loading user data...")
+//                    .task {
+//                        await viewModel.loadCurrentUser()
+//                    }
+//            }
+//        }
+//        .navigationTitle("User Profile")
+//        .navigationBarBackButtonHidden(true)
+//        .toolbar {
+//            ToolbarItem(placement: .navigationBarLeading) {
+//                Button(action: {
+//                    presentationMode.wrappedValue.dismiss()
+//                }) {
+//                    Image(systemName: "chevron.left")
+//                        .font(.headline)
+//                        .foregroundColor(.blue)
+//                }
+//            }
+//        }
+//    }
+//}
+//
+//struct UserProfileView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            UserProfileView(showSignInView: .constant(false))
+//        }
+//    }
+//}
+
+
+//@MainActor
+//final class UserProfileViewModel: ObservableObject {
+//    @Published private(set) var user: DBUser? = nil
+//
+//    func loadCurrentUser() async {
+//        do {
+//            let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
+//            self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
+//        } catch {
+//            print("Failed to load user: \(error.localizedDescription)")
+//            self.user = DBUser(
+//                userId: "unknown",
+//                photoUrl: nil,
+//                firstName: "Anonymous",
+//                lastName: "User"
+//            )
+//        }
+//    }
+//}
+
+
+
+//struct UserProfileView: View {
+//    @StateObject private var viewModel = UserProfileViewModel()
+//    @Environment(\.presentationMode) var presentationMode
+//
+//    var body: some View {
+//        VStack {
+//            if let user = viewModel.user {
+//                // User Profile Image
+//                AsyncImage(url: URL(string: user.photoUrl ?? "")) { image in
+//                    image.resizable()
+//                        .frame(width: 100, height: 100)
+//                        .clipShape(Circle())
+//                        .padding(.top)
+//                } placeholder: {
+//                    Image(systemName: "person.crop.circle")
+//                        .resizable()
+//                        .frame(width: 100, height: 100)
+//                        .foregroundColor(.gray)
+//                        .padding(.top)
+//                }
+//
+//                // User's Name
+//                Text("\(user.firstName ?? "Anonymous") \(user.lastName ?? "User")")
+//                    .font(.title2)
+//                    .fontWeight(.semibold)
+//                    .padding(.top, 4)
+//
+//                Divider()
+//                    .padding(.vertical)
+//
+//                // Menu Items
+//                List {
+//                    Button("Messages") {
+//                        print("Messages tapped")
+//                    }
+//
+//                    Button("My Rentals") {
+//                        print("My Rentals tapped")
+//                    }
+//
+//                    Button("User Settings") {
+//                        print("User Settings tapped")
+//                    }
+//
+//                    Button("Support") {
+//                        print("Support tapped")
+//                    }
+//
+//                    Spacer()
+//
+//                    Button("Log out") {
+//                        print("Log out tapped")
+//                    }
+//                    .foregroundColor(.red)
+//                }
+//                .listStyle(InsetGroupedListStyle())
+//            } else {
+//                ProgressView("Loading user data...")
+//                    .task {
+//                        await viewModel.loadCurrentUser()
+//                    }
+//            }
+//        }
+//        .navigationTitle("User Profile")
+//        .navigationBarBackButtonHidden(true)
+//        .toolbar {
+//            ToolbarItem(placement: .navigationBarLeading) {
+//                Button(action: {
+//                    presentationMode.wrappedValue.dismiss()
+//                }) {
+//                    Image(systemName: "chevron.left")
+//                        .font(.headline)
+//                        .foregroundColor(.blue)
+//                }
+//            }
+//        }
+//    }
+//}
+//
+//struct UserProfileView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            UserProfileView()
+//        }
+//    }
+//}
+
+
+//import SwiftUI
+//
+//@MainActor
+//final class UserProfileViewModel: ObservableObject {
+//    @Published private(set) var user: DBUser? = nil
+//
+//    func loadCurrentUser() async {
+//        do {
+//            let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
+//            self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
+//        } catch {
+//            print("Failed to load user: \(error.localizedDescription)")
+//            self.user = DBUser(
+//                userId: "unknown",
+//                photoUrl: nil,
+//                firstName: "Anonymous",
+//                lastName: "User"
+//            )
+//        }
+//    }
+//
+//}
+//
+//struct UserProfileView: View {
+//    @StateObject private var viewModel = UserProfileViewModel()
+//    @Environment(\.presentationMode) var presentationMode
+//
+//    var body: some View {
+//        VStack {
+//            if let user = viewModel.user {
+//                // User Profile Image
+//                AsyncImage(url: URL(string: user.photoUrl ?? "")) { image in
+//                    image.resizable()
+//                        .frame(width: 100, height: 100)
+//                        .clipShape(Circle())
+//                        .padding(.top)
+//                } placeholder: {
+//                    Image(systemName: "person.crop.circle")
+//                        .resizable()
+//                        .frame(width: 100, height: 100)
+//                        .foregroundColor(.gray)
+//                        .padding(.top)
+//                }
+//
+//                // User's Name
+//                Text("\(user.firstName ?? "Anonymous") \(user.lastName ?? "User")")
+//                    .font(.title2)
+//                    .fontWeight(.semibold)
+//                    .padding(.top, 4)
+//
+//                Divider()
+//                    .padding(.vertical)
+//
+//                // Menu Items
+//                List {
+//                    Button("Messages") {
+//                        print("Messages tapped")
+//                    }
+//
+//                    Button("My Rentals") {
+//                        print("My Rentals tapped")
+//                    }
+//
+//                    Button("User Settings") {
+//                        print("User Settings tapped")
+//                    }
+//
+//                    Button("Support") {
+//                        print("Support tapped")
+//                    }
+//
+//                    Spacer()
+//
+//                    Button("Log out") {
+//                        print("Log out tapped")
+//                    }
+//                    .foregroundColor(.red)
+//                }
+//                .listStyle(InsetGroupedListStyle())
+//            } else {
+//                ProgressView("Loading user data...")
+//                    .task {
+//                        await viewModel.loadCurrentUser()
+//                    }
+//            }
+//        }
+//        .navigationTitle("User Profile")
+//        .navigationBarBackButtonHidden(true)
+//        .toolbar {
+//            ToolbarItem(placement: .navigationBarLeading) {
+//                Button(action: {
+//                    presentationMode.wrappedValue.dismiss()
+//                }) {
+//                    Image(systemName: "chevron.left")
+//                        .font(.headline)
+//                        .foregroundColor(.blue)
+//                }
+//            }
+//        }
+//    }
+//}
+//
+//struct UserProfileView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            UserProfileView()
+//        }
+//    }
+//}
+
+
+//import SwiftUI
+//
+//@MainActor
+//
+//final class UserProfileViewModel: ObservableObject {
+//    
+//    @Published private(set) var user: DBUser? = nil
+//    
+//    func loadCurrentUser() async throws {
+//        let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
+//        self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
+//        
+//    }
+//     
+//
+//}
+//
+//struct UserProfileView: View {
+//    @StateObject private var viewModel = UserProfileViewModel()
+//    @Environment(\.presentationMode) var presentationMode
+//    
+//    var body: some View {
+//        if let user = viewModel.user {
+//            VStack {
+//                
+//                
+//                AsyncImage(url: URL(string: user.photoUrl??, "")) { image in
+//                    image.resizable()
+//                        .frame(width: 100, height: 100)
+//                        .foregroundColor(.gray)
+//                        .padding(.top)
+//                } placeholder: {
+//                    ProgressView()
+//                    //Image(systemName: user.profileImage)
+//                }
+//                .shadow(radius: 10)
+//                
+//                
+//                // User's Name
+//                Text("\(viewModel.userFirstName) \(viewModel.userLastName)")
+//                    .font(.title2)
+//                    .fontWeight(.semibold)
+//                    .padding(.top, 4)
+//                
+//                Divider()
+//                    .padding(.vertical)
+//                
+//                // Menu Items
+//                List {
+//                    Button("Messages") {
+//                        print("Messages tapped")
+//                    }
+//                    
+//                    Button("My Rentals") {
+//                        print("My Rentals tapped")
+//                    }
+//                    
+//                    Button("User Settings") {
+//                        print("User Settings tapped")
+//                    }
+//                    
+//                    Button("Support") {
+//                        print("Support tapped")
+//                    }
+//                    
+//                    Spacer()
+//                    
+//                    Button("Log out") {
+//                        print("Log out tapped")
+//                    }
+//                    .foregroundColor(.red)
+//                }
+//                .listStyle(InsetGroupedListStyle())
+//            }
+//            .task {
+//                await viewModel.loadCurrentUser()
+//                
+//            }
+//            
+//            .navigationTitle("User Profile")
+//            .navigationBarBackButtonHidden(true)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    Button(action: {
+//                        presentationMode.wrappedValue.dismiss()
+//                    }) {
+//                        Image(systemName: "chevron.left")
+//                            .font(.headline)
+//                            .foregroundColor(.blue)
+//                    }
+//                }
+//            }
+//        }
+//
+//    }
+//}
+//
+//struct UserProfileView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        NavigationStack {
+//            UserProfileView()
+//        }
+//    }
+//}
+
+
+
+
+
+// Content from: ../Equipment Booking/Core/Settings/ProfileSettingsView.swift
+
+//
+//  ProfileSettingsView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 1/13/25.
+//
+
+import SwiftUI
+
+struct ProfileSettingsView: View {
+    @State private var email: String = ""
+    @State private var name: String = ""
+    @State private var password: String = ""
+
+    var body: some View {
+        Form {
+            Section(header: Text("Personal Information")) {
+                TextField("Name", text: $name)
+                    .autocapitalization(.words)
+                TextField("Email", text: $email)
+                    .keyboardType(.emailAddress)
+            }
+
+            Section(header: Text("Password")) {
+                SecureField("New Password", text: $password)
+            }
+
+            Button(action: {
+                // Save updated user information
+            }) {
+                Text("Save Changes")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(8)
+            }
+        }
+        .navigationTitle("Profile Settings")
+    }
+}
+
+#Preview {
+    ProfileSettingsView()
+}
+
+
+// Content from: ../Equipment Booking/Core/Settings/SettingsViewModel.swift
+
+//
+//  SettingsViewModel.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/29/24.
+//
+
+import Foundation
+import FirebaseAuth
+
+@MainActor
+
+final class UserSettingsViewModel: ObservableObject {
+    @Published private(set) var user: DBUser? = nil
+    @Published var authUser: AuthDataResultModel? = nil
+
+    func loadCurrentUser() async {
+        do {
+            let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
+            self.authUser = authDataResult
+            self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
+
+            // Handle missing first name and last name
+            if user?.firstName == nil || user?.lastName == nil {
+                if let googleProfile = Auth.auth().currentUser?.providerData.first(where: { $0.providerID == "google.com" }) {
+                    // Try to get names and photo from Google profile
+                    let firstName = googleProfile.displayName?.components(separatedBy: " ").first
+                    let lastName = googleProfile.displayName?.components(separatedBy: " ").dropFirst().joined(separator: " ")
+                    let photoUrl = googleProfile.photoURL?.absoluteString
+
+                    // Update user instance
+                    self.user = DBUser(
+                        userId: authDataResult.uid,
+                        email: authDataResult.email,
+                        photoUrl: photoUrl ?? authDataResult.photoUrl,
+                        firstName: firstName ?? authDataResult.email,
+                        lastName: lastName
+                    )
+                } else {
+                    // Default to email if name is missing
+                    self.user = DBUser(
+                        userId: authDataResult.uid,
+                        email: authDataResult.email,
+                        photoUrl: authDataResult.photoUrl,
+                        firstName: authDataResult.email,
+                        lastName: nil
+                    )
+                }
+            }
+        } catch {
+            print("Failed to load user: \(error.localizedDescription)")
+            self.user = DBUser(
+                userId: "unknown",
+                email: "Unknown User",
+                firstName: "Anonymous",
+                lastName: "User"
+            )
+        }
+    }
+}
+
+//final class UserSettingsViewModel: ObservableObject {
+//    
+//    @Published var authProviders: [AuthProvideroption] = []
+//    @Published var authUser: AuthDataResultModel? = nil
+//    
+//    func loadAuthProviders() {
+//        if let providers = try? AuthenticationManager.shared.getProviders() {
+//            authProviders = providers
+//        }
+//        
+//    }
+//    
+//    // Function to load authenticated user
+//    
+//    func loadauthUser() {
+//        self.authUser = try? AuthenticationManager.shared.getAuthenticatedUser()
+//    }
+//    
+//    
+//    func signOut() throws {
+//        try AuthenticationManager.shared.signOut()
+//    }
+//    
+//    func resetPassword () async throws {
+//        let authUser =  try AuthenticationManager.shared.getAuthenticatedUser()
+//        
+//        guard let email = authUser.email else {
+//            
+//            throw URLError(.fileDoesNotExist)
+//        }
+//        try await AuthenticationManager.shared.resetPassword(email: email)
+//        
+//    }
+//    
+//    
+//    func updateEmail () async throws {
+//        let email = "test123@gmail.com"
+//        try await AuthenticationManager.shared.updateEmail(email: email)
+//        
+//    }
+//    
+//    func updatePassword () async throws {
+//        let password = "test123"
+//        try await AuthenticationManager.shared.updatePassword(password: password)
+//        
+//    }
+//    
+//    func linkGoogleAccount() async throws {
+//        let helper = SignInGoogleHelper()
+//        let tokens = try await helper.signIn()
+//        self.authUser = try await AuthenticationManager.shared.linkGoogle(tokens: tokens)
+//        
+//    }
+//    
+//    /*
+//    func linkAppleAccount() async throws {
+//        let helper = SignInAppleHelper()
+//        let tokens = try await helper.signInWithAppleFlow()
+//        self.authUser = try await AuthenticationManager.shared.linkApple(tokens: tokens)
+//    }
+//     */
+//    
+//    func linkEmailAccount() async throws {
+//        let email = "test2@testing.com"
+//        let password = "1234321"
+//        self.authUser = try await AuthenticationManager.shared.linkEmail(email: email, password: password)
+//        
+//    }
+//    
+//}
+
+
+// Content from: ../Equipment Booking/Core/Settings/UserSettingsView.swift
+
+//
+//  UserSettingsView.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/9/24.
+//
+
+import SwiftUI
+import FirebaseAuth
+
+struct UserSettingsView: View {
+    @StateObject private var viewModel = UserSettingsViewModel()
+    @Binding var showSignInView: Bool // To handle sign-out and navigation back
+
+    var body: some View {
+        NavigationStack {
+            VStack {
+                if let user = viewModel.user {
+                    // Profile Image and Welcome Message
+                    VStack(spacing: 10) {
+                        // Profile Image
+                        AsyncImage(url: URL(string: user.photoUrl ?? "")) { image in
+                            image.resizable()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                        } placeholder: {
+                            Image(systemName: "person.crop.circle")
+                                .resizable()
+                                .frame(width: 100, height: 100)
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.top)
+
+                        // Welcome Text
+                        Text(" \(user.firstName ?? "User")")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .padding(.bottom, 20)
+                    }
+
+                    // Settings Buttons
+                    List {
+                        Section {
+                            Button("Reset Password") {
+                                resetPassword(for: user.email)
+                            }
+                            NavigationLink(destination: UserProfileEditView()) {
+                                Text("Update Profile")
+                            }
+                            
+                        }
+
+                        // Sign Out Button
+                        Section {
+                            Button {
+                                Task {
+                                    do {
+                                        try AuthenticationManager.shared.signOut()
+                                        showSignInView = true // Navigate back to sign-in
+                                    } catch {
+                                        print("Sign-out failed: \(error.localizedDescription)")
+                                    }
+                                }
+                            } label: {
+                                Text("Sign Out")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(height: 55)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.orange)
+                                    .cornerRadius(10)
+                            }
+                        }
+                    }
+                    .listStyle(InsetGroupedListStyle())
+                } else {
+                    // Loading State
+                    ProgressView("Loading user settings...")
+                        .task {
+                            await viewModel.loadCurrentUser()
+                        }
+                }
+            }
+            .navigationTitle("User Settings")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        showSignInView = false // Navigate back to main view
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+        }
+    }
+
+    private func resetPassword(for email: String?) {
+        guard let email = email else {
+            print("Email not available for password reset")
+            return
+        }
+        Task {
+            do {
+                try await AuthenticationManager.shared.resetPassword(email: email)
+                print("Password reset email sent to \(email)")
+            } catch {
+                print("Failed to send reset email: \(error.localizedDescription)")
+            }
+        }
+    }
+}
+
+#Preview {
+    UserSettingsView(showSignInView: .constant(false))
+}
+
+
+#Preview {
+    UserSettingsView(showSignInView: .constant(false))
+}
+
+
+// Old UserSettingsView
+//struct UserSettingsView: View {
+//    
+//    @StateObject private var viewModel = UserSettingsViewModel()
+//    @Binding var showSignInView: Bool
+//    
+//    var body: some View {
+//        List{
+//            Button("Log out"){
+//                Task {
+//                    do {
+//                        try viewModel.signOut()
+//                        showSignInView = true
+//                    }
+//                    catch{
+//                        print(error)
+//                        
+//                    }
+//                }
+//            }
+//            
+//            if viewModel.authProviders.contains(.email) {
+//                emailSection
+//            }
+//            
+//                        
+//            if viewModel.authUser?.isAnonymous == true {
+//                anonymousSection
+//                
+//            }
+//            
+//            
+//        }
+//        
+//        .onAppear{
+//            viewModel.loadAuthProviders()
+//            viewModel.loadauthUser()
+//        }
+//        
+//        
+//        .navigationBarTitle("User Settings")
+//        
+//    }
+//}
+//
+//
+//struct UserSettingsView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        
+//        NavigationStack{
+//            UserSettingsView (showSignInView: .constant(false))
+//        }
+//    }
+//}
+//
+//extension UserSettingsView{
+//    private var emailSection: some View{
+//        Section {
+//            Button("Reset Password"){
+//                Task {
+//                    do {
+//                        try await viewModel.resetPassword()
+//                        print("PASSWORD RESSET")
+//                    }
+//                    catch{
+//                        print(error)
+//                        
+//                    }
+//                }
+//            }
+//            Button("Update Password"){
+//                Task {
+//                    do {
+//                        try await viewModel.resetPassword()
+//                        print("PASSWORD UPDATED")
+//                    }
+//                    catch{
+//                        print(error)
+//                        
+//                    }
+//                }
+//            }
+//            
+//            Button("Update email"){
+//                Task {
+//                    do {
+//                        try await viewModel.resetPassword()
+//                        print("EMAIL UPDATED")
+//                    }
+//                    catch{
+//                        print(error)
+//                        
+//                    }
+//                }
+//            }
+//        } header: {
+//            Text ("User Reset Functions")
+//        }
+//    }
+//    
+//    private var anonymousSection: some View{
+//        Section {
+//            Button("Link Google Account"){
+//                Task {
+//                    do {
+//                        try await viewModel.linkGoogleAccount()
+//                        print("GOOGLE LINKED")
+//                    }
+//                    catch{
+//                        print(error)
+//                        
+//                    }
+//                }
+//            }
+//            /*
+//            Button("Link Apple Account"){
+//                Task {
+//                    do {
+//                        try await viewModel.linkAppleAccount()
+//                        print("APPLE LINKED")
+//                    }
+//                    catch{
+//                        print(error)
+//                        
+//                    }
+//                }
+//            }
+//            */
+//            
+//            Button("Link Email Account"){
+//                Task {
+//                    do {
+//                        try await viewModel.linkEmailAccount()
+//                        print("EMAIL LINKED")
+//                    }
+//                    catch{
+//                        print(error)
+//                        
+//                    }
+//                }
+//            }
+//        } header: {
+//            Text ("Create Account")
+//        }
+//    }
+//    
+//}
+
+
+
+// Content from: ../Equipment Booking/Utilities/EquipmentsDatabase.swift
+
+//
+//  EquipmentsDatabase.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 1/6/25.
+//
+
+import Foundation
+
+struct EquipmentArray: Codable {
+    let equipments: [Equipment]
+    let total, skip, limit: Int
+}
+
+struct Equipment: Identifiable, Codable {
+    var equip_id: String // unique id
+    var id: String {equip_id} // conform to Identifiable by mapping 'id' to 'equip_id'
+    var availability_status: String?
+    var description: String?
+    var equipment_main_category: String?
+    var equipment_sub_category: String?
+    var equipment_name: String?
+    var img_name: String?
+    var img_url: String?
+    var manufacturer: String?
+    var rental_price_per_day: Double?
+    
+}
+
+final class EquipmentsDatabase {
+    
+    static let equipments: [Equipment] = [
+        Equipment(equip_id: "CC-C-2", availability_status: "available", description: "The Liebherr 32 TTR is the crane for you who value maximum flexibility and mobility. This crawler construction crane with self-elevating properties expands your possibilities to get ahead on the jobsite.", equipment_main_category: "Construction Cranes", equipment_sub_category: "Crawler", equipment_name: "Liebherr 32 TTR", img_name: "712322-31.Jpg", img_url: "https://storage.googleapis.com/equipment-management-db.firebasestorage.app/Equipment_imgs/712322-31.Jpg", manufacturer: "Liebherr", rental_price_per_day: 100),
+        
+    ]
+}
+
+
+// Content from: ../Equipment Booking/Utilities/Utilities.swift
+
+//
+//  Utilities.swift
+//  Equipment Booking
+//
+//  Created by Rene Mbanguka on 12/28/24.
+//
+
+import Foundation
+import UIKit
+
+// Get top view controller for use in google sign in
+
+final class Utilities {
+    static let shared = Utilities()
+    private init() {}
+    
+    @MainActor
+    func topViewController(controller: UIViewController? = nil) -> UIViewController? {
+        
+        let controller = controller ?? UIApplication.shared.keyWindow?.rootViewController
+        
+        if let navigationController = controller as? UINavigationController {
+            return topViewController(controller: navigationController.visibleViewController)
+        }
+        if let tabController = controller as? UITabBarController {
+            if let selected = tabController.selectedViewController {
+                return topViewController(controller: selected)
+            }
+        }
+        if let presented = controller?.presentedViewController {
+            return topViewController(controller: presented)
+        }
+        return controller
+    }
+    
+}
+
+
+
