@@ -27,8 +27,8 @@ class CartManager: ObservableObject {
         if let index = cartItems.firstIndex(where: { $0.tool.id == tool.id }) {
             cartItems[index].quantity = quantity
             if cartItems[index].quantity <= 0 {
-                cartItems.remove(at: index)
-            }
+                        cartItems.remove(at: index)
+                    }
         }
     }
 }

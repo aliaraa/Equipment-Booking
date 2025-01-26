@@ -4,7 +4,7 @@ struct Equipment_Details: View {
     var tool: Tool
     @EnvironmentObject var cartManager: CartManager
     @State private var selectPickupDate: Date = Date()
-    @State private var selectReturnDate: Date = Date()
+    @State private var selectReturnDate: Date? = nil
     @State private var isShowingDatePicker = false
     @State private var isPickingDate = true
     @State private var quantity: Int = 1
@@ -16,17 +16,24 @@ struct Equipment_Details: View {
         formatter.timeStyle = .none
         return formatter
     }
+    
+    var isAddToCartEnabled: Bool {
+            if var returnDate = selectReturnDate {
+                return selectPickupDate < returnDate
+            }
+            return false
+        }
 
     func handleDateSelection(_ date: Date) {
         if isPickingDate {
             selectPickupDate = date
-            if selectReturnDate < selectPickupDate {
+            if var returnDate = selectReturnDate, returnDate < selectPickupDate {
                 selectReturnDate = selectPickupDate
             }
         } else {
             selectReturnDate = date
-            if selectPickupDate > selectReturnDate {
-                selectPickupDate = selectReturnDate
+            if selectPickupDate > date {
+                selectPickupDate = date
             }
         }
         isShowingDatePicker = false
@@ -39,7 +46,7 @@ struct Equipment_Details: View {
                     .font(.largeTitle)
                     .padding()
 
-                Image(systemName: "hammer.fill") // Ändra till en relaterad ikon
+                Image(systemName: "hammer.fill")
                     .frame(width: 400.0, height: 300.0)
                     .imageScale(.large)
                     .foregroundStyle(.tint)
@@ -121,10 +128,17 @@ struct Equipment_Details: View {
                         .cornerRadius(8)
 
                         Spacer()
-                        Text(dateFormatter.string(from: selectReturnDate))
-                            .padding(.horizontal)
-                            .font(.subheadline)
-                            .foregroundColor(.black)
+                        if var returnDate = selectReturnDate {
+                            Text(dateFormatter.string(from: returnDate))
+                                .padding(.horizontal)
+                                .font(.subheadline)
+                                .foregroundColor(.black)
+                        } else {
+                            Text("Select Date")
+                                .italic()
+                                .foregroundColor(.gray)
+                                .padding(.trailing)
+                        }
                     }
                 }
                 .padding(.leading)
@@ -132,16 +146,18 @@ struct Equipment_Details: View {
                 Spacer()
 
                 Button(action: {
-                    cartManager.addToCart(tool, quantity: quantity)
-                    showConfirmation = true
+                    if var returnDate = selectReturnDate {
+                        cartManager.addToCart(tool, quantity: quantity)
+                        showConfirmation = true
+                    }
                 }) {
                     Text("Add to Cart")
                         .frame(width: 200.0, height: 50.0)
-                        .background((selectPickupDate < selectReturnDate) ? Color.gray : Color.gray.opacity(0.5))
+                        .background(isAddToCartEnabled ? Color.green : Color.gray.opacity(0.5))
                         .foregroundColor(.white)
                         .cornerRadius(8)
                 }
-                .disabled(selectPickupDate >= selectReturnDate)
+                .disabled(!isAddToCartEnabled)
                 .padding()
                 .alert(isPresented: $showConfirmation) {
                     Alert(
@@ -157,7 +173,10 @@ struct Equipment_Details: View {
                 VStack {
                     DatePicker(
                         "Select Date",
-                        selection: isPickingDate ? $selectPickupDate : $selectReturnDate,
+                        selection: isPickingDate ? $selectPickupDate : Binding(
+                            get: {selectReturnDate ?? Date()},
+                            set: {selectReturnDate = $0}
+                        ),
                         in: Date.now...,
                         displayedComponents: .date
                     )
@@ -168,7 +187,7 @@ struct Equipment_Details: View {
                     .shadow(radius: 10)
 
                     Button("Done") {
-                        handleDateSelection(isPickingDate ? selectPickupDate : selectReturnDate)
+                        handleDateSelection(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
                     }
                     .padding()
                     .background(Color.blue)

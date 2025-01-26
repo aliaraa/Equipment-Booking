@@ -27,6 +27,9 @@ struct CartView: View {
                         }) {
                             Image(systemName: "minus.circle")
                         }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal, 8)
+                        
                         Text("\(cartItem.quantity)")
                             .padding(.horizontal)
                         Button(action: {
@@ -34,10 +37,18 @@ struct CartView: View {
                         }) {
                             Image(systemName: "plus.circle")
                         }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal, 8)
                     }
                 }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    
+                }
             }
-            .onDelete(perform: cartManager.removeFromCart)
+            .onDelete { offsets in
+                cartManager.removeFromCart(at: offsets)
+            }
         }
         .navigationTitle("Cart")
     }
