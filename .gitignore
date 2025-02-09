@@ -1,9 +1,24 @@
-GoogleService-Info.plist
-xcuserdata/
-*.DS_Store
-# Temporary files
-*~
-*.entitlements
+# Swift Package Man# Xcode-generated files
 *.xcworkspace/*
+xcuserdata/
+*.xcuserdatad
+*.xcuserstate
 DerivedData/
 build/
+
+# Build artifacts
+*.ipa
+*.xcarchive
+*.dSYM
+
+# Firebase
+GoogleService-Info.plist
+*.entitlements
+
+# Sensitive configuration files
+*.env
+*.secret
+
+# Temporary files
+*~
+.DS_Store
