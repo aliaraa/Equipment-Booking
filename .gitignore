@@ -1,16 +1,25 @@
-# Xcode
-*.xcworkspace
-xcuserdata
-DerivedData
-build
-.DS_Store
-
-# Build Artifacts
-*.app
-*.ipa
-*.xcodeproj/project.xcworkspace/xcuserdata
+# Swift Package Man# Xcode-generated files
+*.xcworkspace/*
+xcuserdata/
+*.xcuserdatad
 *.xcuserstate
+DerivedData/
+build/
 
-# Swift Package Manager
-Packages/
-Package.resolved
+# Build artifacts
+*.ipa
+*.xcarchive
+*.dSYM
+
+# Firebase
+GoogleService-Info.plist
+*.entitlements
+
+# Sensitive configuration files
+*.env
+*.secret
+
+# Temporary files
+*~
+.DS_Store
+*.DS_Store

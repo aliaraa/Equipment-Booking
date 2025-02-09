@@ -9,10 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        if #available(iOS 18.0, *) {
-            TabsView()
-        } else {
-            // Fallback on earlier versions
+        VStack {
+            Image(systemName: "globe")
+                .imageScale(.large)
+                .foregroundStyle(.tint)
+            Text("Hello")
         }
       
     }

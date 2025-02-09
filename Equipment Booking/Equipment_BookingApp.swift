@@ -6,8 +6,7 @@
 //
 
 import SwiftUI
-import Firebase
-
+import FirebaseCore
 
 @main
 struct Equipment_BookingApp: App {
@@ -17,17 +16,28 @@ struct Equipment_BookingApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            CategoryView(category: "Construction", title: "Construction")
+//            ContentView()
                 .environmentObject(cartManager)
         }
     }
 }
 
-class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        FirebaseApp.configure()
-        
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        FirebaseApp.configure()  // call config
+ 
+        if FirebaseApp.app() == nil
+        {
+            print("Firebase initialisation failed!")
+        } else {
+            if let apiKey = FirebaseApp.app()?.options.apiKey {
+//                print("Firebase API Key Used: \(apiKey)")
+            }
+        }
         return true
+ 
     }
 }
+
+
