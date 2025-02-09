@@ -11,14 +11,10 @@
 		5007A7712D468825003E77AD /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 50067A142D108A1100AA49D5 /* FirebaseAuth */; };
 		5007A7722D468825003E77AD /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 50067A162D108A1100AA49D5 /* FirebaseDatabase */; };
 		5007A7732D468825003E77AD /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 50067A182D108A1100AA49D5 /* FirebaseFirestore */; };
-		5007A7B42D468965003E77AD /* .gitignore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5007A7B32D468957003E77AD /* .gitignore.swift */; };
-		A126DBA72D3D8FB60037BE4A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A126DBA62D3D8FB60037BE4A /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		5007A7B32D468957003E77AD /* .gitignore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = .gitignore.swift; sourceTree = "<group>"; };
 		5053FC3C2CF351FC008036F8 /* Equipment Booking.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Equipment Booking.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A126DBA62D3D8FB60037BE4A /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -47,10 +43,8 @@
 		5053FC332CF351FB008036F8 = {
 			isa = PBXGroup;
 			children = (
-				5007A7B32D468957003E77AD /* .gitignore.swift */,
 				5053FC3E2CF351FC008036F8 /* Equipment Booking */,
 				5053FC3D2CF351FC008036F8 /* Products */,
-				A126DBA62D3D8FB60037BE4A /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -133,7 +127,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A126DBA72D3D8FB60037BE4A /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -144,7 +137,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5007A7B42D468965003E77AD /* .gitignore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
