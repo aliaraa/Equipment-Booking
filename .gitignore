@@ -22,3 +22,6 @@ GoogleService-Info.plist
 # Temporary files
 *~
 .DS_Store
+
+# Other unused folders
+Python/
