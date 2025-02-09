@@ -1,0 +1,9 @@
+GoogleService-Info.plist
+xcuserdata/
+*.DS_Store
+# Temporary files
+*~
+*.entitlements
+*.xcworkspace/*
+DerivedData/
+build/
