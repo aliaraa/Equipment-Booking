@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 
+
 // Get top view controller for use in google sign in
 
 final class Utilities {
@@ -15,6 +16,9 @@ final class Utilities {
     private init() {}
     
     @MainActor
+    // Struct to add a clear button to textfields
+
+  
     func topViewController(controller: UIViewController? = nil) -> UIViewController? {
         
         let controller = controller ?? UIApplication.shared.keyWindow?.rootViewController

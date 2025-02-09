@@ -6,12 +6,12 @@
 //
 
 import SwiftUI
-import Firebase
-
+import FirebaseCore
+ 
 @main
 struct Equipment_BookingApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    
+ 
     var body: some Scene {
         WindowGroup {
             // ContentView()
@@ -19,13 +19,20 @@ struct Equipment_BookingApp: App {
         }
     }
 }
-
+ 
 class AppDelegate: UIResponder, UIApplicationDelegate {
-    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Initialize Firebase
-        FirebaseApp.configure()
-        // print("Configure Firebase Successfully!") // Check firebase config success
+        FirebaseApp.configure()  // call config
+ 
+        if FirebaseApp.app() == nil
+        {
+            print("Firebase initialisation failed!")
+        } else {
+            if let apiKey = FirebaseApp.app()?.options.apiKey {
+                print("🔥 Firebase API Key Used: \(apiKey)")
+            }
+        }
         return true
+ 
     }
 }

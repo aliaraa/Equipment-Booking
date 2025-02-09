@@ -124,103 +124,36 @@ extension AuthenticationManager{
         //try await UserManager.shared.createNewUser(user: DBUser(auth: authDataResult.user))
                 
         
+        
         // Immediately sign the user out after creation
         try await Auth.auth().signOut()
-
+        
         return user // Return user details without leaving them signed in
+        
     }
     
-//    @discardableResult
-//    func createUser(email: String, password: String) async throws -> AuthDataResultModel {
-//        let authDataResult = try await Auth.auth().createUser(withEmail: email, password: password)
-//        return AuthDataResultModel(user: authDataResult.user)
-//    }
     
 // Sign in user function with security verification
     @discardableResult
     func signInUser(email: String, password: String) async throws -> AuthDataResultModel {
-        // Normalize email
         let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        
-        // Check if email exists in Firebase
-        let methods = try await Auth.auth().fetchSignInMethods(forEmail: normalizedEmail)
-        if methods.isEmpty {
-            // Throw error if email is not registered
-            throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "Email is not registered."])
-        }
-        
+
+        // try signing in, and handle errors properly
         do {
-            // Attempt to sign in with the normalized email and password
             let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: password)
             return AuthDataResultModel(user: authDataResult.user)
         } catch let error as NSError {
-            // Handle specific Firebase errors
             switch error.code {
             case AuthErrorCode.wrongPassword.rawValue:
                 throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "Password is incorrect."])
-            case AuthErrorCode.invalidCredential.rawValue:
-                throw NSError(domain: "InvalidCredential", code: 17004, userInfo: [NSLocalizedDescriptionKey: "Invalid credentials. Please check your email and password."])
             default:
-                // Re-throw unknown errors
                 throw error
             }
         }
     }
 
     
-//    @discardableResult
-//    func signInUser(email: String, password: String) async throws -> AuthDataResultModel {
-//        // Check if email exists in Firebase
-//        let methods = try await Auth.auth().fetchSignInMethods(forEmail: email)
-//        if methods.isEmpty {
-//            // Throw error if email is not registered
-//            throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "Email is not registered."])
-//        }
-//        
-//        do {
-//            // Attempt password-based login
-//            let authDataResult = try await Auth.auth().signIn(withEmail: email, password: password)
-//            return AuthDataResultModel(user: authDataResult.user)
-//        } catch let error as NSError {
-//            // Handle specific Firebase errors
-//            switch error.code {
-//            case AuthErrorCode.wrongPassword.rawValue:
-//                throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "Password is incorrect."])
-//            case AuthErrorCode.invalidCredential.rawValue:
-//                throw NSError(domain: "InvalidCredential", code: 17004, userInfo: [NSLocalizedDescriptionKey: "Invalid credentials. Please check your email and password."])
-//            default:
-//                // Re-throw unknown errors
-//                throw error
-//            }
-//        }
-//    }
 
-    
-//    @discardableResult
-//        func signInUser(email: String, password: String) async throws -> AuthDataResultModel {
-//            // Check if email exists in Firebase
-//            let methods = try await Auth.auth().fetchSignInMethods(forEmail: email)
-//            if methods.isEmpty {
-//                // Throw error if email is not registered
-//                throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "Email is not registered."])
-//            }
-//            
-//            do {
-//                // Attempt password-based login
-//                let authDataResult = try await Auth.auth().signIn(withEmail: email, password: password)
-//                return AuthDataResultModel(user: authDataResult.user)
-//            } catch {
-//                // Handle incorrect password
-//                throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "Password is incorrect."])
-//            }
-//        }
-    
-//    @discardableResult
-//    func signInUser (email: String, password: String) async throws -> AuthDataResultModel {
-//        let authDataResult = try await Auth.auth().signIn(withEmail: email, password: password)
-//        return AuthDataResultModel(user: authDataResult.user)
-//        
-//    }
     //Function to reser password
     func resetPassword (email: String) async throws {
         try await Auth.auth().sendPasswordReset(withEmail: email)

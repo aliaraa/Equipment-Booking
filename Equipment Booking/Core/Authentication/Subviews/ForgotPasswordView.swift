@@ -13,28 +13,44 @@ struct ForgotPasswordView: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
-                Text("Forgot Password")
-                    .font(.largeTitle)
-                    .padding()
+            VStack (spacing : 20){
+                Text("Reset your password")
+                    .font(.title)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.yellow)
+                
+//                TextField("Enter your email", text: $email)
+//                    .padding()
+//                    .background(Color.gray.opacity(0.4))
+//                    .cornerRadius(10)
+                
+               
+                Text("Enter the email address registered to your account. You will receive a password reset link shortly!")
+                    .font(.headline)
+                    .fontWeight(.light)
+                    .foregroundColor(.gray)
+                
+                // Email Field (toDo Validate format!) //
+                
+                CustomTextField(icon: "envelope", placeholder: "Email", text: $email)
+                
+                Spacer()
 
-                TextField("Enter your email", text: $email)
-                    .padding()
-                    .background(Color.gray.opacity(0.4))
-                    .cornerRadius(10)
-
-                Button("Reset Password") {
-                    // Add your reset password logic here
+                Button("Send Reset Link") {
+                    // Add reset password logic here
                 }
                 .padding()
+                .frame(height: 55)
+                .frame(maxWidth: .infinity)
                 .background(Color.blue)
                 .foregroundColor(.white)
                 .cornerRadius(10)
+                .shadow(radius: 5)
 
-                Spacer()
+//                Spacer()
             }
             .padding()
-            .navigationTitle("Reset Password")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -48,57 +64,6 @@ struct ForgotPasswordView: View {
 }
 
 
-//struct ForgotPasswordView: View {
-//    @Binding var email: String
-//    @State private var errorMessage: String?
-//    @State private var isSuccess = false
-//
-//    var body: some View {
-//        VStack {
-//            Text("Reset Your Password")
-//                .font(.title2)
-//                .padding()
-//
-//            TextField("Email...", text: $email)
-//                .padding()
-//                .background(Color.gray.opacity(0.4))
-//                .cornerRadius(10)
-//
-//            if let errorMessage = errorMessage {
-//                Text(errorMessage)
-//                    .foregroundColor(.red)
-//                    .padding()
-//            }
-//
-//            Button("Send Reset Link") {
-//                Task {
-//                    do {
-//                        try await AuthenticationManager.shared.resetPassword(email: email)
-//                        isSuccess = true
-//                    } catch {
-//                        errorMessage = "Failed to send reset link. Please try again."
-//                    }
-//                }
-//            }
-//            .padding()
-//            .background(Color.blue)
-//            .foregroundColor(.white)
-//            .cornerRadius(10)
-//
-//            if isSuccess {
-//                Text("Reset link sent! Check your email.")
-//                    .foregroundColor(.green)
-//                    .padding()
-//            }
-//        }
-//        .padding()
-//    }
-//
-//    // Fix the initializer to explicitly take a `Binding<String>`
-//    public init(email: Binding<String>) {
-//        self._email = email
-//    }
-//}
 
 #Preview {
     // Pass a mock binding for the `email` variable in preview
