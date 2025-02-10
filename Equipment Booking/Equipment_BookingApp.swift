@@ -17,7 +17,8 @@ struct Equipment_BookingApp: App {
     var body: some Scene {
         WindowGroup {
             if #available(iOS 18.0, *) {
-                TabsView()
+                RootView() // Landing page on app start up
+//                TabsView()
                 //            ContentView()
                     .environmentObject(cartManager)
             } else {
