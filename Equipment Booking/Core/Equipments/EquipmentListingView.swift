@@ -179,7 +179,7 @@ struct EquipmentListingView: View {
 }
 
 // Placeholder Cart View
-struct CartView: View {
+struct CartView_2: View {
     @Environment(\.presentationMode) var presentationMode // For back navigation
 
     var body: some View {
