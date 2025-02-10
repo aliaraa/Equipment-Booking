@@ -17,7 +17,7 @@ struct TabsView: View {
             Tab("Cart", systemImage: "cart") {
                 CartView()
             }
-            Tab("Status", systemImage: "info.circle") {
+            Tab("Status", systemImage: "person") {
                 
             }
         }

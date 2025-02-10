@@ -16,9 +16,13 @@ struct Equipment_BookingApp: App {
     
     var body: some Scene {
         WindowGroup {
-            CategoryView(category: "Construction", title: "Construction")
-//            ContentView()
-                .environmentObject(cartManager)
+            if #available(iOS 18.0, *) {
+                TabsView()
+                //            ContentView()
+                    .environmentObject(cartManager)
+            } else {
+                // Fallback on earlier versions
+            }
         }
     }
 }
