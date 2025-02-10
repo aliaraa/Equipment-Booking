@@ -7,8 +7,11 @@
 
 import SwiftUI
 
+
 @available(iOS 18.0, *)
+
 struct TabsView: View {
+    
     var body: some View {
         TabView {
             Tab("Search", systemImage: "magnifyingglass") {
@@ -17,7 +20,10 @@ struct TabsView: View {
             Tab("Cart", systemImage: "cart") {
                 CartView()
             }
-            Tab("Status", systemImage: "person") {
+            Tab("Status", systemImage: "person.crop.circle") {
+                UserProfileView()
+                // UserAuthenticationView()
+            
                 
             }
         }
