@@ -9,7 +9,6 @@ import SwiftUI
 import GoogleSignIn
 import GoogleSignInSwift
 import AuthenticationServices // for Apple Sign-In
-// import TextFieldStyles // functions to format textfields
 
 
 struct UserAuthenticationView: View {
@@ -21,61 +20,51 @@ struct UserAuthenticationView: View {
     @State private var showPassword: Bool = false
     @State private var showForgotPassword: Bool = false
     @State private var errorMessage: String? = nil
-    @State private var navigateToSignUp: Bool = false // Controls navigation to SignUpView
-    @State private var showInlineSignUp: Bool = false // Determines if inline Sign-Up appears
-    @State private var navigateToEquipmentListing: Bool = false // Navigation trigger for EquipmentListingView
+    @State private var navigateToSignUp: Bool = false
+    @State private var showInlineSignUp: Bool = false
+    @State private var NavigateToTabsView: Bool = false
     
-    // Focus tracking
     @FocusState private var focusedField: Field?
     
     enum Field {
         case email, password
     }
     
-    // Computed property to enable/disable Sign Up button
     private var isSignInButtonEnabled: Bool {
-        return emailErrorMessage == nil &&
-               !viewModel.password.isEmpty
+        return emailErrorMessage == nil && !viewModel.password.isEmpty
     }
-    
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                // Welcome Message
+                // Title
                 Text("Log in")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.yellow)
                 
-                // Email and Password Fields
-                
-                // Email Field (Validate when moving focus away)
+                // Email Field with Validation
                 CustomTextField(icon: "envelope", placeholder: "Email", text: $viewModel.email)
                     .focused($focusedField, equals: .email)
                     .onChange(of: focusedField) { newFocus in
                         if newFocus != .email {
                             emailErrorMessage = ValidationHelper.validateEmail(viewModel.email)
+                        } else {
+                            emailErrorMessage = nil
                         }
-                        else {
-                                    // Reset error message when focus returns to the email field
-                                    emailErrorMessage = nil
-                                }
                     }
-
+                
                 if let emailErrorMessage = emailErrorMessage {
                     Text(emailErrorMessage)
                         .foregroundColor(.red)
                         .font(.subheadline)
                 }
                 
-
-                // Password Field (No inline validation)
+                // Password Field with Toggle Visibility
                 CustomSecureField(icon: "lock", placeholder: "Password", text: $viewModel.password, isSecure: !showPassword, toggle: { showPassword.toggle() })
                     .focused($focusedField, equals: .password)
                 
-             
-                // Login Error Message & Inline Sign-Up Suggestion
+                // Error Message Handling
                 if let errorMessage = errorMessage {
                     VStack {
                         Text(errorMessage)
@@ -85,7 +74,7 @@ struct UserAuthenticationView: View {
                         if showInlineSignUp {
                             HStack {
                                 Button("New User? Sign Up") {
-                                    navigateToSignUp = true // Trigger navigation
+                                    navigateToSignUp = true
                                 }
                                 .foregroundColor(.blue)
                                 
@@ -100,32 +89,16 @@ struct UserAuthenticationView: View {
                     }
                 }
                 
-                // Sign In Button
+                // Sign-In Button
                 Button {
                     Task {
                         do {
                             try await viewModel.signIn()
-                            errorMessage = nil // Clear any previous errors
-                            navigateToEquipmentListing = true // Navigate to EquipmentListingView
+                            errorMessage = nil
+                            NavigateToTabsView = true
                         } catch let error as NSError {
-                            print("Sign-in error: \(error.domain) - \(error.localizedDescription)")
-                            
-                            switch error.code {
-                            case 404: // Email not registered
-                                errorMessage = "Email not registered. Please sign up or try again."
-                                showInlineSignUp = true
-                            case 401: // Wrong password
-                                errorMessage = "Incorrect password. Please try again."
-                                showInlineSignUp = true
-                            case 400: // Invalid email format
-                                errorMessage = "Invalid email format. Please check and try again."
-                                showInlineSignUp = false
-                            default:
-                                errorMessage = "An unexpected error occurred."
-                                showInlineSignUp = false
-                            }
+                            handleSignInError(error)
                         }
-                        
                     }
                 } label: {
                     Text("Sign In")
@@ -134,24 +107,20 @@ struct UserAuthenticationView: View {
                         .frame(height: 55)
                         .frame(maxWidth: .infinity)
                         .background(isSignInButtonEnabled ? Color.blue : Color.gray.opacity(0.5))
-//                        .background(Color.blue)
                         .cornerRadius(10)
                 }
                 .disabled(!isSignInButtonEnabled)
                 
-
-                 // Divider
+                // OR Separator
                 HStack {
                     Rectangle()
                         .frame(height: 1)
                         .foregroundColor(.gray)
                         .padding(.horizontal, 8)
-                    
                     Text("or")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .padding(.horizontal, 8)
-                    
                     Rectangle()
                         .frame(height: 1)
                         .foregroundColor(.gray)
@@ -159,13 +128,13 @@ struct UserAuthenticationView: View {
                 }
                 .padding(.vertical, 8)
                 
-                // Google and Apple Sign-In Buttons
+                // Social Sign-In Options
                 VStack(spacing: 20) {
                     GoogleSignInButton(viewModel: GoogleSignInButtonViewModel(scheme: .dark, style: .wide, state: .normal)) {
                         Task {
                             do {
                                 try await viewModel.signInGoogle()
-                                navigateToEquipmentListing = true // Navigate after Google sign-in
+                                NavigateToTabsView = true
                             } catch {
                                 print("Google Sign-In Error: \(error)")
                             }
@@ -177,33 +146,34 @@ struct UserAuthenticationView: View {
                         .frame(height: 55)
                 }
                 
-                // Bottom Sign-Up Button (Hidden if inline sign-up is shown)
-                // Bottom Sign-Up Button (Hidden if inline sign-up is shown)
+                // Sign-Up Button
                 if !showInlineSignUp {
                     Button("Don't have an account? Sign Up") {
-                        navigateToSignUp = true // Trigger navigation
+                        navigateToSignUp = true
                     }
                     .foregroundColor(.blue)
                     .padding(.top, 10)
                 }
                 
-                
                 Spacer()
                 
-                // Navigation to SignUpView
+                // Navigation Links (Hidden)
                 NavigationLink(destination: SignUpView().environmentObject(viewModel), isActive: $navigateToSignUp) {
                     EmptyView()
                 }
                 
-                Spacer()
-                
-                // Footer with Home and User Profile buttons
-                HStack {
-                    NavigationLink(destination: EquipmentListingView(), isActive: $navigateToEquipmentListing) {
+                if #available(iOS 18.0, *) {
+                    NavigationLink(destination: TabsView(), isActive: $NavigateToTabsView) {
                         EmptyView()
                     }
-                    .hidden()
-                    
+                } else {
+                    // Fallback on earlier versions
+                }
+                
+                Spacer()
+                
+                // Bottom Navigation Icons
+                HStack {
                     NavigationLink(destination: EquipmentListingView()) {
                         Image(systemName: "house.fill")
                             .resizable()
@@ -224,14 +194,34 @@ struct UserAuthenticationView: View {
                 .padding(.horizontal)
             }
             .padding()
-            //.navigationTitle("Sign In")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showForgotPassword) {
                 ForgotPasswordView(email: $viewModel.email, onDismiss: { showForgotPassword = false })
             }
         }
     }
+    
+    // Function to Handle Sign-In Errors
+    private func handleSignInError(_ error: NSError) {
+        print("Sign-in error: \(error.domain) - \(error.localizedDescription)")
+        switch error.code {
+        case 404:
+            errorMessage = "Email not registered. Please sign up or try again."
+            showInlineSignUp = true
+        case 401:
+            errorMessage = "Incorrect password. Please try again."
+            showInlineSignUp = true
+        case 400:
+            errorMessage = "Invalid email format. Please check and try again."
+            showInlineSignUp = false
+        default:
+            errorMessage = "An unexpected error occurred."
+            showInlineSignUp = true
+        }
+    }
 }
+
+
 
 // Apple Sign-In Button Wrapper
 struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
