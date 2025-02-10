@@ -7,10 +7,9 @@
 
 import SwiftUI
 
-
 @available(iOS 18.0, *)
-
 struct TabsView: View {
+    @StateObject private var authViewModel = AuthenticationViewModel()
     
     var body: some View {
         TabView {
@@ -21,11 +20,15 @@ struct TabsView: View {
                 CartView()
             }
             Tab("Status", systemImage: "person.crop.circle") {
-                UserProfileView()
-                // UserAuthenticationView()
-            
-                
+                if authViewModel.isAuthenticated {
+                    UserProfileView()
+                } else {
+                    UserAuthenticationView(showSignInView: .constant(false))
+                }
             }
+        }
+        .onAppear {
+            authViewModel.checkAuthenticationStatus() //Check authentication on loading
         }
     }
 }
@@ -33,6 +36,38 @@ struct TabsView: View {
 #Preview {
     if #available(iOS 18.0, *) {
         TabsView()
-            .environmentObject(CartManager())
+            .environmentObject(AuthenticationViewModel())
     }
 }
+
+
+//@available(iOS 18.0, *)
+//
+//
+//struct TabsView: View {
+//    
+//    
+//    var body: some View {
+//        TabView {
+//            Tab("Search", systemImage: "magnifyingglass") {
+//                Search()
+//            }
+//            Tab("Cart", systemImage: "cart") {
+//                CartView()
+//            }
+//            Tab("Status", systemImage: "person.crop.circle") {
+//                UserProfileView()
+//                // UserAuthenticationView()
+//            
+//                
+//            }
+//        }
+//    }
+//}
+//
+//#Preview {
+//    if #available(iOS 18.0, *) {
+//        TabsView()
+//            .environmentObject(CartManager())
+//    }
+//}
