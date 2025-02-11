@@ -56,3 +56,35 @@ struct CustomSecureField: View {
         .foregroundColor(Color(UIColor.darkGray))
     }
 }
+
+// ✅ Reusable Custom TextField Component
+struct CustomProfileTextField: View {
+    let placeholder: String
+    @Binding var text: String
+    var isEditable: Bool
+    var onEditingChanged: (() -> Void)?
+
+    var body: some View {
+        
+//        VStack(alignment: .leading, spacing: 5)
+        HStack {
+//            Text(placeholder) // ✅ Fixed duplicate placeholder issue
+//                .foregroundColor(.gray)
+//                .font(.subheadline)
+                        
+            TextField(placeholder, text: $text, onEditingChanged: { _ in
+                onEditingChanged?()
+            })
+            .autocapitalization(.words)
+            .disableAutocorrection(true)
+//            .textFieldStyle(RoundedBorderTextFieldStyle()) // ✅ Proper left alignment
+            .disabled(!isEditable) // ✅ Controls editability
+        }
+//        .padding(.vertical, 5)
+        .padding()
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.yellow, lineWidth: 2))
+        .background(Color.clear)
+        .foregroundColor(Color(UIColor.darkGray))
+        
+    }
+}

@@ -5,13 +5,16 @@
 //  Created by Rene Mbanguka on 12/9/24.
 //
 // UserSettingsView
+
 import SwiftUI
 import FirebaseAuth
 
 struct UserSettingsView: View {
     @StateObject private var viewModel = UserSettingsViewModel()
-    @Binding var showSignInView: Bool // Controls sign-out navigation
-    @Environment(\.presentationMode) var presentationMode // For back navigation
+    @Binding var isShowingSignIn: Bool
+    @Environment(\.presentationMode) var presentationMode
+    
+    @State private var isShowingProfileEdit = false // ✅ State for navigation
 
     var body: some View {
         NavigationStack {
@@ -37,24 +40,25 @@ struct UserSettingsView: View {
                             .foregroundColor(.black)
                     }
 
-                    Divider()
-                        .padding(.vertical)
+                    Divider().padding(.vertical)
 
                     // Settings Options
                     VStack(spacing: 15) {
                         SettingsMenuItem(icon: "key.fill", text: "Reset Password") {
                             resetPassword(for: user.email)
                         }
-                        
-                        NavigationLink(destination: UserProfileEditView()) {
-                            SettingsMenuItem(icon: "pencil", text: "Update Profile")
+
+                        // ✅ Button to trigger navigation
+                        SettingsMenuItem(icon: "pencil", text: "Update Profile") {
+                            isShowingProfileEdit = true
                         }
 
                         SettingsMenuItem(icon: "arrow.backward.square", text: "Sign Out", color: .red) {
                             Task {
                                 do {
                                     try AuthenticationManager.shared.signOut()
-                                    showSignInView = true // Navigate back to login
+                                    isShowingSignIn = true
+                                    presentationMode.wrappedValue.dismiss()
                                 } catch {
                                     print("Sign-out failed: \(error.localizedDescription)")
                                 }
@@ -81,6 +85,10 @@ struct UserSettingsView: View {
                     }
                 }
             }
+            // ✅ Navigation Destination for Profile Edit
+            .navigationDestination(isPresented: $isShowingProfileEdit) {
+                UserProfileEditView()
+            }
         }
     }
 
@@ -100,7 +108,105 @@ struct UserSettingsView: View {
     }
 }
 
-// ✅ Reusable Settings Item (Same Look as Profile)
+
+
+//import SwiftUI
+//import FirebaseAuth
+//
+//struct UserSettingsView: View {
+//    @StateObject private var viewModel = UserSettingsViewModel()
+//    @Binding var isShowingSignIn: Bool // Controls sign-out navigation
+//    @Environment(\.presentationMode) var presentationMode // For back navigation
+//    
+//    var body: some View {
+//        NavigationStack {
+//            VStack {
+//                if let user = viewModel.user {
+//                    // Profile Image & Name
+//                    VStack(spacing: 10) {
+//                        AsyncImage(url: URL(string: user.photoUrl ?? "")) { image in
+//                            image.resizable()
+//                                .frame(width: 100, height: 100)
+//                                .clipShape(Circle())
+//                        } placeholder: {
+//                            Image(systemName: "person.crop.circle.fill")
+//                                .resizable()
+//                                .frame(width: 100, height: 100)
+//                                .foregroundColor(.yellow)
+//                        }
+//                        .padding(.top)
+//
+//                        Text(user.firstName ?? "User")
+//                            .font(.title2)
+//                            .fontWeight(.bold)
+//                            .foregroundColor(.black)
+//                    }
+//
+//                    Divider()
+//                        .padding(.vertical)
+//
+//                    // Settings Options
+//                    VStack(spacing: 15) {
+//                        SettingsMenuItem(icon: "key.fill", text: "Reset Password") {
+//                            resetPassword(for: user.email)
+//                        }
+//                        
+//                        NavigationLink(destination: UserProfileEditView()) {
+//                            SettingsMenuItem(icon: "pencil", text: "Update Profile")
+//                        }
+//                        
+//                        SettingsMenuItem(icon: "arrow.backward.square", text: "Sign Out", color: .red) {
+//                            Task {
+//                                do {
+//                                    try AuthenticationManager.shared.signOut()
+//                                    isShowingSignIn = true // Navigate back to login
+//                                    presentationMode.wrappedValue.dismiss()
+//                                } catch {
+//                                    print("Sign-out failed: \(error.localizedDescription)")
+//                                }
+//                            }
+//                        }
+//                    }
+//                    .padding(.horizontal, 20)
+//                } else {
+//                    ProgressView("Loading user settings...")
+//                        .task {
+//                            await viewModel.loadCurrentUser()
+//                        }
+//                }
+//            }
+//            .navigationBarBackButtonHidden(true)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    Button(action: {
+//                        presentationMode.wrappedValue.dismiss()
+//                    }) {
+//                        Image(systemName: "chevron.left")
+//                            .font(.headline)
+//                            .foregroundColor(.yellow)
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    private func resetPassword(for email: String?) {
+//        guard let email = email else {
+//            print("Email not available for password reset")
+//            return
+//        }
+//        Task {
+//            do {
+//                try await AuthenticationManager.shared.resetPassword(email: email)
+//                print("Password reset email sent to \(email)")
+//            } catch {
+//                print("Failed to send reset email: \(error.localizedDescription)")
+//            }
+//        }
+//    }
+//}
+
+// ✅ Reusable Settings Menu Item
 struct SettingsMenuItem: View {
     let icon: String
     let text: String
@@ -128,8 +234,136 @@ struct SettingsMenuItem: View {
 }
 
 #Preview {
-    UserSettingsView(showSignInView: .constant(true))
+    UserSettingsView(isShowingSignIn: .constant(false))
 }
+
+
+//import SwiftUI
+//import FirebaseAuth
+//
+//struct UserSettingsView: View {
+//    @StateObject private var viewModel = UserSettingsViewModel()
+//    @Binding var showSignInView: Bool // Controls sign-out navigation
+//    @Binding var navigateToSettings: Bool
+//    @Environment(\.presentationMode) var presentationMode // For back navigation
+//
+//    var body: some View {
+//        NavigationStack {
+//            VStack {
+//                if let user = viewModel.user {
+//                    // Profile Image & Name
+//                    VStack(spacing: 10) {
+//                        AsyncImage(url: URL(string: user.photoUrl ?? "")) { image in
+//                            image.resizable()
+//                                .frame(width: 100, height: 100)
+//                                .clipShape(Circle())
+//                        } placeholder: {
+//                            Image(systemName: "person.crop.circle.fill")
+//                                .resizable()
+//                                .frame(width: 100, height: 100)
+//                                .foregroundColor(.yellow)
+//                        }
+//                        .padding(.top)
+//
+//                        Text(user.firstName ?? "User")
+//                            .font(.title2)
+//                            .fontWeight(.bold)
+//                            .foregroundColor(.black)
+//                    }
+//
+//                    Divider()
+//                        .padding(.vertical)
+//
+//                    // Settings Options
+//                    VStack(spacing: 15) {
+//                        SettingsMenuItem(icon: "key.fill", text: "Reset Password") {
+//                            resetPassword(for: user.email)
+//                        }
+//                        
+//                        NavigationLink(destination: UserProfileEditView()) {
+//                            SettingsMenuItem(icon: "pencil", text: "Update Profile")
+//                        }
+//
+//                        SettingsMenuItem(icon: "arrow.backward.square", text: "Sign Out", color: .red) {
+//                            Task {
+//                                do {
+//                                    try AuthenticationManager.shared.signOut()
+//                                    showSignInView = true // Navigate back to login
+//                                } catch {
+//                                    print("Sign-out failed: \(error.localizedDescription)")
+//                                }
+//                            }
+//                        }
+//                    }
+//                    .padding(.horizontal, 20)
+//                } else {
+//                    ProgressView("Loading user settings...")
+//                        .task {
+//                            await viewModel.loadCurrentUser()
+//                        }
+//                }
+//            }
+//            .navigationBarBackButtonHidden(true)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    Button(action: {
+//                        presentationMode.wrappedValue.dismiss()
+//                    }) {
+//                        Image(systemName: "chevron.left")
+//                            .font(.headline)
+//                            .foregroundColor(.yellow)
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    private func resetPassword(for email: String?) {
+//        guard let email = email else {
+//            print("Email not available for password reset")
+//            return
+//        }
+//        Task {
+//            do {
+//                try await AuthenticationManager.shared.resetPassword(email: email)
+//                print("Password reset email sent to \(email)")
+//            } catch {
+//                print("Failed to send reset email: \(error.localizedDescription)")
+//            }
+//        }
+//    }
+//}
+//
+//// ✅ Reusable Settings Item (Same Look as Profile)
+//struct SettingsMenuItem: View {
+//    let icon: String
+//    let text: String
+//    var color: Color = .black
+//    var action: (() -> Void)? = nil
+//
+//    var body: some View {
+//        Button(action: { action?() }) {
+//            HStack {
+//                Image(systemName: icon)
+//                    .foregroundColor(.yellow)
+//                    .font(.headline)
+//                Text(text)
+//                    .font(.headline)
+//                    .foregroundColor(color)
+//                Spacer()
+//                Image(systemName: "chevron.right")
+//                    .foregroundColor(.gray)
+//            }
+//            .padding()
+//            .background(RoundedRectangle(cornerRadius: 12).fill(Color.yellow.opacity(0.2)))
+//            .shadow(radius: 2)
+//        }
+//    }
+//}
+//
+//#Preview {
+//    UserSettingsView(showSignInView: .constant(false), navigateToSettings: .constant(true))
+//}
 
 
 //import SwiftUI
