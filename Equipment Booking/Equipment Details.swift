@@ -9,7 +9,7 @@ struct Equipment_Details: View {
     @State private var isPickingDate = true
     @State private var quantity: Int = 1
     @State private var showConfirmation = false
-
+    
     var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -18,12 +18,12 @@ struct Equipment_Details: View {
     }
     
     var isAddToCartEnabled: Bool {
-            if var returnDate = selectReturnDate {
-                return selectPickupDate < returnDate
-            }
-            return false
+        if var returnDate = selectReturnDate {
+            return selectPickupDate < returnDate
         }
-
+        return false
+    }
+    
     func handleDateSelection(_ date: Date) {
         if isPickingDate {
             selectPickupDate = date
@@ -38,20 +38,20 @@ struct Equipment_Details: View {
         }
         isShowingDatePicker = false
     }
-
+    
     var body: some View {
         ZStack {
             VStack {
                 Text(tool.name)
                     .font(.largeTitle)
                     .padding()
-
+                
                 Image(systemName: "hammer.fill")
                     .frame(width: 400.0, height: 300.0)
                     .imageScale(.large)
                     .foregroundStyle(.tint)
                     .background(Color.black)
-
+                
                 HStack {
                     VStack(alignment: .leading) {
                         Text("Description")
@@ -66,7 +66,7 @@ struct Equipment_Details: View {
                             .padding([.top, .bottom, .trailing])
                     }
                     .padding(.leading)
-
+                    
                     Spacer()
                     VStack {
                         HStack {
@@ -81,11 +81,11 @@ struct Equipment_Details: View {
                                     .background(Color.blue)
                                     .clipShape(Circle())
                             }
-
+                            
                             Text("\(quantity)")
                                 .font(.title3)
                                 .padding(10)
-
+                            
                             Button(action: {
                                 quantity += 1
                             }) {
@@ -98,7 +98,7 @@ struct Equipment_Details: View {
                         }
                     }.padding(.trailing)
                 }
-
+                
                 VStack {
                     HStack {
                         Button("Pick Pickup Date") {
@@ -109,14 +109,14 @@ struct Equipment_Details: View {
                         .background(Color.blue)
                         .foregroundColor(.white)
                         .cornerRadius(8)
-
+                        
                         Spacer()
                         Text(dateFormatter.string(from: selectPickupDate))
                             .padding(.horizontal)
                             .font(.subheadline)
                             .foregroundColor(.black)
                     }
-
+                    
                     HStack {
                         Button("Pick Return Date") {
                             isPickingDate = false
@@ -126,7 +126,7 @@ struct Equipment_Details: View {
                         .background(Color.blue)
                         .foregroundColor(.white)
                         .cornerRadius(8)
-
+                        
                         Spacer()
                         if var returnDate = selectReturnDate {
                             Text(dateFormatter.string(from: returnDate))
@@ -142,9 +142,9 @@ struct Equipment_Details: View {
                     }
                 }
                 .padding(.leading)
-
+                
                 Spacer()
-
+                
                 Button(action: {
                     if var returnDate = selectReturnDate {
                         cartManager.addToCart(tool, quantity: quantity)
@@ -168,7 +168,7 @@ struct Equipment_Details: View {
                 }
             }
             .padding()
-
+            
             if isShowingDatePicker {
                 VStack {
                     DatePicker(
@@ -185,7 +185,7 @@ struct Equipment_Details: View {
                     .background(Color.white)
                     .cornerRadius(10)
                     .shadow(radius: 10)
-
+                    
                     Button("Done") {
                         handleDateSelection(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
                     }
@@ -201,13 +201,33 @@ struct Equipment_Details: View {
         }
     }
 }
+
+
 let exampleTool = Tool(
-    name: "Hammer",
-    description: "A sturdy hammer for construction work.",
-    price: 15,
-    isAvailable: true,
-    category: "Construction"
+    id: "LCE-CM-11",
+    name: "Petrol-powered mobile cutters, plates 400-500mm",
+    category: "Construction",
+    mainCategory: "Light construction equipment",
+    subCategory: "Cutting machines",
+    description: "The mobile petrol cutter with a 500 mm blade is used for cutting asphalt or concrete surfaces using diamond blades.",
+    manufacturer: "Ntc",
+    imageName: "B546r2T9p0R0M1y6l8j7q4K2a7b6K0M5.webp",
+    imageURL: "https://storage.googleapis.com/equipment-management-db.firebasestorage.app/Equipment_imgs/B546r2T9p0R0M1y6l8j7q4K2a7b6K0M5.webp",
+    status: "available",
+    price: 100.0,
+    numberOfItems: 1,
+    isAvailable: true
 )
+    
+    
+//let exampleTool = Tool(
+//        name: "Hammer",
+//        description: "A sturdy hammer for construction work.",
+//        price: 15,
+//        isAvailable: true,
+//        category: "Construction")
+
+
 #Preview {
     Equipment_Details(tool: exampleTool)
         .environmentObject(CartManager())

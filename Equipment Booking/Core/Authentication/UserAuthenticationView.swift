@@ -174,11 +174,15 @@ struct UserAuthenticationView: View {
                 
                 // Bottom Navigation Icons
                 HStack {
-                    NavigationLink(destination: EquipmentListingView()) {
-                        Image(systemName: "house.fill")
-                            .resizable()
-                            .frame(width: 40, height: 40)
-                            .foregroundColor(.gray)
+                    if #available(iOS 18.0, *) {
+                        NavigationLink(destination: TabsView()) {
+                            Image(systemName: "house.fill")
+                                .resizable()
+                                .frame(width: 40, height: 40)
+                                .foregroundColor(.gray)
+                        }
+                    } else {
+                        // Fallback on earlier versions
                     }
                     
                     Spacer()

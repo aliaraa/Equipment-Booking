@@ -6,17 +6,22 @@
 //
 
 import SwiftUI
+import Firebase
+import FirebaseFirestore
 
 struct Search: View {
-    @State private var tools = toolData
+
+
+    @StateObject private var dataManager = EquipmentDataManager() // get data from fb & replace tools by dataManager.toolData
+//    @State private var tools = dataManager.toolData
     @State private var searchText = ""
     @State private var isShowingResults = false
     
     var filteredTools: [Tool] {
         if searchText.isEmpty{
-            return tools
+            return dataManager.toolData
         } else {
-            return tools.filter{
+            return dataManager.toolData.filter{
                 $0.name.localizedCaseInsensitiveContains(searchText)
             }
         }

@@ -15,8 +15,7 @@ struct AuthDataResultModel {
     let isAnonymous: Bool
     
     // for profile data fetching
-    
-    // let userId : String
+
     let dateCreated : Date?
     let isAdmin : Bool?
     let firstName : String?
@@ -33,9 +32,6 @@ struct AuthDataResultModel {
         self.email = user.email
         self.photoUrl = user.photoURL?.absoluteString
         self.isAnonymous = user.isAnonymous
- 
-        
-        //self.userId = user.userId
         self.dateCreated = user.metadata.creationDate
         self.isAdmin = nil
         self.firstName = nil
@@ -73,7 +69,6 @@ final class AuthenticationManager {
     // allows to select what to show after successful login
     
     
-    
     // Provider function (login method)
     
     func getProviders() throws  -> [AuthProvideroption] {
@@ -105,7 +100,7 @@ final class AuthenticationManager {
     
 }
 
-// MARK: SIGN IN EMAIL
+// MARK: SIGN IN EMAIL/PASSWORD
 
 extension AuthenticationManager{
     // creates a user , not leaving the user logged in.
@@ -154,7 +149,7 @@ extension AuthenticationManager{
 
     
 
-    //Function to reser password
+    //Function to reset password
     func resetPassword (email: String) async throws {
         try await Auth.auth().sendPasswordReset(withEmail: email)
     }
@@ -178,7 +173,7 @@ extension AuthenticationManager{
     
 }
 
-// MARK: SIGN IN SSO
+// MARK: SIGN IN SSO (GOOGLE & APPLE)
 
 extension AuthenticationManager{
     
@@ -198,48 +193,7 @@ extension AuthenticationManager{
 
 }
 
-// MARK: SIGN IN ANONYMOUSLY
 
-extension AuthenticationManager{
-    @discardableResult
-    func signInAnonymous() async throws -> AuthDataResultModel {
-        let authDataResult = try await Auth.auth().signInAnonymously()
-        return AuthDataResultModel(user: authDataResult.user)
-    }
-    
-    
-    // Functions to link anonymously signed in user id with already signed in credentials (email/Password, google, apple accounts)
-    func linkEmail(email: String, password: String) async throws -> AuthDataResultModel {
-        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
-        
-        return try await linkCredential(credential: credential)
-    }
-    
-    func linkGoogle(tokens: GoogleSignInResultModel) async throws -> AuthDataResultModel {
-        let credential = GoogleAuthProvider.credential(withIDToken: tokens.idToken, accessToken: tokens.accessToken)
-        
-        return try await linkCredential(credential: credential)
-    }
-
-/*
-    func linkApple(tokens: SignInWithAppleResult) async throws -> AuthDataResultModel {
-        let credential = OAuthProvider.credential(withProviderID: AuthProvideroption.apple.rawValue, idToken: tokens.token, rawNonce: tokens.nonce)
-        
-        return try await linkCredential(credential: credential)
-    }
-*/
-    
-    private func linkCredential(credential: AuthCredential) async throws -> AuthDataResultModel {
-        guard let user = Auth.auth().currentUser else {
-            throw URLError(.badURL)
-        }
-        
-        let authDataResult = try await user.link(with: credential)
-        return AuthDataResultModel(user: authDataResult.user)
-    }
-    
-    
-}
     
 
 

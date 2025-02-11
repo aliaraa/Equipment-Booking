@@ -16,10 +16,10 @@ struct EquipmentListingView: View {
     @State private var navigateToCart = false // State to control cart navigation
 
     // Filtered Equipment List
-    var filteredEquipments: [Equipment] {
+    var filteredEquipments: [Tool] {
         viewModel.equipments.filter { equipment in
-            (selectedCategory == "All" || equipment.equipment_main_category == selectedCategory) &&
-            (searchText.isEmpty || equipment.equipment_name?.localizedCaseInsensitiveContains(searchText) == true)
+            (selectedCategory == "All" || equipment.category == selectedCategory) &&
+            (searchText.isEmpty || equipment.name.localizedCaseInsensitiveContains(searchText) == true)
         }
     }
 
@@ -34,8 +34,8 @@ struct EquipmentListingView: View {
 
                     Menu {
                         Button("All", action: { selectedCategory = "All" })
-                        Button("Construction Cranes", action: { selectedCategory = "Construction Cranes" })
-                        Button("Power Tools", action: { selectedCategory = "Power Tools" })
+                        Button("Construction", action: { selectedCategory = "Construction" })
+                        Button("Electrical", action: { selectedCategory = "Electrical" })
                     } label: {
                         HStack {
                             Text(selectedCategory)
@@ -55,7 +55,7 @@ struct EquipmentListingView: View {
                     ForEach(filteredEquipments) { equipment in
                         HStack(alignment: .top) {
                             // Equipment Image
-                            AsyncImage(url: URL(string: equipment.img_url ?? "")) { image in
+                            AsyncImage(url: URL(string: equipment.imageURL ?? "")) { image in
                                 image.resizable()
                                     .scaledToFit()
                                     .frame(width: 100, height: 100)
@@ -67,15 +67,15 @@ struct EquipmentListingView: View {
 
                             // Equipment Details
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(equipment.equipment_name ?? "n/a")
+                                Text(equipment.name)
                                     .font(.headline)
                                     .foregroundColor(.primary)
 
-                                Text(equipment.description ?? "No description available")
+                                Text(equipment.description)
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
 
-                                if equipment.availability_status == "available" {
+                                if equipment.status == "available" {
                                     Button(action: {
                                         addToCart(equipment: equipment)
                                     }) {
@@ -86,7 +86,7 @@ struct EquipmentListingView: View {
                                             .background(Color.gray.opacity(0.2))
                                             .cornerRadius(5)
                                     }
-                                } else if equipment.availability_status == "rented" {
+                                } else if equipment.status == "rented" {
                                     Text("Expected Return: yyyy-mm-dd")
                                         .font(.caption)
                                         .foregroundColor(.red)
@@ -147,7 +147,7 @@ struct EquipmentListingView: View {
     }
 
     // Function to Handle Adding to Cart
-    private func addToCart(equipment: Equipment) {
+    private func addToCart(equipment: Tool) {
         guard let authUser = try? AuthenticationManager.shared.getAuthenticatedUser() else { return }
 
         // Generate Booking ID
@@ -156,7 +156,7 @@ struct EquipmentListingView: View {
         // Create Rental Data
         let rental: [String: Any] = [
             "Date_out": Date(),
-            "rented_items": [equipment.equip_id],
+            "rented_items": [equipment.id],
             "expected_return_date": Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date(),
             "user_id": authUser.uid
         ]
@@ -169,7 +169,7 @@ struct EquipmentListingView: View {
             }
 
             // Update Equipment Status to "booked"
-            Firestore.firestore().collection("equipments").document(equipment.equip_id).updateData(["availability_status": "booked"]) { error in
+            Firestore.firestore().collection("equipments").document(equipment.id).updateData(["availability_status": "booked"]) { error in
                 if let error = error {
                     print("Error updating equipment status: \(error)")
                 }

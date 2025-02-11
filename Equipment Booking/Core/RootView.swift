@@ -15,7 +15,11 @@ struct RootView: View {
         ZStack {
             if authViewModel.isAuthenticated {
                 NavigationStack {
-                    EquipmentListingView()
+                    if #available(iOS 18.0, *) {
+                        TabsView()
+                    } else {
+                        // Fallback on earlier versions
+                    }
                 }
             } else {
                 NavigationStack {
@@ -25,20 +29,12 @@ struct RootView: View {
             }
         }
         .onAppear {
-            // Check authentication status on app launch
-            checkAuthenticationStatus()
+            authViewModel.checkAuthenticationStatus() //Check authentication on loading
+
         }
         .environmentObject(authViewModel) // Provide auth state globally
     }
 
-    private func checkAuthenticationStatus() {
-        do {
-            let _ = try AuthenticationManager.shared.getAuthenticatedUser()
-            authViewModel.isAuthenticated = true
-        } catch {
-            authViewModel.isAuthenticated = false
-        }
-    }
 }
 
 

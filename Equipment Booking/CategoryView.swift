@@ -8,18 +8,22 @@
 import SwiftUI
 
 struct CategoryView: View {
+    
     var category: String
     var title: String
-    @State private var tools = toolData
+//    @State private var tools = toolData
+    @StateObject private var dataManager = EquipmentDataManager() //Replace tools with dataManager.toolData
     @State private var searchText = ""
     @State private var isShowingResults = false
     
     var filteredTools: [Tool] {
-        tools.filter { tool in
-            (tool.category == category) &&
-            (searchText.isEmpty || tool.name.localizedCaseInsensitiveContains(searchText))
+      
+            //        tools.filter { tool in
+            dataManager.toolData.filter { tool in
+                (tool.category == category) &&
+                (searchText.isEmpty || tool.name.localizedCaseInsensitiveContains(searchText))
+            }
         }
-    }
     
     var body: some View {
         VStack {
@@ -43,7 +47,7 @@ struct CategoryView: View {
                 .disabled(searchText.isEmpty)
             }// Hstack
             
-            List(isShowingResults ? filteredTools : tools.filter{$0.category == category}) { tool in
+            List(isShowingResults ? filteredTools : dataManager.toolData.filter{$0.category == category}) { tool in
                 NavigationLink(destination: Equipment_Details(tool: tool)) {
                     HStack {
                         VStack(alignment: .leading) {
