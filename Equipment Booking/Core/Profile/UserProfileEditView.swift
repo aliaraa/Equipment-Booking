@@ -91,6 +91,7 @@ struct UserProfileEditView: View {
                 }
                 .onAppear { loadUserData() }
             }
+            .navigationBarBackButtonHidden(true)
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -117,6 +118,7 @@ struct UserProfileEditView: View {
         }
     }
 
+    
     // ✅ Track changes to enable Save button
     private func checkForChanges() {
         isSaveButtonActive = true

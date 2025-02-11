@@ -18,10 +18,10 @@ struct UserSettingsView: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack (spacing: 20){
                 if let user = viewModel.user {
                     // Profile Image & Name
-                    VStack(spacing: 10) {
+//                    VStack(spacing: 10) {
                         AsyncImage(url: URL(string: user.photoUrl ?? "")) { image in
                             image.resizable()
                                 .frame(width: 100, height: 100)
@@ -38,34 +38,62 @@ struct UserSettingsView: View {
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.black)
-                    }
+//                    }
 
                     Divider().padding(.vertical)
 
                     // Settings Options
                     VStack(spacing: 15) {
-                        SettingsMenuItem(icon: "key.fill", text: "Reset Password") {
-                            resetPassword(for: user.email)
-                        }
-
                         // ✅ Button to trigger navigation
                         SettingsMenuItem(icon: "pencil", text: "Update Profile") {
                             isShowingProfileEdit = true
                         }
-
-                        SettingsMenuItem(icon: "arrow.backward.square", text: "Sign Out", color: .red) {
-                            Task {
-                                do {
-                                    try AuthenticationManager.shared.signOut()
-                                    isShowingSignIn = true
-                                    presentationMode.wrappedValue.dismiss()
-                                } catch {
-                                    print("Sign-out failed: \(error.localizedDescription)")
-                                }
-                            }
+                        
+                        
+                        SettingsMenuItem(icon: "key.fill", text: "Reset Password") {
+                            resetPassword(for: user.email)
                         }
+                        
+
+
+//                        SettingsMenuItem(icon: "arrow.backward.square", text: "Sign Out", color: .red) {
+//                            Task {
+//                                do {
+//                                    try AuthenticationManager.shared.signOut()
+//                                    isShowingSignIn = true
+//                                    presentationMode.wrappedValue.dismiss()
+//                                } catch {
+//                                    print("Sign-out failed: \(error.localizedDescription)")
+//                                }
+//                            }
+//                        }
                     }
                     .padding(.horizontal, 20)
+                    
+                    Spacer()
+                    
+                    // Logout Button
+                    Button {
+                        Task {
+                            do {
+                                try AuthenticationManager.shared.signOut()
+                                isShowingSignIn = true // Navigate to sign-in
+                            } catch {
+                                print("Error during sign-out: \(error)")
+                            }
+                        }
+                    } label: {
+                        Text("Log out")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(height: 55)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.red)
+                            .cornerRadius(10)
+                            .shadow(radius: 5)
+                    }
+                    
+                    
                 } else {
                     ProgressView("Loading user settings...")
                         .task {
