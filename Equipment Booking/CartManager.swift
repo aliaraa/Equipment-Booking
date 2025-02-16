@@ -112,4 +112,21 @@ class CartManager: ObservableObject {
     func clearCart() {
         cartItems.removeAll()
     }
+    
+    func getUnavailableDates(for tool: Tool, quantity: Int) -> [Date] {
+        let bookedDates = bookings
+            .filter { $0.toolId == tool.id }
+            .flatMap { booking in
+                Calendar.current.generateDates(from: booking.startDate, to: booking.endDate)
+            }
+        
+        let dateCounts = Dictionary(bookedDates.map { ($0, 1) }, uniquingKeysWith: +)
+        
+        let unavailableDates = dateCounts
+            .filter { $0.value + quantity > tool.numberOfItems }
+            .map { $0.key }
+        
+        return unavailableDates
+    }
+    
 }

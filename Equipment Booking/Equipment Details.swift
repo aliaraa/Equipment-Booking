@@ -24,6 +24,7 @@ struct Equipment_Details: View {
         return false
     }
     
+    // Helper function to get next available date based on the current selection
     func handleDateSelection(_ date: Date) {
         if isPickingDate {
             selectPickupDate = date
@@ -39,6 +40,26 @@ struct Equipment_Details: View {
         isShowingDatePicker = false
     }
     
+    // Check if the date is available with the current quantity
+    func isDateAvailable(_ date: Date) -> Bool {
+        return !cartManager.getUnavailableDates(for: tool, quantity: quantity).contains(where: { Calendar.current.isDate($0, inSameDayAs: date) })
+    }
+    
+    // Function to check if the date is a weekend
+    func isWeekend(_ date: Date) -> Bool {
+        return Calendar.current.isDateInWeekend(date)
+    }
+    
+    // Function to find the next available date automatically
+    func findNextAvailableDate(from startDate: Date) -> Date {
+        var nextAvailableDate = startDate
+        // Loop through dates until a valid, non-weekend, available date is found
+        while !isDateAvailable(nextAvailableDate) || isWeekend(nextAvailableDate) {
+            nextAvailableDate = Calendar.current.date(byAdding: .day, value: 1, to: nextAvailableDate)!
+        }
+        return nextAvailableDate
+    }
+
     var body: some View {
         ZStack {
             VStack {
@@ -52,17 +73,16 @@ struct Equipment_Details: View {
                             .scaledToFit()
                             .frame(width: 200, height: 200)
                     } placeholder: {
-                        ProgressView()  // Laddningsindikator
+                        ProgressView()  // Loading indicator
                     }
                 } else {
-                    Image(systemName: "photo")  // Placeholder-bild
+                    Image(systemName: "photo")  // Placeholder image
                         .resizable()
                         .scaledToFit()
                         .frame(width: 200, height: 200)
                         .foregroundColor(.gray)
                 }
 
-                
                 VStack(alignment: .leading) {
                     Text("Description")
                         .font(.title2)
@@ -100,7 +120,6 @@ struct Equipment_Details: View {
                 Spacer()
                 
                 Button("Add to Cart") {
-                    // Här lägger vi till i kundvagnen men visar INTE felmeddelandet här
                     cartManager.addToCart(tool, quantity: quantity, pickupDate: selectPickupDate, returnDate: selectReturnDate!)
                     showConfirmationAlert = true
                 }
@@ -112,9 +131,7 @@ struct Equipment_Details: View {
                 Alert(
                     title: Text("Added to Cart"),
                     message: Text(cartManager.confirmationMessage ?? "\(tool.name) has been added to your cart"),
-                    dismissButton: .default(Text("OK"), action: {
-                        cartManager.confirmationMessage
-                    })
+                    dismissButton: .default(Text("OK"))
                 )
             }
             
@@ -129,6 +146,12 @@ struct Equipment_Details: View {
                     .background(Color.white)
                     .cornerRadius(10)
                     .shadow(radius: 10)
+                    .onChange(of: selectPickupDate) { newDate in
+                        // If selected date is unavailable or a weekend, find the next available date
+                        if !isDateAvailable(newDate) || isWeekend(newDate) {
+                            selectPickupDate = findNextAvailableDate(from: newDate)
+                        }
+                    }
                     
                     Button("Done") {
                         handleDateSelection(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
@@ -145,6 +168,8 @@ struct Equipment_Details: View {
         }
     }
 }
+
+
 
 let exampleTool = Tool(
     id: "LCE-CM-11",
