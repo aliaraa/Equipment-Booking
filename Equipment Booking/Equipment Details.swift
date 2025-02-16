@@ -16,6 +16,12 @@ struct Equipment_Details: View {
         formatter.timeStyle = .none
         return formatter
     }
+    
+    func isWeekend(_ date: Date) -> Bool {
+            let calendar = Calendar.current
+            let weekday = calendar.component(.weekday, from: date)
+            return weekday == 1 || weekday == 7 // Söndag = 1, Lördag = 7
+        }
 
     var isAddToCartEnabled: Bool {
         if let pickupDate = selectPickupDate, let returnDate = selectReturnDate {
