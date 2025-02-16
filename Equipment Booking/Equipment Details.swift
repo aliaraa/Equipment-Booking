@@ -8,7 +8,7 @@ struct Equipment_Details: View {
     @State private var isShowingDatePicker = false
     @State private var isPickingDate = true
     @State private var quantity: Int = 1
-    @State private var showConfirmation = false
+    @State private var showConfirmationAlert = false
     
     var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
@@ -18,7 +18,7 @@ struct Equipment_Details: View {
     }
     
     var isAddToCartEnabled: Bool {
-        if var returnDate = selectReturnDate {
+        if let returnDate = selectReturnDate {
             return selectPickupDate < returnDate
         }
         return false
@@ -27,7 +27,7 @@ struct Equipment_Details: View {
     func handleDateSelection(_ date: Date) {
         if isPickingDate {
             selectPickupDate = date
-            if var returnDate = selectReturnDate, returnDate < selectPickupDate {
+            if let returnDate = selectReturnDate, returnDate < selectPickupDate {
                 selectReturnDate = selectPickupDate
             }
         } else {
@@ -46,140 +46,84 @@ struct Equipment_Details: View {
                     .font(.largeTitle)
                     .padding()
                 
-                Image(systemName: "hammer.fill")
-                    .frame(width: 400.0, height: 300.0)
-                    .imageScale(.large)
-                    .foregroundStyle(.tint)
-                    .background(Color.black)
+                if let imageUrlString = tool.imageURL, let imageUrl = URL(string: imageUrlString) {
+                    AsyncImage(url: imageUrl) { image in
+                        image.resizable()
+                            .scaledToFit()
+                            .frame(width: 200, height: 200)
+                    } placeholder: {
+                        ProgressView()  // Laddningsindikator
+                    }
+                } else {
+                    Image(systemName: "photo")  // Placeholder-bild
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 200, height: 200)
+                        .foregroundColor(.gray)
+                }
+
+                
+                VStack(alignment: .leading) {
+                    Text("Description")
+                        .font(.title2)
+                    Text(tool.description)
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                    Text("Price per day: \(tool.price, specifier: "%.2f") SEK")
+                        .font(.headline)
+                        .foregroundColor(.red)
+                }
+                .padding()
                 
                 HStack {
-                    VStack(alignment: .leading) {
-                        Text("Description")
-                            .font(.title)
-                        Text(tool.description)
-                            .padding(.trailing)
-                            .font(.subheadline)
-                            .foregroundColor(Color.gray)
-                        Text("Price per day: \(tool.price) SEK")
-                            .font(.headline)
-                            .foregroundColor(Color.red)
-                            .padding([.top, .bottom, .trailing])
+                    Button("Pick Pickup Date") {
+                        isPickingDate = true
+                        isShowingDatePicker.toggle()
                     }
-                    .padding(.leading)
+                    .buttonStyle(.borderedProminent)
                     
                     Spacer()
-                    VStack {
-                        HStack {
-                            Button(action: {
-                                if quantity > 1 {
-                                    quantity -= 1
-                                }
-                            }) {
-                                Image(systemName: "minus")
-                                    .frame(width: 30, height: 30)
-                                    .foregroundColor(.white)
-                                    .background(Color.blue)
-                                    .clipShape(Circle())
-                            }
-                            
-                            Text("\(quantity)")
-                                .font(.title3)
-                                .padding(10)
-                            
-                            Button(action: {
-                                quantity += 1
-                            }) {
-                                Image(systemName: "plus")
-                                    .frame(width: 30, height: 30)
-                                    .foregroundColor(.white)
-                                    .background(Color.blue)
-                                    .clipShape(Circle())
-                            }
-                        }
-                    }.padding(.trailing)
+                    Text(dateFormatter.string(from: selectPickupDate))
                 }
                 
-                VStack {
-                    HStack {
-                        Button("Pick Pickup Date") {
-                            isPickingDate = true
-                            isShowingDatePicker.toggle()
-                        }
-                        .padding(10)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        
-                        Spacer()
-                        Text(dateFormatter.string(from: selectPickupDate))
-                            .padding(.horizontal)
-                            .font(.subheadline)
-                            .foregroundColor(.black)
+                HStack {
+                    Button("Pick Return Date") {
+                        isPickingDate = false
+                        isShowingDatePicker.toggle()
                     }
+                    .buttonStyle(.borderedProminent)
                     
-                    HStack {
-                        Button("Pick Return Date") {
-                            isPickingDate = false
-                            isShowingDatePicker.toggle()
-                        }
-                        .padding(10)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        
-                        Spacer()
-                        if var returnDate = selectReturnDate {
-                            Text(dateFormatter.string(from: returnDate))
-                                .padding(.horizontal)
-                                .font(.subheadline)
-                                .foregroundColor(.black)
-                        } else {
-                            Text("Select Date")
-                                .italic()
-                                .foregroundColor(.gray)
-                                .padding(.trailing)
-                        }
-                    }
+                    Spacer()
+                    Text(selectReturnDate != nil ? dateFormatter.string(from: selectReturnDate!) : "Select Date")
                 }
-                .padding(.leading)
                 
                 Spacer()
                 
-                Button(action: {
-                    if var returnDate = selectReturnDate {
-                        cartManager.addToCart(tool, quantity: quantity)
-                        showConfirmation = true
-                    }
-                }) {
-                    Text("Add to Cart")
-                        .frame(width: 200.0, height: 50.0)
-                        .background(isAddToCartEnabled ? Color.green : Color.gray.opacity(0.5))
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+                Button("Add to Cart") {
+                    // Här lägger vi till i kundvagnen men visar INTE felmeddelandet här
+                    cartManager.addToCart(tool, quantity: quantity, pickupDate: selectPickupDate, returnDate: selectReturnDate!)
+                    showConfirmationAlert = true
                 }
+                .buttonStyle(.borderedProminent)
                 .disabled(!isAddToCartEnabled)
-                .padding()
-                .alert(isPresented: $showConfirmation) {
-                    Alert(
-                        title: Text("Added to Cart"),
-                        message: Text("\(quantity) x \(tool.name) added to your cart."),
-                        dismissButton: .default(Text("OK"))
-                    )
-                }
             }
             .padding()
+            .alert(isPresented: $showConfirmationAlert) {
+                Alert(
+                    title: Text("Added to Cart"),
+                    message: Text(cartManager.confirmationMessage ?? "\(tool.name) has been added to your cart"),
+                    dismissButton: .default(Text("OK"), action: {
+                        cartManager.confirmationMessage
+                    })
+                )
+            }
             
             if isShowingDatePicker {
                 VStack {
-                    DatePicker(
-                        "Select Date",
-                        selection: isPickingDate ? $selectPickupDate : Binding(
-                            get: {selectReturnDate ?? Date()},
-                            set: {selectReturnDate = $0}
-                        ),
-                        in: Date.now...,
-                        displayedComponents: .date
-                    )
+                    DatePicker("Select Date", selection: isPickingDate ? $selectPickupDate : Binding(
+                        get: { selectReturnDate ?? Date() },
+                        set: { selectReturnDate = $0 }
+                    ), in: Date.now..., displayedComponents: .date)
                     .datePickerStyle(GraphicalDatePickerStyle())
                     .padding()
                     .background(Color.white)
@@ -202,7 +146,6 @@ struct Equipment_Details: View {
     }
 }
 
-
 let exampleTool = Tool(
     id: "LCE-CM-11",
     name: "Petrol-powered mobile cutters, plates 400-500mm",
@@ -218,15 +161,6 @@ let exampleTool = Tool(
     numberOfItems: 1,
     isAvailable: true
 )
-    
-    
-//let exampleTool = Tool(
-//        name: "Hammer",
-//        description: "A sturdy hammer for construction work.",
-//        price: 15,
-//        isAvailable: true,
-//        category: "Construction")
-
 
 #Preview {
     Equipment_Details(tool: exampleTool)

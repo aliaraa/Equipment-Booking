@@ -48,4 +48,6 @@ final class EquipmentManager: ObservableObject {
         let id = "\(firstName.prefix(1))\(lastName.prefix(2).uppercased())\(dateStr)"
         return id
     }
+    
+    
 }

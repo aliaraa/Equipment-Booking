@@ -11,4 +11,6 @@ struct CartItem: Identifiable {
     let id = UUID()
     let tool: Tool
     var quantity: Int
+    var pickupDate: Date
+    var returnDate: Date
 }
