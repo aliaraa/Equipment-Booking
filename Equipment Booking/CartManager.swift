@@ -20,10 +20,7 @@ class CartManager: ObservableObject {
         
         // Kontrollera om verktyget är tillgängligt under valt datum
         if !isToolAvailable(tool, from: pickupDate, to: returnDate, quantity: quantity) {
-            let nextAvailableDate = getNextAvailableDate(for: tool)
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateStyle = .medium
-            unavailableMessage = "This tool is unavailable during the selected dates. It will be available from \(dateFormatter.string(from: nextAvailableDate))."
+            unavailableMessage = "This tool is unavailable during the selected dates."
             return
         }
 
@@ -72,20 +69,16 @@ class CartManager: ObservableObject {
 
     // Kontrollera om verktyget är tillgängligt för vald period
     func isToolAvailable(_ tool: Tool, from startDate: Date, to endDate: Date, quantity: Int) -> Bool {
+        // Kontrollera om någon av datumen är helg
+        if isWeekend(startDate) || isWeekend(endDate) {
+            return false
+        }
+
         let totalBooked = bookings
             .filter { $0.toolId == tool.id && !($0.endDate < startDate || $0.startDate > endDate) }
             .reduce(0) { $0 + $1.quantity }
-        
-        return (totalBooked + quantity) <= tool.numberOfItems
-    }
 
-    // Hämta nästa lediga datum
-    func getNextAvailableDate(for tool: Tool) -> Date {
-        let sortedBookings = bookings
-            .filter { $0.toolId == tool.id }
-            .sorted { $0.endDate < $1.endDate }
-        
-        return sortedBookings.last?.endDate ?? Date()
+        return (totalBooked + quantity) <= tool.numberOfItems
     }
 
     // Återställ felmeddelande
@@ -129,4 +122,8 @@ class CartManager: ObservableObject {
         return unavailableDates
     }
     
+    // Funktion för att kontrollera om ett datum är en helg
+    func isWeekend(_ date: Date) -> Bool {
+        return Calendar.current.isDateInWeekend(date)
+    }
 }
