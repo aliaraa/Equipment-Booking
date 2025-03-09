@@ -1,0 +1,1344 @@
+// Content from: ../Equipment Booking/CartItem.swift
+
+//
+//  CartItem.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2025-01-05.
+//
+
+import Foundation
+
+struct CartItem: Identifiable {
+    let id = UUID()
+    let tool: Tool
+    var quantity: Int
+}
+
+
+// Content from: ../Equipment Booking/CartManager.swift
+
+//
+//  Untitled.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2025-01-05.
+//
+import SwiftUI
+
+class CartManager: ObservableObject {
+    @Published var cartItems: [CartItem] = []
+    
+    func addToCart(_ tool: Tool, quantity: Int) {
+        if let index = cartItems.firstIndex(where: { $0.tool.id == tool.id }) {
+            // Om verktyget redan finns i kundvagnen, öka kvantiteten
+            cartItems[index].quantity += quantity
+        } else {
+            // Lägg till nytt verktyg i kundvagnen
+            cartItems.append(CartItem(tool: tool, quantity: quantity))
+        }
+    }
+    
+    func removeFromCart(at offsets: IndexSet) {
+        cartItems.remove(atOffsets: offsets)
+    }
+    
+    func updateQuantity(for tool: Tool, quantity: Int) {
+        if let index = cartItems.firstIndex(where: { $0.tool.id == tool.id }) {
+            cartItems[index].quantity = quantity
+            if cartItems[index].quantity <= 0 {
+                        cartItems.remove(at: index)
+                    }
+        }
+    }
+}
+
+
+
+// Content from: ../Equipment Booking/CartView.swift
+
+//
+//  CartView.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2025-01-05.
+//
+
+import SwiftUI
+
+struct CartView: View {
+    @EnvironmentObject var cartManager: CartManager
+
+    var body: some View {
+        List {
+            ForEach(cartManager.cartItems) { cartItem in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(cartItem.tool.name)
+                            .font(.headline)
+                        Text("Price: \(cartItem.tool.price) SEK")
+                            .foregroundColor(Color.gray)
+                    }
+                    Spacer()
+                    HStack {
+                        Button(action: {
+                            cartManager.updateQuantity(for: cartItem.tool, quantity: cartItem.quantity - 1)
+                        }) {
+                            Image(systemName: "minus.circle")
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal, 8)
+                        
+                        Text("\(cartItem.quantity)")
+                            .padding(.horizontal)
+                        Button(action: {
+                            cartManager.updateQuantity(for: cartItem.tool, quantity: cartItem.quantity + 1)
+                        }) {
+                            Image(systemName: "plus.circle")
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal, 8)
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    
+                }
+            }
+            .onDelete { offsets in
+                cartManager.removeFromCart(at: offsets)
+            }
+        }
+        .navigationTitle("Cart")
+    }
+}
+
+
+#Preview {
+    Equipment_Details(tool: exampleTool)
+        .environmentObject(CartManager()) 
+}
+
+
+
+
+
+// Content from: ../Equipment Booking/CategoriesView.swift
+
+import SwiftUI
+
+struct CategoriesView: View {
+    @State var columns = [
+        GridItem(.flexible(), spacing: 16),
+        GridItem(.flexible(), spacing: 16)
+    ]
+    @State var categoryInput = ""
+    @State var categories: [Category] = []
+    @State var descriptionInput = ""
+    
+    var body: some View {
+        VStack {
+           
+            HStack {
+                VStack {
+                    TextField("Category", text: $categoryInput)
+                        .border(Color.black)
+                        .padding()
+                        .foregroundColor(Color.black)
+                        .cornerRadius(10)
+                    
+                    TextField("Description", text: $descriptionInput)
+                        .border(Color.black)
+                        .padding()
+                        .foregroundColor(Color.black)
+                        .cornerRadius(10)
+                }
+                Button(action: {
+                    addCategory()
+                }) {
+                    Text("Add")
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+            }
+            ScrollView {
+                LazyVGrid(columns: columns) {
+                    ForEach(categories) { category in
+                        CategoryBoxView(category: category)
+                            .frame(height: 200)
+                    }
+                }
+                .padding()
+            }
+        }
+    }
+    
+    func addCategory() {
+        guard !categoryInput.isEmpty, !descriptionInput.isEmpty else { return }
+        
+        let newCategory = Category(title: categoryInput, description: descriptionInput)
+        categories.append(newCategory)
+        
+        categoryInput = ""
+        descriptionInput = ""
+    }
+}
+
+#Preview {
+    CategoriesView()
+        .environmentObject(CartManager())
+}
+
+
+// Content from: ../Equipment Booking/CategoryBoxView.swift
+
+//
+//  CategoryBoxView.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2024-12-16.
+//
+
+import SwiftUI
+
+struct CategoryBoxView: View {
+    @State var category: Category
+    var body: some View {
+        
+            VStack {
+                Text(category.title)
+                    .font(.title)
+                    .multilineTextAlignment(.center)
+                Spacer()
+                Text(category.description)
+                    .font(.subheadline)
+                    .foregroundColor(Color.gray)
+                    .multilineTextAlignment(.center)
+                Spacer()
+            }
+            .padding()
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: 200)
+            .border(Color.black)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.black, lineWidth: 1)
+            )
+    }
+}
+
+#Preview {
+    CategoryBoxView(category: Category(title: "Books", description: "Find your favorite books"))
+        .environmentObject(CartManager())
+}
+
+
+// Content from: ../Equipment Booking/CategoryClass.swift
+
+//
+//  CategoryClass.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2024-12-16.
+//
+
+import Foundation
+
+class Category: Identifiable {
+    var id = UUID()
+    let title: String
+    let description: String
+    
+    init(title: String, description: String) {
+        self.id = UUID()
+        self.title = title
+        self.description = description
+    }
+}
+
+
+// Content from: ../Equipment Booking/CategoryData.swift
+
+//
+//  CategoryData.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2024-12-16.
+//
+
+import Foundation
+
+let categories = [
+        Category(title: "Books", description: "Find your favorite books"),
+        Category(title: "Laptops", description: "Reserve high-end laptops"),
+        Category(title: "Cameras", description: "Capture moments with cameras")
+    ]
+
+
+// Content from: ../Equipment Booking/CategoryView.swift
+
+//
+//  ConstructionView.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2025-01-05.
+//
+
+import SwiftUI
+
+struct CategoryView: View {
+    
+    var category: String
+    var title: String
+//    @State private var tools = toolData
+    @StateObject private var dataManager = EquipmentDataManager() //Replace tools with dataManager.toolData
+    @State private var searchText = ""
+    @State private var isShowingResults = false
+    
+    var filteredTools: [Tool] {
+      
+            //        tools.filter { tool in
+            dataManager.toolData.filter { tool in
+                (tool.category == category) &&
+                (searchText.isEmpty || tool.name.localizedCaseInsensitiveContains(searchText))
+            }
+        }
+    
+    var body: some View {
+        VStack {
+            HStack {
+                TextField("Search in \(title)", text: $searchText)
+                    .padding(.leading)
+                    .frame(maxWidth: .infinity, maxHeight: 50)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+                    .padding([.top, .leading])
+                
+                Button(action: {isShowingResults.toggle()}) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: 40, maxHeight: 50)
+                        .background(searchText.isEmpty ? Color.gray : Color.blue)
+                        .cornerRadius(8)
+                        .padding([.top, .trailing])
+                }
+                .disabled(searchText.isEmpty)
+            }// Hstack
+            
+            List(isShowingResults ? filteredTools : dataManager.toolData.filter{$0.category == category}) { tool in
+                NavigationLink(destination: Equipment_Details(tool: tool)) {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(tool.name)
+                                .font(.headline)
+                            Text(tool.description)
+                                .font(.subheadline)
+                                .foregroundColor(Color.gray)
+                            Text("Price Per Day: \(tool.price)$")
+                                .foregroundColor(Color.red)
+                                .font(.caption)
+                        }
+                        Spacer()
+                        if tool.isAvailable {
+                            Text("Available")
+                                .font(.caption)
+                                .foregroundColor(Color.green)
+                        } else {
+                            Text("Unavailable")
+                                .font(.caption)
+                                .foregroundColor(Color.red)
+                        }
+                    } //Hstack
+                } //Navigationlink
+            } //List
+            .onChange(of: searchText) { newValue in
+                if newValue.isEmpty {
+                    isShowingResults = false
+                }
+            }
+            Spacer()
+        } //Vstack
+        .navigationTitle("\(title) Tools")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("\(title) Tools")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+            }
+        }
+    }
+}
+
+#Preview {
+    CategoryView(category: "Construction", title: "Construction")
+        .environmentObject(CartManager())
+}
+
+
+// Content from: ../Equipment Booking/ConstructionView.swift
+
+//
+//  ConstructionView.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2025-01-05.
+//
+
+import SwiftUI
+
+struct ConstructionView: View {
+    var body: some View {
+        CategoryView(category: "Construction", title: "Construction")
+    }
+}
+
+#Preview {
+    ConstructionView()
+        .environmentObject(CartManager())
+}
+
+
+// Content from: ../Equipment Booking/ContentView.swift
+
+//
+//  ContentView.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2024-12-01.
+//
+
+import SwiftUI
+
+struct ContentView: View {
+    var body: some View {
+        VStack {
+            Image(systemName: "globe")
+                .imageScale(.large)
+                .foregroundStyle(.tint)
+            Text("Hello")
+        }
+      
+    }
+}
+
+#Preview {
+    ContentView()
+        .environmentObject(CartManager())
+}
+
+
+
+
+
+// Content from: ../Equipment Booking/ElectricalView.swift
+
+//
+//  ElectricalView.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2025-01-05.
+//
+
+import SwiftUI
+
+struct ElectricalView: View {
+    var body: some View {
+        CategoryView(category: "Electrical", title: "Electrical")
+    }
+}
+
+#Preview {
+    ElectricalView()
+        .environmentObject(CartManager())
+}
+
+
+// Content from: ../Equipment Booking/Equipment Details.swift
+
+import SwiftUI
+
+struct Equipment_Details: View {
+    var tool: Tool
+    @EnvironmentObject var cartManager: CartManager
+    @State private var selectPickupDate: Date = Date()
+    @State private var selectReturnDate: Date? = nil
+    @State private var isShowingDatePicker = false
+    @State private var isPickingDate = true
+    @State private var quantity: Int = 1
+    @State private var showConfirmation = false
+    
+    var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }
+    
+    var isAddToCartEnabled: Bool {
+        if var returnDate = selectReturnDate {
+            return selectPickupDate < returnDate
+        }
+        return false
+    }
+    
+    func handleDateSelection(_ date: Date) {
+        if isPickingDate {
+            selectPickupDate = date
+            if var returnDate = selectReturnDate, returnDate < selectPickupDate {
+                selectReturnDate = selectPickupDate
+            }
+        } else {
+            selectReturnDate = date
+            if selectPickupDate > date {
+                selectPickupDate = date
+            }
+        }
+        isShowingDatePicker = false
+    }
+    
+    var body: some View {
+        ZStack {
+            VStack {
+                Text(tool.name)
+                    .font(.largeTitle)
+                    .padding()
+                
+                Image(systemName: "hammer.fill")
+                    .frame(width: 400.0, height: 300.0)
+                    .imageScale(.large)
+                    .foregroundStyle(.tint)
+                    .background(Color.black)
+                
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Description")
+                            .font(.title)
+                        Text(tool.description)
+                            .padding(.trailing)
+                            .font(.subheadline)
+                            .foregroundColor(Color.gray)
+                        Text("Price per day: \(tool.price) SEK")
+                            .font(.headline)
+                            .foregroundColor(Color.red)
+                            .padding([.top, .bottom, .trailing])
+                    }
+                    .padding(.leading)
+                    
+                    Spacer()
+                    VStack {
+                        HStack {
+                            Button(action: {
+                                if quantity > 1 {
+                                    quantity -= 1
+                                }
+                            }) {
+                                Image(systemName: "minus")
+                                    .frame(width: 30, height: 30)
+                                    .foregroundColor(.white)
+                                    .background(Color.blue)
+                                    .clipShape(Circle())
+                            }
+                            
+                            Text("\(quantity)")
+                                .font(.title3)
+                                .padding(10)
+                            
+                            Button(action: {
+                                quantity += 1
+                            }) {
+                                Image(systemName: "plus")
+                                    .frame(width: 30, height: 30)
+                                    .foregroundColor(.white)
+                                    .background(Color.blue)
+                                    .clipShape(Circle())
+                            }
+                        }
+                    }.padding(.trailing)
+                }
+                
+                VStack {
+                    HStack {
+                        Button("Pick Pickup Date") {
+                            isPickingDate = true
+                            isShowingDatePicker.toggle()
+                        }
+                        .padding(10)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        
+                        Spacer()
+                        Text(dateFormatter.string(from: selectPickupDate))
+                            .padding(.horizontal)
+                            .font(.subheadline)
+                            .foregroundColor(.black)
+                    }
+                    
+                    HStack {
+                        Button("Pick Return Date") {
+                            isPickingDate = false
+                            isShowingDatePicker.toggle()
+                        }
+                        .padding(10)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        
+                        Spacer()
+                        if var returnDate = selectReturnDate {
+                            Text(dateFormatter.string(from: returnDate))
+                                .padding(.horizontal)
+                                .font(.subheadline)
+                                .foregroundColor(.black)
+                        } else {
+                            Text("Select Date")
+                                .italic()
+                                .foregroundColor(.gray)
+                                .padding(.trailing)
+                        }
+                    }
+                }
+                .padding(.leading)
+                
+                Spacer()
+                
+                Button(action: {
+                    if var returnDate = selectReturnDate {
+                        cartManager.addToCart(tool, quantity: quantity)
+                        showConfirmation = true
+                    }
+                }) {
+                    Text("Add to Cart")
+                        .frame(width: 200.0, height: 50.0)
+                        .background(isAddToCartEnabled ? Color.green : Color.gray.opacity(0.5))
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+                .disabled(!isAddToCartEnabled)
+                .padding()
+                .alert(isPresented: $showConfirmation) {
+                    Alert(
+                        title: Text("Added to Cart"),
+                        message: Text("\(quantity) x \(tool.name) added to your cart."),
+                        dismissButton: .default(Text("OK"))
+                    )
+                }
+            }
+            .padding()
+            
+            if isShowingDatePicker {
+                VStack {
+                    DatePicker(
+                        "Select Date",
+                        selection: isPickingDate ? $selectPickupDate : Binding(
+                            get: {selectReturnDate ?? Date()},
+                            set: {selectReturnDate = $0}
+                        ),
+                        in: Date.now...,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(GraphicalDatePickerStyle())
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .shadow(radius: 10)
+                    
+                    Button("Done") {
+                        handleDateSelection(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
+                    }
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .padding(.horizontal, 20.0)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black.opacity(0.5))
+            }
+        }
+    }
+}
+
+
+let exampleTool = Tool(
+    id: "LCE-CM-11",
+    name: "Petrol-powered mobile cutters, plates 400-500mm",
+    category: "Construction",
+    mainCategory: "Light construction equipment",
+    subCategory: "Cutting machines",
+    description: "The mobile petrol cutter with a 500 mm blade is used for cutting asphalt or concrete surfaces using diamond blades.",
+    manufacturer: "Ntc",
+    imageName: "B546r2T9p0R0M1y6l8j7q4K2a7b6K0M5.webp",
+    imageURL: "https://storage.googleapis.com/equipment-management-db.firebasestorage.app/Equipment_imgs/B546r2T9p0R0M1y6l8j7q4K2a7b6K0M5.webp",
+    status: "available",
+    price: 100.0,
+    numberOfItems: 1,
+    isAvailable: true
+)
+    
+    
+//let exampleTool = Tool(
+//        name: "Hammer",
+//        description: "A sturdy hammer for construction work.",
+//        price: 15,
+//        isAvailable: true,
+//        category: "Construction")
+
+
+#Preview {
+    Equipment_Details(tool: exampleTool)
+        .environmentObject(CartManager())
+}
+
+
+// Content from: ../Equipment Booking/Equipment_BookingApp.swift
+
+//
+//  Equipment_BookingApp.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2024-11-24.
+//
+
+import SwiftUI
+import FirebaseCore
+
+@main
+struct Equipment_BookingApp: App {
+    @StateObject private var cartManager = CartManager()
+    
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    
+    var body: some Scene {
+        WindowGroup {
+            if #available(iOS 18.0, *) {
+                RootView() // Landing page on app start up
+//                TabsView()
+                //            ContentView()
+                    .environmentObject(cartManager)
+            } else {
+                // Fallback on earlier versions
+            }
+        }
+    }
+}
+ 
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        FirebaseApp.configure()  // call config
+ 
+        if FirebaseApp.app() == nil
+        {
+            print("Firebase initialisation failed!")
+        } else {
+            if let apiKey = FirebaseApp.app()?.options.apiKey {
+                print("Firebase API Key Used: \(apiKey)")
+            }
+        }
+        return true
+ 
+    }
+}
+
+
+
+
+
+
+// Content from: ../Equipment Booking/EquipmentList.swift
+
+//
+//  EquipmentList.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2024-11-30.
+//
+
+
+// We need to use FB database
+
+import Foundation
+import Firebase
+
+//Get toolData from fb
+
+@MainActor
+final class EquipmentDataManager: ObservableObject {
+    @Published var toolData: [Tool] = []  // Holds all equipment data
+    private let equipmentViewModel = EquipmentListingViewModel()
+    
+    init() {
+        fetchEquipmentFromFirebase()
+    }
+    
+    // Fetches equipment from Firebase and stores it in `toolData`.
+    func fetchEquipmentFromFirebase() {
+        Task {
+            do {
+                try await equipmentViewModel.fetchEquipments()
+                DispatchQueue.main.async {
+                    self.toolData = self.equipmentViewModel.equipments
+                }
+            } catch {
+                print(" Error fetching equipment from Firebase: \(error.localizedDescription)")
+            }
+        }
+    }
+}
+
+
+
+//let toolData: [Tool] = [
+//    Tool(name: "Drill Machine",
+//         description: "High-power drill machine",
+//         price: 10,
+//         isAvailable: true,
+//         category: "Industrial"),
+//    Tool(name: "Hammer",
+//         description: "Heavy-duty hammer",
+//         price: 4,
+//         isAvailable: true,
+//         category: "Electrical"),
+//    Tool(name: "Screwdriver Set",
+//         description: "Set of precision screwdrivers",
+//         price: 6,
+//         isAvailable: false,
+//         category: "Construction")
+//]
+
+
+// Content from: ../Equipment Booking/Equipments.swift
+
+//
+//  Equipments.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2024-11-30.
+//
+
+import Foundation
+
+// Equipment item fetched from Firebase.
+struct Tool: Identifiable {
+    let id: String  // Equipment ID from Firebase
+    let name: String
+    let category: String
+    let mainCategory: String
+    let subCategory: String
+    let description: String
+    let manufacturer: String
+    let imageName: String?
+    let imageURL: String?
+    let status: String
+    let price: Double
+    let numberOfItems: Int
+    let isAvailable: Bool
+    
+    // Initializes a `Tool` object from Firebase data.
+    init(from data: [String: Any]) {
+        self.id = data["equip_id"] as? String ?? UUID().uuidString
+        self.name = data["name"] as? String ?? "Unknown Equipment"
+        self.category = data["category"] as? String ?? "Uncategorized"
+        self.mainCategory = data["equipment_main_category"] as? String ?? "Unknown Main Category"
+        self.subCategory = data["equipment_sub_category"] as? String ?? "Unknown Sub Category"
+        self.description = data["description"] as? String ?? "No description available"
+        self.manufacturer = data["manufacturer"] as? String ?? "Unknown Manufacturer"
+        self.imageName = data["img_name"] as? String
+        self.imageURL = data["img_url"] as? String
+        self.status = data["status"] as? String ?? "unknown"
+        self.price = data["price"] as? Double ?? 0.0
+        self.numberOfItems = data["number_of_items"] as? Int ?? 0
+        self.isAvailable = data["available"] as? Bool ?? false
+    }
+    
+    // **New initializer for manual testing**
+        init(
+            id: String = UUID().uuidString,
+            name: String,
+            category: String,
+            mainCategory: String,
+            subCategory: String,
+            description: String,
+            manufacturer: String,
+            imageName: String? = nil,
+            imageURL: String? = nil,
+            status: String,
+            price: Double,
+            numberOfItems: Int,
+            isAvailable: Bool
+        ) {
+            self.id = id
+            self.name = name
+            self.category = category
+            self.mainCategory = mainCategory
+            self.subCategory = subCategory
+            self.description = description
+            self.manufacturer = manufacturer
+            self.imageName = imageName
+            self.imageURL = imageURL
+            self.status = status
+            self.price = price
+            self.numberOfItems = numberOfItems
+            self.isAvailable = isAvailable
+        }
+    
+}
+
+
+
+//struct Tool: Identifiable{
+//    var id = UUID()
+//    var name: String
+//    var description: String
+//    var price: Int
+//    var isAvailable: Bool
+//    var category: String
+//}
+
+
+// Content from: ../Equipment Booking/IndustrialView.swift
+
+//
+//  IndustrialView.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2025-01-05.
+//
+
+import SwiftUI
+
+struct IndustrialView: View {
+    var body: some View {
+        CategoryView(category: "Industrial", title: "Industrial")
+    }
+}
+
+#Preview {
+    IndustrialView()
+        .environmentObject(CartManager())
+}
+
+
+// Content from: ../Equipment Booking/ProfileMenuView.swift
+
+//
+//  ProfileMenuView.swift
+//  Equipment Booking
+//
+//  Created by XXXXXXXX on 12/5/24.
+//
+
+import SwiftUI
+
+struct ProfileMenuView: View {
+    @Binding var isMenuOpen: Bool // Track the menu visibility from the parent
+    
+    var body: some View {
+        VStack {
+            // Spacer to push everything down
+            Spacer()
+                .frame(height: 30) //
+            
+            // Back Button and Profile Image
+            HStack {
+                Button(action: {
+                    withAnimation {
+                        isMenuOpen = false // Close the menu
+                    }
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.title)
+                        .foregroundColor(.blue)
+                        .padding(.leading, 20)
+                }
+                Spacer()
+                
+                // Profile Image (Centered)
+                Image(systemName: "person.crop.circle")
+                    .resizable()
+                    .frame(width: 100, height: 100)
+                    .foregroundColor(.gray)
+                    // .padding(.top, 5) // Add extra padding to space it out more
+                
+                Spacer()
+                
+                // Shopping Cart Icon
+                Button(action: {
+                    // Action for shopping cart icon )
+                    print("Shopping Cart tapped")
+                }) {
+                    Image(systemName: "cart")
+                        .font(.title)
+                        .foregroundColor(.blue)
+                        .padding(.trailing, 20) // Align with the chevron button
+                }
+                        
+                
+            }
+            
+            
+            //.padding(.bottom, 30)
+            
+            
+            // Menu List with Dividers and Raised Effect
+            VStack(spacing: 5) { // Use 0 spacing to create clean divider placement
+                MenuItem(icon: "person", text: "Account", action: {})
+                // Divider()
+                MenuItem(icon: "bell", text: "Notifications", action: {})
+                //Divider()
+                MenuItem(icon: "gearshape", text: "Settings", action: {})
+                //Divider()
+                MenuItem(icon: "questionmark.circle", text: "Support", action: {})
+            }
+            .padding(.top, 30)
+            .padding(.horizontal, 10)
+            
+            
+            
+            // Sign Out Button
+            Button(action: {
+                withAnimation {
+                    isMenuOpen = false // Close the menu
+                }
+                print("Signed out and navigated back to home.")
+            }) {
+                HStack {
+                    Image(systemName: "arrow.backward.square")
+                        .font(.headline)
+                    Text("Sign Out")
+                        .fontWeight(.bold)
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(height: 55)
+                .frame(maxWidth: .infinity)
+                .background(Color.red)
+                .cornerRadius(10)
+                .padding(.horizontal)
+            }
+            Spacer()
+            
+        }
+    }
+}
+
+// Reusable Menu Item View with Action Support
+struct MenuItem: View {
+    let icon: String
+    let text: String
+    let action: () -> Void // Closure for button action
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.headline)
+                    .foregroundColor(.blue)
+                Text(text)
+                    .font(.headline)
+                    .foregroundColor(.black)
+                Spacer()
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.white)
+                    .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2) // Subtle shadow for raised effect
+                            ) // Subtle shadow for raised effect
+            
+        }
+        .padding(.horizontal, 10) // Add horizontal padding to ensure items don't touch the screen edge
+    }
+}
+
+#Preview {
+    // Creating a Binding to pass into the ProfileMenuView
+    ProfileMenuView(isMenuOpen: .constant(true)) // Use .constant(true) for the preview
+}
+
+
+// Content from: ../Equipment Booking/Search.swift
+
+//
+//  Search.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2024-12-01.
+//
+
+import SwiftUI
+import Firebase
+import FirebaseFirestore
+
+struct Search: View {
+
+
+    @StateObject private var dataManager = EquipmentDataManager() // get data from fb & replace tools by dataManager.toolData
+//    @State private var tools = dataManager.toolData
+    @State private var searchText = ""
+    @State private var isShowingResults = false
+    
+    var filteredTools: [Tool] {
+        if searchText.isEmpty{
+            return dataManager.toolData
+        } else {
+            return dataManager.toolData.filter{
+                $0.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+    
+    var body: some View {
+        if #available(iOS 16.0, *) {
+            NavigationStack{
+                VStack{
+                    HStack {
+                        TextField("Search...", text: $searchText)
+                            .frame(maxWidth: .infinity, maxHeight: 40)
+                            .padding(10)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(8)
+                            .padding([.top, .leading, .trailing])
+                        
+                        Button(action: {isShowingResults = true}) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.headline)
+                                .foregroundColor(Color.white)
+                                .frame(maxWidth: 40, maxHeight: 60)
+                                .background(searchText.isEmpty ? Color.gray : Color.blue)
+                                .cornerRadius(8)
+                                .padding([.top, .trailing])
+                        }
+                    }
+                    
+                    
+               
+                    NavigationLink(destination: ConstructionView()) {
+                        Text("Construction")
+                            .font(.title2)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .background(Color.orange)
+                            .cornerRadius(8)
+                            .padding([.top, .leading, .trailing])
+                    }
+                    
+                    NavigationLink(destination: IndustrialView()) {
+                        Text("Industrial")
+                            .font(.title2)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .background(Color.gray)
+                            .cornerRadius(8)
+                            .padding([.top, .leading, .trailing])
+                    }
+                        
+                    NavigationLink(destination: ElectricalView()) {
+                        Text("Electrical")
+                            .font(.title2)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .background(Color.yellow)
+                            .cornerRadius(8)
+                            .padding([.top, .leading, .trailing])
+                    }
+                    Spacer()
+                } //Vstack
+                .sheet(isPresented: $isShowingResults) {
+                    SearchResultsView(tools: filteredTools)
+                }
+            } //Navigation
+        }
+    }
+}
+
+#Preview {
+    Search()
+        .environmentObject(CartManager())
+}
+
+
+// Content from: ../Equipment Booking/SearchResultsView.swift
+
+//
+//  SearchResultsView.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2025-01-05.
+//
+
+import SwiftUI
+
+struct SearchResultsView: View {
+    
+    var tools: [Tool]
+    
+    var body: some View {
+        if #available(iOS 16.0, *) {
+            NavigationStack {
+                List(tools) { tool in
+                    VStack(alignment: .leading) {
+                        Text(tool.name)
+                            .font(.headline)
+                        Text(tool.description)
+                            .font(.subheadline)
+                            .foregroundColor(Color.gray)
+                        Text("Price per day: \(tool.price)$")
+                            .foregroundColor(Color.red)
+                            .font(.caption)
+                        if tool.isAvailable {
+                            Text("Available")
+                                .font(.caption)
+                                .foregroundColor(Color.green)
+                        } else {
+                            Text("Unavailable")
+                                .font(.caption)
+                                .foregroundColor(Color.red)
+                        }
+                    }
+                }
+                .navigationTitle("Search Results")
+                .navigationBarTitleDisplayMode(.inline)
+            }
+        }
+    }
+}
+
+#Preview {
+    Search()
+        .environmentObject(CartManager())
+}
+
+
+// Content from: ../Equipment Booking/TabsView.swift
+
+//
+//  TabsView.swift
+//  Equipment Booking
+//
+//  Created by YYYYYYYY on 2024-12-16.
+//
+
+import SwiftUI
+
+@available(iOS 18.0, *)
+struct TabsView: View {
+    @StateObject private var authViewModel = AuthenticationViewModel()
+    
+    var body: some View {
+        TabView {
+            Tab("Search", systemImage: "magnifyingglass") {
+                Search()
+            }
+            Tab("Cart", systemImage: "cart") {
+                CartView()
+            }
+            Tab("Status", systemImage: "person.crop.circle") {
+                if authViewModel.isAuthenticated {
+                    UserProfileView()
+                } else {
+                    UserAuthenticationView(showSignInView: .constant(false))
+                }
+            }
+        }
+        .onAppear {
+            authViewModel.checkAuthenticationStatus() //Check authentication on loading
+        }
+    }
+}
+
+#Preview {
+    if #available(iOS 18.0, *) {
+        TabsView()
+            .environmentObject(AuthenticationViewModel())
+    }
+}
+
+
+//@available(iOS 18.0, *)
+//
+//
+//struct TabsView: View {
+//    
+//    
+//    var body: some View {
+//        TabView {
+//            Tab("Search", systemImage: "magnifyingglass") {
+//                Search()
+//            }
+//            Tab("Cart", systemImage: "cart") {
+//                CartView()
+//            }
+//            Tab("Status", systemImage: "person.crop.circle") {
+//                UserProfileView()
+//                // UserAuthenticationView()
+//            
+//                
+//            }
+//        }
+//    }
+//}
+//
+//#Preview {
+//    if #available(iOS 18.0, *) {
+//        TabsView()
+//            .environmentObject(CartManager())
+//    }
+//}
+
+
+// Content from: ../Equipment Booking/Core/RootView.swift
+
+//
+//  RootView.swift
+//  Equipment Booking
+//
+//  Created by XXXXXXXX on 12/9/24.
+//
+
+import SwiftUI
+
+
+struct RootView: View {
+    @StateObject private var authViewModel = AuthenticationViewModel()
+
+    var body: some View {
+        ZStack {
+            if authViewModel.isAuthenticated {
+                NavigationStack {
+                    if #available(iOS 18.0, *) {
+                        TabsView()
+                    } else {
+                        // Fallback on earlier versions
+                    }
+                }
+            } else {
+                NavigationStack {
+                    UserAuthenticationView(showSignInView: .constant(false))
+                        .environmentObject(authViewModel)
+                }
+            }
+        }
+        .onAppear {
+            authViewModel.checkAuthenticationStatus() //Check authentication on loading
+
+        }
+        .environmentObject(authViewModel) // Provide auth state globally
+    }
+
+}
+
+
+struct RootView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            RootView()
+        }
+    }
+}
+
