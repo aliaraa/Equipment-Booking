@@ -17,6 +17,7 @@ struct RootView: View {
                 NavigationStack {
                     if #available(iOS 18.0, *) {
                         TabsView()
+
                     } else {
                         // Fallback on earlier versions
                     }

@@ -7,8 +7,8 @@
 
 import Foundation
 
-// Equipment item fetched from Firebase.
-struct Tool: Identifiable {
+// Equipment item fetched from Firebase, updated to ensure availability fields are mutable
+struct Tool: Identifiable, Codable {
     let id: String  // Equipment ID from Firebase
     let name: String
     let category: String
@@ -20,66 +20,88 @@ struct Tool: Identifiable {
     let imageURL: String?
     let status: String
     let price: Double
-    let numberOfItems: Int
-    let isAvailable: Bool
+    var numberOfItems: Int  // Made mutable for availability updates
+    var isAvailable: Bool   // Made mutable for availability updates
     
-    // Initializes a `Tool` object from Firebase data.
-    init(from data: [String: Any]) {
-        self.id = data["equip_id"] as? String ?? UUID().uuidString
-        self.name = data["name"] as? String ?? "Unknown Equipment"
-        self.category = data["category"] as? String ?? "Uncategorized"
-        self.mainCategory = data["equipment_main_category"] as? String ?? "Unknown Main Category"
-        self.subCategory = data["equipment_sub_category"] as? String ?? "Unknown Sub Category"
-        self.description = data["description"] as? String ?? "No description available"
-        self.manufacturer = data["manufacturer"] as? String ?? "Unknown Manufacturer"
+    // Failable initializer from Firebase data
+    init?(from data: [String: Any]) {
+        // Require critical fields; return nil if missing
+        guard let id = data["equip_id"] as? String,
+              let name = data["name"] as? String,
+              let category = data["category"] as? String,
+              let mainCategory = data["equipment_main_category"] as? String,
+              let subCategory = data["equipment_sub_category"] as? String,
+              let description = data["description"] as? String,
+              let manufacturer = data["manufacturer"] as? String,
+              let status = data["status"] as? String,
+              let price = data["price"] as? Double,
+              let numberOfItems = data["number_of_items"] as? Int,
+              let isAvailable = data["available"] as? Bool else {
+            return nil
+        }
+        
+        self.id = id
+        self.name = name
+        self.category = category
+        self.mainCategory = mainCategory
+        self.subCategory = subCategory
+        self.description = description
+        self.manufacturer = manufacturer
         self.imageName = data["img_name"] as? String
         self.imageURL = data["img_url"] as? String
-        self.status = data["status"] as? String ?? "unknown"
-        self.price = data["price"] as? Double ?? 0.0
-        self.numberOfItems = data["number_of_items"] as? Int ?? 0
-        self.isAvailable = data["available"] as? Bool ?? false
+        self.status = status
+        self.price = price
+        self.numberOfItems = numberOfItems
+        self.isAvailable = isAvailable
     }
     
-    // **New initializer for manual testing**
-        init(
-            id: String = UUID().uuidString,
-            name: String,
-            category: String,
-            mainCategory: String,
-            subCategory: String,
-            description: String,
-            manufacturer: String,
-            imageName: String? = nil,
-            imageURL: String? = nil,
-            status: String,
-            price: Double,
-            numberOfItems: Int,
-            isAvailable: Bool
-        ) {
-            self.id = id
-            self.name = name
-            self.category = category
-            self.mainCategory = mainCategory
-            self.subCategory = subCategory
-            self.description = description
-            self.manufacturer = manufacturer
-            self.imageName = imageName
-            self.imageURL = imageURL
-            self.status = status
-            self.price = price
-            self.numberOfItems = numberOfItems
-            self.isAvailable = isAvailable
-        }
+    // Manual initializer for testing or local creation
+    init(
+        id: String = UUID().uuidString,
+        name: String,
+        category: String,
+        mainCategory: String,
+        subCategory: String,
+        description: String,
+        manufacturer: String,
+        imageName: String? = nil,
+        imageURL: String? = nil,
+        status: String,
+        price: Double,
+        numberOfItems: Int,
+        isAvailable: Bool
+    ) {
+        self.id = id
+        self.name = name
+        self.category = category
+        self.mainCategory = mainCategory
+        self.subCategory = subCategory
+        self.description = description
+        self.manufacturer = manufacturer
+        self.imageName = imageName
+        self.imageURL = imageURL
+        self.status = status
+        self.price = price
+        self.numberOfItems = numberOfItems
+        self.isAvailable = isAvailable
+    }
     
+    // CodingKeys for Firebase serialization
+    enum CodingKeys: String, CodingKey {
+        case id = "equip_id"
+        case name
+        case category
+        case mainCategory = "equipment_main_category"
+        case subCategory = "equipment_sub_category"
+        case description
+        case manufacturer
+        case imageName = "img_name"
+        case imageURL = "img_url"
+        case status
+        case price
+        case numberOfItems = "number_of_items"
+        case isAvailable = "available"
+    }
 }
 
 
-
-//struct Tool: Identifiable{
-//    var id = UUID()
-//    var name: String
-//    var description: String
-//    var price: Int
-//    var isAvailable: Bool
-//    var category: String
-//}

@@ -12,6 +12,7 @@ import FirebaseCore
 struct Equipment_BookingApp: App {
     @StateObject private var cartManager = CartManager()
     
+    
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
     var body: some Scene {
