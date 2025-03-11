@@ -54,19 +54,7 @@ struct UserSettingsView: View {
                             resetPassword(for: user.email)
                         }
                         
-                        
-                        
-                        //                        SettingsMenuItem(icon: "arrow.backward.square", text: "Sign Out", color: .red) {
-                        //                            Task {
-                        //                                do {
-                        //                                    try AuthenticationManager.shared.signOut()
-                        //                                    isShowingSignIn = true
-                        //                                    presentationMode.wrappedValue.dismiss()
-                        //                                } catch {
-                        //                                    print("Sign-out failed: \(error.localizedDescription)")
-                        //                                }
-                        //                            }
-                        //                        }
+
                     }
                     .padding(.horizontal, 20)
                     
@@ -137,8 +125,6 @@ struct UserSettingsView: View {
         }
     }
 }
-
-
 
 
 // ✅ Reusable Settings Menu Item

@@ -61,30 +61,54 @@ struct CustomSecureField: View {
 struct CustomProfileTextField: View {
     let placeholder: String
     @Binding var text: String
-    var isEditable: Bool
-    var onEditingChanged: (() -> Void)?
-
+    let isEditable: Bool
+    let showClearButton: Bool // ✅ New parameter for clear button
+    let onEditingChanged: () -> Void
+    
     var body: some View {
-        
-//        VStack(alignment: .leading, spacing: 5)
         HStack {
-//            Text(placeholder) // ✅ Fixed duplicate placeholder issue
-//                .foregroundColor(.gray)
-//                .font(.subheadline)
-                        
-            TextField(placeholder, text: $text, onEditingChanged: { _ in
-                onEditingChanged?()
-            })
-            .autocapitalization(.words)
-            .disableAutocorrection(true)
-//            .textFieldStyle(RoundedBorderTextFieldStyle()) // ✅ Proper left alignment
-            .disabled(!isEditable) // ✅ Controls editability
+            TextField(placeholder, text: $text, onEditingChanged: { _ in onEditingChanged() })
+                .disabled(!isEditable)
+                .textFieldStyle(PlainTextFieldStyle())
+                .padding(.vertical, 8)
+            
+            if showClearButton && !text.isEmpty && isEditable { // ✅ Show clear button when typing
+                Button(action: { text = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+            }
         }
-//        .padding(.vertical, 5)
-        .padding()
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.yellow, lineWidth: 2))
-        .background(Color.clear)
-        .foregroundColor(Color(UIColor.darkGray))
-        
     }
 }
+
+//struct CustomProfileTextField: View {
+//    let placeholder: String
+//    @Binding var text: String
+//    var isEditable: Bool
+//    var onEditingChanged: (() -> Void)?
+//
+//    var body: some View {
+//        
+////        VStack(alignment: .leading, spacing: 5)
+//        HStack {
+////            Text(placeholder) // ✅ Fixed duplicate placeholder issue
+////                .foregroundColor(.gray)
+////                .font(.subheadline)
+//                        
+//            TextField(placeholder, text: $text, onEditingChanged: { _ in
+//                onEditingChanged?()
+//            })
+//            .autocapitalization(.words)
+//            .disableAutocorrection(true)
+////            .textFieldStyle(RoundedBorderTextFieldStyle()) // ✅ Proper left alignment
+//            .disabled(!isEditable) // ✅ Controls editability
+//        }
+////        .padding(.vertical, 5)
+//        .padding()
+//        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.yellow, lineWidth: 2))
+//        .background(Color.clear)
+//        .foregroundColor(Color(UIColor.darkGray))
+//        
+//    }
+//}
