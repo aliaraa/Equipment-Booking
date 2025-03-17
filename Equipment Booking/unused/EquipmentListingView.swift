@@ -128,7 +128,7 @@ struct EquipmentListingView: View {
                     Spacer()
 
                     // User Profile Button (Moved from Toolbar to Footer)
-                    NavigationLink(destination: UserProfileView()) {
+                    NavigationLink(destination: UserProfileView(selectedTab: .constant(nil))) {
                         Image(systemName: "person.crop.circle")
                             .resizable()
                             .frame(width: 30, height: 30)
@@ -204,7 +204,7 @@ struct CartView_2: View {
                     Spacer()
 
                     // User Profile Button
-                    NavigationLink(destination: UserProfileView()) {
+                    NavigationLink(destination: UserProfileView(selectedTab: .constant(nil))) {
                         Image(systemName: "person.crop.circle")
                             .resizable()
                             .frame(width: 30, height: 30)
