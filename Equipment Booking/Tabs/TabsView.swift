@@ -14,6 +14,11 @@ import SwiftUI
 struct TabsView: View {
     @StateObject private var authViewModel = AuthenticationViewModel()
     @EnvironmentObject var cartManager: CartManager
+    @State private var selectedTab: String
+    
+    init(selectedTab: String = "search") {
+        self._selectedTab = State(initialValue: selectedTab)
+    }
     
     var body: some View {
         TabView {
@@ -34,7 +39,10 @@ struct TabsView: View {
                 // Wrap Status tab content in NavigationStack
                 NavigationStack {
                     if authViewModel.isAuthenticated {
-                        UserProfileView()
+                        UserProfileView(selectedTab: Binding(
+                            get: { selectedTab },
+                            set: { selectedTab = $0 ?? "search" }
+                        ))
                     } else {
                         UserAuthenticationView(showSignInView: .constant(false))
                     }
@@ -47,12 +55,5 @@ struct TabsView: View {
     }
 }
 
-#Preview {
-    if #available(iOS 18.0, *) {
-        TabsView()
-            .environmentObject(CartManager())
-    } else {
-        // Fallback on earlier versions
-    }
-}
+
 

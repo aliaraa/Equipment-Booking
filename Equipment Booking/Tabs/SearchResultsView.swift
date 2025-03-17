@@ -51,14 +51,14 @@ struct SearchResultsView: View {
             }
             .frame(maxWidth: .infinity)
             
-            NavigationLink(destination: UserProfileView()) {
+            NavigationLink(destination: UserProfileView(selectedTab: .constant(nil))) { // Provide nil binding
                 Image(systemName: "person.crop.circle")
                     .font(.title2)
                     .foregroundColor(.yellow)
             }
             .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, 20) // Padding at ends
+        .padding(.horizontal, 20)
         .padding(.vertical, 10)
         .background(Color.gray.opacity(0.1))
         .cornerRadius(12)
@@ -107,44 +107,3 @@ let exampleTool2 = Tool(
         .environmentObject(CartManager())
 }
 
-
-
-//struct SearchResultsView: View {
-//    
-//    var tools: [Tool]
-//    
-//    var body: some View {
-//        if #available(iOS 16.0, *) {
-//            NavigationStack {
-//                List(tools) { tool in
-//                    VStack(alignment: .leading) {
-//                        Text(tool.name)
-//                            .font(.headline)
-//                        Text(tool.description)
-//                            .font(.subheadline)
-//                            .foregroundColor(Color.gray)
-//                        Text("Price per day: \(tool.price)$")
-//                            .foregroundColor(Color.red)
-//                            .font(.caption)
-//                        if tool.isAvailable {
-//                            Text("Available")
-//                                .font(.caption)
-//                                .foregroundColor(Color.green)
-//                        } else {
-//                            Text("Unavailable")
-//                                .font(.caption)
-//                                .foregroundColor(Color.red)
-//                        }
-//                    }
-//                }
-//                .navigationTitle("Search Results")
-//                .navigationBarTitleDisplayMode(.inline)
-//            }
-//        }
-//    }
-//}
-//
-//#Preview {
-//    Search()
-//        .environmentObject(CartManager())
-//}

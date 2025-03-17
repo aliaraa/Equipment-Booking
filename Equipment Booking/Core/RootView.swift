@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-
 struct RootView: View {
     @StateObject private var authViewModel = AuthenticationViewModel()
-
+    @EnvironmentObject var cartManager: CartManager
+    
     var body: some View {
         ZStack {
             if authViewModel.isAuthenticated {
@@ -23,7 +23,6 @@ struct RootView: View {
             } else {
                 NavigationStack {
                     UserAuthenticationView(showSignInView: .constant(false))
-                        .environmentObject(authViewModel)
                 }
             }
         }

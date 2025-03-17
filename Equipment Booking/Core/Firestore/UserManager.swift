@@ -9,53 +9,6 @@ import Foundation
 import FirebaseFirestore
 import FirebaseFirestoreCombineSwift
 
-
-//struct DBUser: Codable {
-//    let userId: String
-//    let isAnonymous: Bool?
-//    let email: String?
-//    let photoUrl: String?
-//    let dateCreated: Date?
-//    let isAdmin: Bool?
-//    let firstName: String?
-//    let lastName: String?
-//    let phone: String?          // New field
-//    let address: String?        // New field
-//    let companyName: String?    // New field
-//    let profession: String?     // New field
-//
-//    init(auth: AuthDataResultModel) {
-//        self.userId = auth.uid
-//        self.isAnonymous = auth.isAnonymous
-//        self.email = auth.email
-//        self.photoUrl = auth.photoUrl
-//        self.dateCreated = Date()
-//        self.isAdmin = false
-//        self.firstName = auth.firstName
-//        self.lastName = auth.lastName
-//        self.phone = ""
-//        self.address = ""
-//        self.companyName = ""
-//        self.profession = ""
-//    }
-//
-//    enum CodingKeys: String, CodingKey {
-//        case userId = "doc_id"
-//        case isAnonymous = "is_anonymous"
-//        case email = "email"
-//        case photoUrl = "img_url"
-//        case dateCreated = "date_created"
-//        case isAdmin = "is_admin"
-//        case firstName = "firstname"
-//        case lastName = "lastname"
-//        case phone = "phone"
-//        case address = "address"
-//        case companyName = "company_name"
-//        case profession = "profession"
-//    }
-//}
-
-
 struct DBUser: Codable {
     let userId: String
     let isAnonymous: Bool?

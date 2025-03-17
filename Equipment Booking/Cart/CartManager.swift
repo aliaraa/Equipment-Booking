@@ -10,13 +10,23 @@
 
 import SwiftUI
 import Foundation  // Added for Date and UUID
+//
 
-// Import CartItem from CartItem.swift (assuming it’s in the same module)
 class CartManager: ObservableObject {
     @Published var cartItems: [CartItem] = []
+    let isReadOnly: Bool // ✅ Added for unauthenticated users to prevent unauthorized user to add items
+    
+    init(isReadOnly: Bool = false) {
+        self.isReadOnly = isReadOnly
+    }
     
     // Add a tool to the cart with rental dates
     func addToCart(_ tool: Tool, quantity: Int, pickupDate: Date, returnDate: Date) {
+        if isReadOnly {
+            print("Sign in to add items to cart")
+            return // ✅ Block addition in read-only mode
+        }
+        
         if let index = cartItems.firstIndex(where: { $0.tool.id == tool.id }) {
             cartItems[index].quantity += quantity
         } else {
@@ -26,11 +36,20 @@ class CartManager: ObservableObject {
     
     // Remove items from the cart
     func removeFromCart(at offsets: IndexSet) {
+        if isReadOnly {
+            print("Sign in to modify cart")
+            return // ✅ Block removal in read-only mode
+        }
         cartItems.remove(atOffsets: offsets)
     }
     
     // Update quantity and remove if zero or less
     func updateQuantity(for tool: Tool, quantity: Int) {
+        if isReadOnly {
+            print("Sign in to modify cart")
+            return // ✅ Block updates in read-only mode
+        }
+        
         if let index = cartItems.firstIndex(where: { $0.tool.id == tool.id }) {
             cartItems[index].quantity = quantity
             if quantity <= 0 {
@@ -41,7 +60,6 @@ class CartManager: ObservableObject {
     
     // Prepare rental data for Firebase
     func prepareRental(userId: String) -> Rental {
-        // Updated to use id instead of toolId
         let rentalItems = cartItems.map { RentalItem(id: $0.tool.id, quantity: $0.quantity) }
         let pickupDate = cartItems.first?.pickupDate ?? Date()
         let returnDate = cartItems.first?.returnDate ?? Calendar.current.date(byAdding: .day, value: 7, to: Date())!
@@ -57,6 +75,10 @@ class CartManager: ObservableObject {
     
     // Clear the cart after successful booking
     func clearCart() {
+        if isReadOnly {
+            print("Sign in to modify cart")
+            return // ✅ Block clearing in read-only mode
+        }
         cartItems.removeAll()
     }
 }
@@ -82,16 +104,14 @@ struct Rental: Identifiable, Codable {
 
 // RentalItem for Firebase, conforms to Identifiable
 struct RentalItem: Codable, Identifiable {
-    let id: String  // Single property for tool identifier
+    let id: String
     let quantity: Int
     
-    // Updated initializer to use id
     init(id: String, quantity: Int) {
         self.id = id
         self.quantity = quantity
     }
     
-    // CodingKeys now maps only id to "tool_id"
     enum CodingKeys: String, CodingKey {
         case id = "tool_id"
         case quantity

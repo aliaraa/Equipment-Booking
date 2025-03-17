@@ -22,7 +22,8 @@ struct UserAuthenticationView: View {
     @State private var errorMessage: String? = nil
     @State private var navigateToSignUp: Bool = false
     @State private var showInlineSignUp: Bool = false
-    @State private var NavigateToTabsView: Bool = false
+    @State private var navigateToTabsView: Bool = false
+    @State private var navigateToSearch: Bool = false
     
     @FocusState private var focusedField: Field?
     
@@ -95,7 +96,7 @@ struct UserAuthenticationView: View {
                         do {
                             try await viewModel.signIn()
                             errorMessage = nil
-                            NavigateToTabsView = true
+                            navigateToTabsView = true
                         } catch let error as NSError {
                             handleSignInError(error)
                         }
@@ -134,7 +135,7 @@ struct UserAuthenticationView: View {
                         Task {
                             do {
                                 try await viewModel.signInGoogle()
-                                NavigateToTabsView = true
+                                navigateToTabsView = true
                             } catch {
                                 print("Google Sign-In Error: \(error)")
                             }
@@ -157,45 +158,34 @@ struct UserAuthenticationView: View {
                 
                 Spacer()
                 
+                // Search Tab Icon (Footer)
+                Button(action: {
+                    navigateToSearch = true
+                }) {
+                    Image(systemName: "magnifyingglass")
+                        .resizable()
+                        .frame(width: 30, height: 30)
+                        .foregroundColor(.yellow)
+                }
+                .padding(.bottom, 20)
+                
                 // Navigation Links (Hidden)
                 NavigationLink(destination: SignUpView().environmentObject(viewModel), isActive: $navigateToSignUp) {
                     EmptyView()
                 }
                 
                 if #available(iOS 18.0, *) {
-                    NavigationLink(destination: TabsView(), isActive: $NavigateToTabsView) {
+                    NavigationLink(destination: TabsView() // ✅ Default to "search"
+                        .environmentObject(CartManager(isReadOnly: !viewModel.isAuthenticated)),
+                                   isActive: $navigateToTabsView) {
                         EmptyView()
                     }
-                } else {
-                    // Fallback on earlier versions
-                }
-                
-                Spacer()
-                
-                // Bottom Navigation Icons
-                HStack {
-                    if #available(iOS 18.0, *) {
-                        NavigationLink(destination: TabsView()) {
-                            Image(systemName: "house.fill")
-                                .resizable()
-                                .frame(width: 40, height: 40)
-                                .foregroundColor(.gray)
-                        }
-                    } else {
-                        // Fallback on earlier versions
-                    }
-                    
-                    Spacer()
-                    
-                    NavigationLink(destination: UserProfileView()) {
-                        Image(systemName: "person.crop.circle")
-                            .resizable()
-                            .frame(width: 40, height: 40)
-                            .foregroundColor(.gray)
+                    NavigationLink(destination: TabsView(selectedTab: "search") // ✅ Explicitly "search"
+                        .environmentObject(CartManager(isReadOnly: !viewModel.isAuthenticated)),
+                                   isActive: $navigateToSearch) {
+                        EmptyView()
                     }
                 }
-                .frame(height: 60)
-                .padding(.horizontal)
             }
             .padding()
             .navigationBarTitleDisplayMode(.inline)
@@ -205,7 +195,6 @@ struct UserAuthenticationView: View {
         }
     }
     
-    // Function to Handle Sign-In Errors
     private func handleSignInError(_ error: NSError) {
         print("Sign-in error: \(error.domain) - \(error.localizedDescription)")
         switch error.code {
@@ -225,9 +214,6 @@ struct UserAuthenticationView: View {
     }
 }
 
-
-
-// Apple Sign-In Button Wrapper
 struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
     let type: ASAuthorizationAppleIDButton.ButtonType
     let style: ASAuthorizationAppleIDButton.Style
@@ -238,7 +224,6 @@ struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
     
     func updateUIView(_ uiView: ASAuthorizationAppleIDButton, context: Context) {}
 }
-
 
 #Preview {
     UserAuthenticationView(showSignInView: .constant(true))
