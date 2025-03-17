@@ -14,14 +14,12 @@ struct RootView: View {
     var body: some View {
         ZStack {
             if authViewModel.isAuthenticated {
-                NavigationStack {
+                
                     if #available(iOS 18.0, *) {
                         TabsView()
-
                     } else {
                         // Fallback on earlier versions
                     }
-                }
             } else {
                 NavigationStack {
                     UserAuthenticationView(showSignInView: .constant(false))

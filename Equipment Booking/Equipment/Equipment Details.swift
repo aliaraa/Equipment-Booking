@@ -13,12 +13,14 @@ struct Equipment_Details: View {
     var tool: Tool
     @EnvironmentObject var cartManager: CartManager
     @Environment(\.dismiss) var dismiss
+    @StateObject private var equipmentManager = EquipmentManager.shared
     @State private var selectPickupDate: Date = Date()
     @State private var selectReturnDate: Date? = nil
     @State private var isShowingDatePicker = false
     @State private var isPickingDate = true
     @State private var quantity: Int = 1
     @State private var showConfirmation = false
+    @State private var nextAvailableDate: Date = Date()
     
     // Date formatter for display
     var dateFormatter: DateFormatter {
@@ -31,7 +33,7 @@ struct Equipment_Details: View {
     // Enable "Add to Cart" only if dates are valid and quantity is available
     var isAddToCartEnabled: Bool {
         if let returnDate = selectReturnDate {
-            return selectPickupDate < returnDate && quantity <= tool.numberOfItems
+            return selectPickupDate >= nextAvailableDate && selectPickupDate < returnDate && quantity <= tool.numberOfItems
         }
         return false
     }
@@ -39,7 +41,7 @@ struct Equipment_Details: View {
     // Handle date selection logic
     func handleDateSelection(_ date: Date) {
         if isPickingDate {
-            selectPickupDate = date
+            selectPickupDate = max(date, nextAvailableDate)
             if let returnDate = selectReturnDate, returnDate < selectPickupDate {
                 selectReturnDate = selectPickupDate
             }
@@ -54,126 +56,164 @@ struct Equipment_Details: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                VStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Titel
                     Text(tool.name)
-                        .font(.largeTitle)
-                        .padding()
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                        .padding(.top, 20)
                     
+                    // Bild
                     if let imageURL = tool.imageURL, let url = URL(string: imageURL) {
                         AsyncImage(url: url) { phase in
                             switch phase {
                             case .empty:
                                 ProgressView()
-                                    .frame(width: 400.0, height: 300.0)
+                                    .frame(maxWidth: .infinity, maxHeight: 250)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(12)
                             case .success(let image):
                                 image
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 400.0, height: 300.0)
-                                    .background(Color.black)
+                                    .frame(maxWidth: .infinity, maxHeight: 250)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                    )
                             case .failure:
                                 Image(systemName: "photo")
-                                    .frame(width: 400.0, height: 300.0)
-                                    .imageScale(.large)
-                                    .foregroundStyle(.gray)
-                                    .background(Color.black)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxWidth: .infinity, maxHeight: 250)
+                                    .foregroundColor(.gray.opacity(0.5))
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(12)
                             @unknown default:
                                 Image(systemName: "exclamationmark.triangle")
-                                    .frame(width: 400.0, height: 300.0)
-                                    .imageScale(.large)
-                                    .foregroundStyle(.red)
-                                    .background(Color.black)
+                                    .frame(maxWidth: .infinity, maxHeight: 250)
+                                    .foregroundColor(.orange)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(12)
                             }
                         }
                     } else {
                         Image(systemName: "hammer.fill")
-                            .frame(width: 400.0, height: 300.0)
-                            .imageScale(.large)
-                            .foregroundStyle(.tint)
-                            .background(Color.black)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: .infinity, maxHeight: 250)
+                            .foregroundColor(.gray.opacity(0.5))
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(12)
                     }
                     
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Description")
-                                .font(.title)
-                            Text(tool.description)
-                                .padding(.trailing)
-                                .font(.subheadline)
-                                .foregroundColor(Color.gray)
-                            Text("Price per day: \(tool.price) SEK")
-                                .font(.headline)
-                                .foregroundColor(Color.red)
-                                .padding([.top, .bottom, .trailing])
-                        }
-                        .padding(.leading)
+                    // Beskrivning och pris
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Description")
+                            .font(.system(size: 22, weight: .semibold, design: .rounded))
+                            .foregroundColor(.primary)
                         
-                        Spacer()
-                        VStack {
-                            HStack {
-                                Button(action: { if quantity > 1 { quantity -= 1 } }) {
-                                    Image(systemName: "minus")
-                                        .frame(width: 30, height: 30)
-                                        .foregroundColor(.white)
-                                        .background(Color.blue)
-                                        .clipShape(Circle())
-                                }
-                                Text("\(quantity)")
-                                    .font(.title3)
-                                    .padding(10)
-                                Button(action: { quantity += 1 }) {
-                                    Image(systemName: "plus")
-                                        .frame(width: 30, height: 30)
-                                        .foregroundColor(.white)
-                                        .background(Color.blue)
-                                        .clipShape(Circle())
-                                }
-                            }
-                        }.padding(.trailing)
+                        Text(tool.description)
+                            .font(.system(size: 16, weight: .regular, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .lineLimit(nil)
+                        
+                        Text("Price per day: \(tool.price) SEK")
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
+                            .foregroundColor(.blue)
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 12)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
                     }
+                    .padding(.horizontal, 16)
                     
-                    VStack {
+                    // Kvantitet
+                    HStack(spacing: 20) {
+                        Text("Quantity")
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        HStack(spacing: 12) {
+                            Button(action: { if quantity > 1 { quantity -= 1 } }) {
+                                Image(systemName: "minus")
+                                    .frame(width: 36, height: 36)
+                                    .foregroundColor(.white)
+                                    .background(Color.blue.opacity(0.9))
+                                    .clipShape(Circle())
+                                    .shadow(radius: 2)
+                            }
+                            Text("\(quantity)")
+                                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                                .frame(width: 50)
+                                .foregroundColor(.primary)
+                            Button(action: { if quantity < tool.numberOfItems { quantity += 1 } }) {
+                                Image(systemName: "plus")
+                                    .frame(width: 36, height: 36)
+                                    .foregroundColor(.white)
+                                    .background(Color.blue.opacity(0.9))
+                                    .clipShape(Circle())
+                                    .shadow(radius: 2)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: .black.opacity(0.05), radius: 6)
+                    
+                    // Datumval
+                    VStack(spacing: 12) {
                         HStack {
-                            Button("Pick Pickup Date") {
+                            Button("Pickup Date") {
                                 isPickingDate = true
                                 isShowingDatePicker.toggle()
                             }
-                            .padding(10)
-                            .background(Color.blue)
+                            .font(.system(size: 16, weight: .medium))
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(Color.blue.opacity(0.9))
                             .foregroundColor(.white)
-                            .cornerRadius(8)
+                            .cornerRadius(10)
                             Spacer()
                             Text(dateFormatter.string(from: selectPickupDate))
-                                .padding(.horizontal)
-                                .font(.subheadline)
+                                .font(.system(size: 16, weight: .regular, design: .rounded))
+                                .foregroundColor(.secondary)
                         }
                         HStack {
-                            Button("Pick Return Date") {
+                            Button("Return Date") {
                                 isPickingDate = false
                                 isShowingDatePicker.toggle()
                             }
-                            .padding(10)
-                            .background(Color.blue)
+                            .font(.system(size: 16, weight: .medium))
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .background(Color.blue.opacity(0.9))
                             .foregroundColor(.white)
-                            .cornerRadius(8)
+                            .cornerRadius(10)
                             Spacer()
                             if let returnDate = selectReturnDate {
                                 Text(dateFormatter.string(from: returnDate))
-                                    .padding(.horizontal)
-                                    .font(.subheadline)
+                                    .font(.system(size: 16, weight: .regular, design: .rounded))
+                                    .foregroundColor(.secondary)
                             } else {
                                 Text("Select Date")
+                                    .font(.system(size: 16, weight: .regular, design: .rounded))
                                     .italic()
-                                    .foregroundColor(.gray)
-                                    .padding(.trailing)
+                                    .foregroundColor(.gray.opacity(0.6))
                             }
                         }
                     }
-                    .padding(.leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: .black.opacity(0.05), radius: 6)
                     
-                    Spacer()
-                    
+                    // Add to Cart-knapp
                     Button(action: {
                         if let returnDate = selectReturnDate {
                             cartManager.addToCart(tool, quantity: quantity, pickupDate: selectPickupDate, returnDate: returnDate)
@@ -181,52 +221,73 @@ struct Equipment_Details: View {
                         }
                     }) {
                         Text("Add to Cart")
-                            .frame(width: 200.0, height: 50.0)
-                            .background(isAddToCartEnabled ? Color.green : Color.gray.opacity(0.5))
+                            .font(.system(size: 20, weight: .semibold, design: .rounded))
+                            .frame(width: 200, height: 50)
+                            .background(isAddToCartEnabled ? Color.green.opacity(0.9) : Color.gray.opacity(0.5))
                             .foregroundColor(.white)
-                            .cornerRadius(8)
+                            .cornerRadius(25)
+                            .shadow(radius: isAddToCartEnabled ? 4 : 0)
                     }
                     .disabled(!isAddToCartEnabled)
-                    .padding()
-                }
-                .padding()
-                
-                if isShowingDatePicker {
-                    VStack {
-                        DatePicker(
-                            "Select Date",
-                            selection: isPickingDate ? $selectPickupDate : Binding(
-                                get: { selectReturnDate ?? Date() },
-                                set: { selectReturnDate = $0 }
-                            ),
-                            in: Date.now...,
-                            displayedComponents: .date
-                        )
-                        .datePickerStyle(GraphicalDatePickerStyle())
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .shadow(radius: 10)
-                        Button("Done") {
-                            handleDateSelection(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
-                        }
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                    }
-                    .padding(.horizontal, 20.0)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black.opacity(0.5))
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
                 }
             }
-            .navigationTitle("Equipment Details")
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Equipment Details") // Explicit String
+            .navigationBarTitleDisplayMode(.inline) // För tydligare placering
+            .overlay(
+                Group {
+                    if isShowingDatePicker {
+                        Color.black.opacity(0.5)
+                            .ignoresSafeArea()
+                            .overlay(
+                                VStack {
+                                    DatePicker(
+                                        "Select Date",
+                                        selection: isPickingDate ? $selectPickupDate : Binding(
+                                            get: { selectReturnDate ?? Date() },
+                                            set: { selectReturnDate = $0 }
+                                        ),
+                                        in: nextAvailableDate...,
+                                        displayedComponents: .date
+                                    )
+                                    .datePickerStyle(GraphicalDatePickerStyle())
+                                    .padding()
+                                    .background(Color(.systemBackground))
+                                    .cornerRadius(12)
+                                    .shadow(color: .black.opacity(0.2), radius: 10)
+                                    
+                                    Button("Done") {
+                                        handleDateSelection(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
+                                    }
+                                    .font(.system(size: 16, weight: .medium))
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 20)
+                                    .background(Color.blue.opacity(0.9))
+                                    .foregroundColor(.white)
+                                    .cornerRadius(10)
+                                }
+                                .padding(20)
+                            )
+                    }
+                }
+            )
             .alert("Added to Cart", isPresented: $showConfirmation) {
                 Button("OK") {
-                    dismiss() // Navigate back to Search in TabsView
+                    dismiss()
                 }
             } message: {
                 Text("\(quantity) x \(tool.name) added to your cart.")
+            }
+            .task {
+                do {
+                    nextAvailableDate = try await
+                    equipmentManager.getNextAvailableDate(forToolId: tool.id)
+                    selectPickupDate = nextAvailableDate // Sätt initialt pickup-datum till nästa tillgängliga
+                } catch {
+                    print("Error fetching next available date: \(error)")
+                }
             }
         }
     }

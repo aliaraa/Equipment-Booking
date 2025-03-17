@@ -18,11 +18,15 @@ struct TabsView: View {
     var body: some View {
         TabView {
             Tab("Search", systemImage: "magnifyingglass") {
-                Search()
+                NavigationStack {
+                    Search()
+                }
             }
             
             Tab("Cart", systemImage: "cart") {
-                CartView()
+                NavigationStack {
+                    CartView()
+                }
             }
             .badge(cartManager.cartItems.count)
             

@@ -1,27 +1,17 @@
-//
-//  Search.swift
-//  Equipment Booking
-//
-//  Created by Ali Ara on 2024-12-01.
-//
-
 import SwiftUI
 import Firebase
 import FirebaseFirestore
 
 struct Search: View {
-
-
-    @StateObject private var dataManager = EquipmentDataManager() // get data from fb & replace tools by dataManager.toolData
-//    @State private var tools = dataManager.toolData
+    @StateObject private var dataManager = EquipmentDataManager()
     @State private var searchText = ""
     @State private var isShowingResults = false
     
     var filteredTools: [Tool] {
-        if searchText.isEmpty{
+        if searchText.isEmpty {
             return dataManager.toolData
         } else {
-            return dataManager.toolData.filter{
+            return dataManager.toolData.filter {
                 $0.name.localizedCaseInsensitiveContains(searchText)
             }
         }
@@ -29,8 +19,8 @@ struct Search: View {
     
     var body: some View {
         if #available(iOS 16.0, *) {
-            NavigationStack{
-                VStack{
+           
+                VStack {
                     HStack {
                         TextField("Search...", text: $searchText)
                             .frame(maxWidth: .infinity, maxHeight: 40)
@@ -39,7 +29,7 @@ struct Search: View {
                             .cornerRadius(8)
                             .padding([.top, .leading, .trailing])
                         
-                        Button(action: {isShowingResults = true}) {
+                        Button(action: { isShowingResults = true }) {
                             Image(systemName: "magnifyingglass")
                                 .font(.headline)
                                 .foregroundColor(Color.white)
@@ -50,9 +40,7 @@ struct Search: View {
                         }
                     }
                     
-                    
-               
-                    NavigationLink(destination: ConstructionView()) {
+                    NavigationLink(destination: CategoryView(category: "Construction", title: "Construction")) {
                         Text("Construction")
                             .font(.title2)
                             .multilineTextAlignment(.center)
@@ -62,7 +50,7 @@ struct Search: View {
                             .padding([.top, .leading, .trailing])
                     }
                     
-                    NavigationLink(destination: IndustrialView()) {
+                    NavigationLink(destination: CategoryView(category: "Industrial", title: "Industrial")) {
                         Text("Industrial")
                             .font(.title2)
                             .multilineTextAlignment(.center)
@@ -71,8 +59,8 @@ struct Search: View {
                             .cornerRadius(8)
                             .padding([.top, .leading, .trailing])
                     }
-                        
-                    NavigationLink(destination: ElectricalView()) {
+                    
+                    NavigationLink(destination: CategoryView(category: "Electrical", title: "Electrical")) {
                         Text("Electrical")
                             .font(.title2)
                             .multilineTextAlignment(.center)
@@ -81,15 +69,16 @@ struct Search: View {
                             .cornerRadius(8)
                             .padding([.top, .leading, .trailing])
                     }
+                    
                     Spacer()
-                } //Vstack
+                }
                 .sheet(isPresented: $isShowingResults) {
                     SearchResultsView(tools: filteredTools)
                 }
-            } //Navigation
+            }
         }
     }
-}
+
 
 #Preview {
     Search()

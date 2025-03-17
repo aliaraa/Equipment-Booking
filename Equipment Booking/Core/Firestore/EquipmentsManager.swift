@@ -11,13 +11,12 @@ import FirebaseFirestoreCombineSwift
 
 @MainActor
 final class EquipmentManager: ObservableObject {
-    
     static let shared = EquipmentManager()
     private init() {}
     
     private let equipmentsCollection = Firestore.firestore().collection("equipments")
+    private let rentalsCollection = Firestore.firestore().collection("rentals")
     
-    //function to get document/equipment for a given equipmentId
     private func equipmentDocument(equipmentId: String) -> DocumentReference {
         equipmentsCollection.document(equipmentId)
     }
@@ -28,18 +27,33 @@ final class EquipmentManager: ObservableObject {
     
     func getAllEquipments() async throws -> [Equipment] {
         let snapshot = try await equipmentsCollection.getDocuments()
-        
         var equipments: [Equipment] = []
         for document in snapshot.documents {
             let equipment = try document.data(as: Equipment.self)
             equipments.append(equipment)
         }
-        
         return equipments
-        
     }
     
-    //Booking ID Generation Function:
+    
+    func getNextAvailableDate(forToolId toolId: String) async throws -> Date {
+        let snapshot = try await rentalsCollection
+            .whereField("items.tool_id", arrayContains: toolId)
+            .whereField("status", isEqualTo: "active")
+            .getDocuments()
+        
+        var latestReturnDate: Date = Date()
+        
+        for document in snapshot.documents {
+            let rental = try document.data(as: Rental.self)
+            if rental.returnDate > latestReturnDate {
+                latestReturnDate = rental.returnDate
+            }
+        }
+        
+   
+        return Calendar.current.date(byAdding: .day, value: 1, to: latestReturnDate) ?? latestReturnDate
+    }
     
     func generateBookingID(firstName: String, lastName: String) -> String {
         let dateFormatter = DateFormatter()
