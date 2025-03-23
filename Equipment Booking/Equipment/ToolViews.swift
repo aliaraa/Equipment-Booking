@@ -6,6 +6,7 @@
 //
 
 
+// ToolViews.swift
 import SwiftUI
 
 struct ToolRow: View {
@@ -77,13 +78,13 @@ struct ToolRow: View {
             do {
                 let today = Date()
                 let nextWeek = Calendar.current.date(byAdding: .day, value: 7, to: today) ?? today
-                let (total, available) = try await equipmentManager.getToolAvailability(
+                let (bookings, available) = try await equipmentManager.getToolAvailability(
                     forToolId: tool.id,
                     pickupDate: today,
                     returnDate: nextWeek
                 )
-                totalQuantity = total
-                availableQuantity = available
+                totalQuantity = tool.numberOfItems // Totalt antal från verktyget självt
+                availableQuantity = available // Bara "available" från tuplen
             } catch {
                 print("Error fetching availability: \(error)")
                 totalQuantity = tool.numberOfItems
@@ -114,3 +115,21 @@ struct ToolImageView: View {
     }
 }
 
+#Preview {
+    ToolRow(tool: Tool(
+        id: "LCE-CM-11",
+        name: "Petrol-powered mobile cutters",
+        category: "Construction",
+        mainCategory: "Light construction equipment",
+        subCategory: "Cutting machines",
+        description: "A mobile petrol cutter with a 500 mm blade.",
+        manufacturer: "Ntc",
+        imageName: "cutter.webp",
+        imageURL: "https://example.com/cutter.webp",
+        status: "available",
+        price: 100.0,
+        numberOfItems: 4,
+        isAvailable: true
+    ))
+    .environmentObject(CartManager())
+}

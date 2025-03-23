@@ -25,6 +25,7 @@ struct Equipment_Details: View {
     @State private var totalQuantity: Int
     @State private var availableQuantity: Int = 0
     @State private var showMore = false
+    @State private var availabilityMessage: String = ""
     
     init(tool: Tool) {
         self.tool = tool
@@ -65,21 +66,34 @@ struct Equipment_Details: View {
         Task {
             guard let returnDate = selectReturnDate else {
                 availableQuantity = totalQuantity
-                print("No return date selected, available set to total: \(availableQuantity)")
+                availabilityMessage = "No return date selected. Showing total quantity: \(totalQuantity)."
                 return
             }
+            
             do {
-                print("Fetching availability for \(tool.id) from \(dateFormatter.string(from: selectPickupDate)) to \(dateFormatter.string(from: returnDate))")
-                let (_, available) = try await equipmentManager.getToolAvailability(
+                let (bookings, available) = try await equipmentManager.getToolAvailability(
                     forToolId: tool.id,
                     pickupDate: selectPickupDate,
                     returnDate: returnDate
                 )
                 availableQuantity = available
-                print("Updated availability for \(tool.id): \(availableQuantity)")
+                
+                if available < totalQuantity {
+                    availabilityMessage = "Limited availability due to bookings:"
+                    for booking in bookings {
+                        let start = dateFormatter.string(from: booking.pickupDate)
+                        let end = dateFormatter.string(from: booking.returnDate)
+                        if let item = booking.items.first(where: { $0.id == tool.id }) {
+                            availabilityMessage += "\n- \(item.quantity) booked from \(start) to \(end)"
+                        }
+                    }
+                } else {
+                    availabilityMessage = "Full availability: \(availableQuantity) available."
+                }
             } catch {
                 print("Error fetching availability: \(error)")
                 availableQuantity = totalQuantity
+                availabilityMessage = "Error fetching availability. Showing total quantity: \(totalQuantity)."
             }
         }
     }
@@ -87,7 +101,7 @@ struct Equipment_Details: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 16) {
                     // Verktygsnamn
                     Text(tool.name)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -102,36 +116,39 @@ struct Equipment_Details: View {
                             case .empty:
                                 ProgressView()
                                     .frame(maxWidth: .infinity, maxHeight: 250)
-                                    .background(Color.gray.opacity(0.1))
-                                    .cornerRadius(10)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(12)
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.separator), lineWidth: 1))
                             case .success(let image):
                                 image
                                     .resizable()
                                     .scaledToFit()
                                     .frame(maxWidth: .infinity, maxHeight: 250)
-                                    .cornerRadius(10)
-                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray.opacity(0.2), lineWidth: 1))
+                                    .cornerRadius(12)
+                                    .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
                             case .failure:
                                 Image(systemName: "photo")
                                     .resizable()
                                     .scaledToFit()
                                     .frame(maxWidth: .infinity, maxHeight: 250)
                                     .foregroundColor(.gray.opacity(0.5))
-                                    .background(Color.gray.opacity(0.1))
-                                    .cornerRadius(10)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(12)
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.separator), lineWidth: 1))
                             @unknown default:
                                 Image(systemName: "exclamationmark.triangle")
                                     .frame(maxWidth: .infinity, maxHeight: 250)
                                     .foregroundColor(.orange)
-                                    .background(Color.gray.opacity(0.1))
-                                    .cornerRadius(10)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(12)
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.separator), lineWidth: 1))
                             }
                         }
                         .padding(.horizontal, 16)
                     }
                     
                     // Beskrivning
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Description")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
                             .foregroundColor(.primary)
@@ -140,21 +157,26 @@ struct Equipment_Details: View {
                             .font(.system(size: 16, weight: .regular, design: .rounded))
                             .foregroundColor(.secondary)
                             .lineLimit(showMore ? nil : 2)
-                            .animation(.easeInOut, value: showMore)
+                            .animation(.easeInOut(duration: 0.3), value: showMore)
                         
                         Button(action: { showMore.toggle() }) {
                             Text(showMore ? "Visa mindre" : "Visa mer")
-                                .font(.system(size: 16, weight: .medium, design: .rounded))
-                                .foregroundColor(.blue)
+                                .font(.system(size: 14, weight: .medium, design: .rounded))
+                                .foregroundColor(Color.accentColor)
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 8)
+                                .background(Color.accentColor.opacity(0.1))
+                                .cornerRadius(6)
                         }
                     }
+                    .padding(16)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
                     
                     // Tillgänglighet
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Availability")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
                             .foregroundColor(.primary)
@@ -180,62 +202,78 @@ struct Equipment_Details: View {
                             Image(systemName: availableQuantity > 0 ? "checkmark.circle.fill" : "xmark.circle.fill")
                                 .foregroundColor(availableQuantity > 0 ? .green : .red)
                         }
+                        
+                        if !availabilityMessage.isEmpty {
+                            Text(availabilityMessage)
+                                .font(.system(size: 14, weight: .regular, design: .rounded))
+                                .foregroundColor(.secondary)
+                                .lineLimit(nil)
+                        }
                     }
+                    .padding(16)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
                     
                     // Antal
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Quantity")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
                             .foregroundColor(.primary)
                         
-                        HStack(spacing: 12) {
+                        HStack(spacing: 16) {
                             Button(action: { if quantity > 1 { quantity -= 1 } }) {
                                 Image(systemName: "minus")
-                                    .frame(width: 36, height: 36)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .frame(width: 40, height: 40)
                                     .foregroundColor(.white)
-                                    .background(Color.blue)
-                                    .clipShape(Circle())
+                                    .background(Color.accentColor)
+                                    .cornerRadius(20)
+                                    .shadow(color: .gray.opacity(0.2), radius: 2)
                             }
                             Text("\(quantity)")
-                                .font(.system(size: 16, weight: .regular, design: .rounded))
-                                .foregroundColor(.secondary)
+                                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                                .foregroundColor(.primary)
                                 .frame(width: 50, alignment: .center)
                             Button(action: { if quantity < availableQuantity { quantity += 1 } }) {
                                 Image(systemName: "plus")
-                                    .frame(width: 36, height: 36)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .frame(width: 40, height: 40)
                                     .foregroundColor(.white)
-                                    .background(Color.blue)
-                                    .clipShape(Circle())
+                                    .background(Color.accentColor)
+                                    .cornerRadius(20)
+                                    .shadow(color: .gray.opacity(0.2), radius: 2)
                             }
                             Spacer()
                         }
                     }
+                    .padding(16)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
                     
                     // Datumval
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Booking Dates")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
                             .foregroundColor(.primary)
                         
                         HStack(spacing: 8) {
-                            Button("Pickup Date") {
+                            Button(action: {
                                 isPickingDate = true
                                 isShowingDatePicker.toggle()
+                            }) {
+                                Text("Pickup Date")
+                                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 16)
+                                    .background(Color.accentColor)
+                                    .cornerRadius(8)
+                                    .shadow(color: .gray.opacity(0.2), radius: 2)
                             }
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
                             Spacer()
                             Text(dateFormatter.string(from: selectPickupDate))
                                 .font(.system(size: 16, weight: .regular, design: .rounded))
@@ -243,16 +281,19 @@ struct Equipment_Details: View {
                         }
                         
                         HStack(spacing: 8) {
-                            Button("Return Date") {
+                            Button(action: {
                                 isPickingDate = false
                                 isShowingDatePicker.toggle()
+                            }) {
+                                Text("Return Date")
+                                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 16)
+                                    .background(Color.accentColor)
+                                    .cornerRadius(8)
+                                    .shadow(color: .gray.opacity(0.2), radius: 2)
                             }
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
                             Spacer()
                             if let returnDate = selectReturnDate {
                                 Text(dateFormatter.string(from: returnDate))
@@ -266,10 +307,11 @@ struct Equipment_Details: View {
                             }
                         }
                     }
+                    .padding(16)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
                     
                     // Add to Cart-knapp
                     Button(action: {
@@ -279,12 +321,13 @@ struct Equipment_Details: View {
                         }
                     }) {
                         Text("Add to Cart")
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(isAddToCartEnabled ? Color.green : Color.gray.opacity(0.5))
+                            .padding(.vertical, 14)
+                            .background(isAddToCartEnabled ? Color.green : Color(.systemGray))
                             .foregroundColor(.white)
-                            .cornerRadius(10)
+                            .cornerRadius(12)
+                            .shadow(color: .gray.opacity(isAddToCartEnabled ? 0.3 : 0), radius: 4, x: 0, y: 2)
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 20)
@@ -300,7 +343,7 @@ struct Equipment_Details: View {
                         Color.black.opacity(0.5)
                             .ignoresSafeArea()
                             .overlay(
-                                VStack {
+                                VStack(spacing: 12) {
                                     DatePicker(
                                         "Select Date",
                                         selection: isPickingDate ? $selectPickupDate : Binding(
@@ -314,17 +357,20 @@ struct Equipment_Details: View {
                                     .padding()
                                     .background(Color(.systemBackground))
                                     .cornerRadius(12)
-                                    .shadow(color: .black.opacity(0.2), radius: 10)
+                                    .shadow(color: .gray.opacity(0.2), radius: 8)
                                     
-                                    Button("Done") {
+                                    Button(action: {
                                         handleDateSelection(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
+                                    }) {
+                                        Text("Done")
+                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                            .foregroundColor(.white)
+                                            .padding(.vertical, 10)
+                                            .padding(.horizontal, 20)
+                                            .background(Color.accentColor)
+                                            .cornerRadius(8)
+                                            .shadow(color: .gray.opacity(0.2), radius: 2)
                                     }
-                                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                                    .padding(.vertical, 10)
-                                    .padding(.horizontal, 20)
-                                    .background(Color.blue)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(10)
                                 }
                                 .padding(20)
                             )
@@ -335,22 +381,18 @@ struct Equipment_Details: View {
                 Button("OK") { dismiss() }
             } message: {
                 Text("\(quantity) x \(tool.name) added to your cart.")
+                    .font(.system(size: 16, weight: .regular, design: .rounded))
             }
             .task {
                 do {
                     nextAvailableDate = try await equipmentManager.getNextAvailableDate(forToolId: tool.id)
                     selectPickupDate = nextAvailableDate
                     selectReturnDate = Calendar.current.date(byAdding: .day, value: 7, to: selectPickupDate) ?? selectPickupDate
-                    let (_, available) = try await equipmentManager.getToolAvailability(
-                        forToolId: tool.id,
-                        pickupDate: selectPickupDate,
-                        returnDate: selectReturnDate!
-                    )
-                    availableQuantity = available
-                    print("Initial setup: pickup = \(dateFormatter.string(from: selectPickupDate)), return = \(dateFormatter.string(from: selectReturnDate!)), available = \(availableQuantity)")
+                    updateAvailability() // Initial uppdatering
                 } catch {
                     print("Error initializing: \(error)")
                     availableQuantity = totalQuantity
+                    availabilityMessage = "Error initializing. Showing total quantity: \(totalQuantity)."
                 }
             }
             .onChange(of: selectPickupDate) { _ in updateAvailability() }
@@ -371,7 +413,7 @@ let exampleTool = Tool(
     imageURL: "https://storage.googleapis.com/equipment-management-db.firebasestorage.app/Equipment_imgs/B546r2T9p0R0M1y6l8j7q4K2a7b6K0M5.webp",
     status: "available",
     price: 100.0,
-    numberOfItems: 1,
+    numberOfItems: 4,
     isAvailable: true
 )
 

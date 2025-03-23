@@ -52,38 +52,60 @@ final class EquipmentManager: ObservableObject {
         return Calendar.current.date(byAdding: .day, value: 1, to: latestReturnDate) ?? latestReturnDate
     }
     
-    // Uppdaterad getToolAvailability i EquipmentManager.swift
-    func getToolAvailability(forToolId toolId: String, pickupDate: Date, returnDate: Date) async throws -> (total: Int, available: Int) {
+    func getToolAvailability(forToolId toolId: String, pickupDate: Date, returnDate: Date) async throws -> ([Rental], Int) {
         let equipmentSnapshot = try await equipmentDocument(equipmentId: toolId).getDocument()
         guard equipmentSnapshot.exists, let tool = try? equipmentSnapshot.data(as: Tool.self) else {
             throw NSError(domain: "EquipmentManager", code: 404, userInfo: [NSLocalizedDescriptionKey: "Tool not found"])
         }
         let totalQuantity = tool.numberOfItems
         print("Total quantity for \(toolId): \(totalQuantity)")
-
-        // Hämta alla aktiva bokningar och filtrera manuellt
+        
+        // Hämta alla aktiva bokningar
         let snapshot = try await rentalsCollection
             .whereField("status", isEqualTo: "active")
             .getDocuments()
         
         print("Found \(snapshot.documents.count) active rentals to check for \(toolId)")
-
-        var bookedQuantity = 0
+        
+        var relevantBookings: [Rental] = []
+        var dailyAvailability: [Date: Int] = [:]
+        let calendar = Calendar.current
+        
+        // Normalisera datum till början av dagen
+        let pickupStart = calendar.startOfDay(for: pickupDate)
+        let returnEnd = calendar.startOfDay(for: returnDate)
+        
+        // Fyll i daglig tillgänglighet
+        var currentDate = pickupStart
+        while currentDate <= returnEnd {
+            dailyAvailability[currentDate] = totalQuantity
+            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+        }
+        
+        // Analysera bokningar
         for document in snapshot.documents {
             let rental = try document.data(as: Rental.self)
-            let overlaps = rental.pickupDate <= returnDate && rental.returnDate >= pickupDate
-            print("Rental \(document.documentID): pickup \(rental.pickupDate), return \(rental.returnDate), overlaps: \(overlaps)")
-            if overlaps {
-                if let bookedItem = rental.items.first(where: { $0.id == toolId }) {
-                    bookedQuantity += bookedItem.quantity
-                    print(" - Booked \(bookedItem.quantity) for \(toolId)")
+            let overlaps = rental.pickupDate <= returnEnd && rental.returnDate >= pickupStart
+            print("Rental \(document.documentID): pickup \(dateFormatter.string(from: rental.pickupDate)), return \(dateFormatter.string(from: rental.returnDate)), overlaps: \(overlaps)")
+            
+            if overlaps, let bookedItem = rental.items.first(where: { $0.id == toolId }) {
+                relevantBookings.append(rental)
+                currentDate = calendar.startOfDay(for: rental.pickupDate)
+                let rentalEnd = calendar.startOfDay(for: rental.returnDate)
+                while currentDate <= rentalEnd {
+                    if let available = dailyAvailability[currentDate], currentDate >= pickupStart && currentDate <= returnEnd {
+                        dailyAvailability[currentDate] = max(0, available - bookedItem.quantity)
+                        print(" - Adjusted \(dateFormatter.string(from: currentDate)) to \(dailyAvailability[currentDate]!) due to \(bookedItem.quantity) booked")
+                    }
+                    currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
                 }
             }
         }
-        print("Total booked for \(toolId) between \(pickupDate) and \(returnDate): \(bookedQuantity)")
-        let availableQuantity = max(0, totalQuantity - bookedQuantity)
-        print("Available quantity for \(toolId): \(availableQuantity)")
-        return (total: totalQuantity, available: availableQuantity)
+        
+        let minAvailable = dailyAvailability.values.min() ?? totalQuantity
+        print("Daily availability: \(dailyAvailability.map { "\(dateFormatter.string(from: $0.key)): \($0.value)" }.joined(separator: ", "))")
+        print("Minimum available for \(toolId) from \(dateFormatter.string(from: pickupStart)) to \(dateFormatter.string(from: returnEnd)): \(minAvailable)")
+        return (relevantBookings, minAvailable)
     }
     
     func generateBookingID(firstName: String, lastName: String) -> String {
@@ -91,5 +113,12 @@ final class EquipmentManager: ObservableObject {
         dateFormatter.dateFormat = "yyyyMMdd_HHmm"
         let dateStr = dateFormatter.string(from: Date())
         return "\(firstName.prefix(1))\(lastName.prefix(2).uppercased())\(dateStr)"
+    }
+    
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
     }
 }
