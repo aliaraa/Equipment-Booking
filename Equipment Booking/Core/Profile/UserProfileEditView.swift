@@ -7,10 +7,12 @@
 
 import SwiftUI
 import Firebase
+import FirebaseStorage
+import PhotosUI
 
 struct UserProfileEditView: View {
     @StateObject private var viewModel = UserProfileViewModel()
-    @Environment(\.dismiss) var dismiss // For dismissing back to UserProfileView
+    @Environment(\.dismiss) var dismiss
     
     @State private var firstName: String = ""
     @State private var lastName: String = ""
@@ -19,99 +21,151 @@ struct UserProfileEditView: View {
     @State private var companyName: String = ""
     @State private var profession: String = ""
     @State private var isSaveButtonActive: Bool = false
+    @State private var selectedPhoto: PhotosPickerItem? = nil
+    @State private var profileImage: Image? = nil
     
     var body: some View {
-        // Remove NavigationStack; rely on parent stack from UserProfileView
-        VStack(spacing: 10) {
-            VStack(spacing: 5) {
-                AsyncImage(url: URL(string: viewModel.user?.photoUrl ?? "")) { image in
-                    image.resizable()
-                        .frame(width: 60, height: 60)
+        VStack(spacing: 0) {
+            // Header med gradient och bildväljare
+            ZStack {
+                GradientBackground()
+                    .frame(height: 200)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                
+                VStack(spacing: 12) {
+                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                        Group {
+                            if let profileImage = profileImage {
+                                profileImage
+                                    .resizable()
+                                    .scaledToFill()
+                            } else if let photoUrl = viewModel.user?.photoUrl, let url = URL(string: photoUrl) {
+                                AsyncImage(url: url) { image in
+                                    image.resizable().scaledToFill()
+                                } placeholder: {
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .foregroundColor(.gray)
+                                }
+                            } else {
+                                Image(systemName: "person.crop.circle.fill")
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .frame(width: 100, height: 100)
                         .clipShape(Circle())
-                } placeholder: {
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .frame(width: 60, height: 60)
-                        .foregroundColor(.yellow)
-                }
-                
-                Text(viewModel.user?.email ?? "No Email")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-            }
-            .padding(.top, 10)
-            
-            Form {
-                Section(header: Text("User Information").font(.subheadline)) {
-                    ProfileTextField(
-                        icon: "person.fill",
-                        placeholder: "First Name",
-                        text: $firstName,
-                        isEditable: firstName.isEmpty,
-                        onEditingChanged: checkForChanges
-                    )
-                    .disabled(!firstName.isEmpty)
-                    
-                    ProfileTextField(
-                        icon: "person.fill",
-                        placeholder: "Last Name",
-                        text: $lastName,
-                        isEditable: lastName.isEmpty,
-                        onEditingChanged: checkForChanges
-                    )
-                    .disabled(!lastName.isEmpty)
-                }
-                
-                Section(header: Text("Additional Details").font(.subheadline)) {
-                    ProfileTextField(
-                        icon: "phone.fill",
-                        placeholder: "Phone Number",
-                        text: $phone,
-                        isEditable: true,
-                        onEditingChanged: checkForChanges
-                    )
-                    ProfileTextField(
-                        icon: "house.fill",
-                        placeholder: "Mailing Address",
-                        text: $address,
-                        isEditable: true,
-                        onEditingChanged: checkForChanges
-                    )
-                    ProfileTextField(
-                        icon: "building.2.fill",
-                        placeholder: "Company Name",
-                        text: $companyName,
-                        isEditable: true,
-                        onEditingChanged: checkForChanges
-                    )
-                    ProfileTextField(
-                        icon: "briefcase.fill",
-                        placeholder: "Profession",
-                        text: $profession,
-                        isEditable: true,
-                        onEditingChanged: checkForChanges
-                    )
-                }
-                
-                Section {
-                    Button("Save Changes") {
-                        saveProfileChanges()
+                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                        .shadow(radius: 6)
+                        .overlay(
+                            Image(systemName: "camera.fill")
+                                .foregroundColor(.white)
+                                .font(.system(size: 16))
+                                .padding(6)
+                                .background(Circle().fill(Color.blue.opacity(0.8)))
+                                .offset(x: 35, y: 35)
+                        )
                     }
-                    .font(.headline)
-                    .frame(height: 40)
-                    .frame(maxWidth: .infinity)
-                    .background(isSaveButtonActive ? Color.green : Color.gray)
-                    .cornerRadius(8)
-                    .shadow(radius: 3)
-                    .foregroundColor(isSaveButtonActive ? .white : .black)
+                    .onChange(of: selectedPhoto) { newItem in
+                        Task {
+                            if let data = try? await newItem?.loadTransferable(type: Data.self),
+                               let uiImage = UIImage(data: data) {
+                                profileImage = Image(uiImage: uiImage)
+                                isSaveButtonActive = true
+                            }
+                        }
+                    }
+                    
+                    Text(viewModel.user?.email ?? "No e-mail")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .padding(.top, 20)
+            }
+            
+            // Formulär med anpassad layout
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Personlig information
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Personal information")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        
+                        ProfileTextField(
+                            icon: "person.fill",
+                            placeholder: "First name",
+                            text: $firstName,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                        
+                        
+                        ProfileTextField(
+                            icon: "person.fill",
+                            placeholder: "Last name",
+                            text: $lastName,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                        
+                    }
+                    
+                    // Ytterligare detaljer
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("More information")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        
+                        ProfileTextField(
+                            icon: "phone.fill",
+                            placeholder: "Phone number",
+                            text: $phone,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                        ProfileTextField(
+                            icon: "house.fill",
+                            placeholder: "Mailing address",
+                            text: $address,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                        ProfileTextField(
+                            icon: "building.2.fill",
+                            placeholder: "Company name",
+                            text: $companyName,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                        ProfileTextField(
+                            icon: "briefcase.fill",
+                            placeholder: "Profession",
+                            text: $profession,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                    }
+                    
+                    // Spara-knapp
+                    Button(action: saveProfileChanges) {
+                        Text("Save changes")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(isSaveButtonActive ? Color.green.opacity(0.9) : Color.gray.opacity(0.5))
+                            .cornerRadius(12)
+                            .shadow(radius: 4)
+                    }
                     .disabled(!isSaveButtonActive)
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
             }
-            .scrollContentBackground(.hidden)
-            .onAppear { loadUserData() }
+            .background(Color(.systemBackground))
         }
-        .navigationTitle("Edit Profile")
+        .navigationTitle("Edit profile")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { loadUserData() }
     }
     
     private func checkForChanges() {
@@ -135,22 +189,39 @@ struct UserProfileEditView: View {
     private func saveProfileChanges() {
         Task {
             do {
-                try await viewModel.updateUserProfile(
-                    firstName: firstName,
-                    lastName: lastName,
-                    phone: phone,
-                    address: address,
-                    companyName: companyName,
-                    profession: profession
-                )
+                if let selectedPhoto = selectedPhoto,
+                   let data = try? await selectedPhoto.loadTransferable(type: Data.self) {
+                    let storageRef = Storage.storage().reference().child("profile_images/\(UUID().uuidString).jpg")
+                    _ = try await storageRef.putDataAsync(data)
+                    let photoUrl = try await storageRef.downloadURL().absoluteString
+                    
+                    try await viewModel.updateUserProfile(
+                        firstName: firstName,
+                        lastName: lastName,
+                        phone: phone,
+                        address: address,
+                        companyName: companyName,
+                        profession: profession
+                    )
+                } else {
+                    try await viewModel.updateUserProfile(
+                        firstName: firstName,
+                        lastName: lastName,
+                        phone: phone,
+                        address: address,
+                        companyName: companyName,
+                        profession: profession
+                    )
+                }
                 isSaveButtonActive = false
-                dismiss() // Return to UserProfileView
+                dismiss()
             } catch {
                 print("Error updating profile: \(error.localizedDescription)")
             }
         }
     }
 }
+
 
 struct ProfileTextField: View {
     let icon: String
@@ -160,25 +231,29 @@ struct ProfileTextField: View {
     let onEditingChanged: () -> Void
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.yellow)
-                .font(.headline)
+                .foregroundColor(.blue.opacity(0.8))
+                .font(.system(size: 18, weight: .medium))
             TextField(placeholder, text: $text, onEditingChanged: { _ in onEditingChanged() })
+                .font(.system(size: 16, design: .rounded))
+                .foregroundColor(.primary)
                 .disabled(!isEditable)
-                .foregroundColor(.black)
-                .font(.headline)
-            Spacer()
             if !text.isEmpty && isEditable {
                 Button(action: { text = "" }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.gray.opacity(0.7))
                 }
             }
         }
         .padding()
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.yellow.opacity(0.2)))
-        .shadow(radius: 2)
+        .background(Color.white)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
+        )
+        .shadow(color: .gray.opacity(0.1), radius: 3)
     }
 }
 

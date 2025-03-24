@@ -4,7 +4,7 @@
 //
 //  Created by Rene Mbanguka on 1/18/25.
 //
-// UserProfileView
+// UserProfileView.swift
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
@@ -12,8 +12,8 @@ import FirebaseFirestore
 struct UserProfileView: View {
     @StateObject private var viewModel = UserProfileViewModel()
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var authViewModel: AuthenticationViewModel // Shared auth state
-    @Binding var selectedTab: String? // Optional binding, nil when not in TabsView
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @Binding var selectedTab: String?
     
     @State private var showingEditProfile = false
     @State private var showingContactUs = false
@@ -22,50 +22,68 @@ struct UserProfileView: View {
     
     private var greeting: String {
         if let firstName = viewModel.user?.firstName, !firstName.isEmpty {
-            return "Welcome \(firstName)"
+            return "Welcome, \(firstName)"
         } else if let email = viewModel.user?.email, let prefix = email.split(separator: "@").first {
-            return "Welcome \(prefix)"
+            return "Welcome, \(prefix)"
         } else {
-            return "Welcome User"
+            return "Welcome, User"
         }
     }
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                VStack(spacing: 10) {
-                    AsyncImage(url: URL(string: viewModel.user?.photoUrl ?? "")) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 100, height: 100)
-                            .clipShape(Circle())
-                    } placeholder: {
-                        Image(systemName: "person.crop.circle.fill")
-                            .resizable()
-                            .frame(width: 100, height: 100)
-                            .foregroundColor(.yellow)
-                    }
+                // Profilheader med gradientbakgrund
+                ZStack {
+                    GradientBackground()
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 300) // Utökad höjd för headern
                     
-                    Text(greeting)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    if viewModel.authUser != nil {
-                        Button("Edit Profile") {
-                            showingEditProfile = true
+                    VStack(spacing: 12) {
+                        AsyncImage(url: URL(string: viewModel.user?.photoUrl ?? "")) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
+                                .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                        } placeholder: {
+                            Image(systemName: "person.crop.circle.fill")
+                                .resizable()
+                                .frame(width: 100, height: 100)
+                                .foregroundColor(.blue)
+                                .background(Color(.systemGray6))
+                                .clipShape(Circle())
                         }
-                        .font(.subheadline)
-                        .foregroundColor(.blue)
+                        
+                        Text(greeting)
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        
+                        if viewModel.authUser != nil {
+                            Button("Edit Profile") {
+                                showingEditProfile = true
+                            }
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                            .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                        }
                     }
+                    .padding(.vertical, 20)
                 }
-                .padding(.vertical, 20)
-                .frame(maxWidth: .infinity)
-                .background(Color.gray.opacity(0.1))
                 
+                // Meny (utan gradient, bara vit bakgrund)
                 ScrollView {
                     VStack(spacing: 20) {
-                        Section(header: Text("Your Account").font(.headline).padding(.top, 10)) {
+                        Section(header: Text("Your Account")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                            .padding(.top, 10)) {
                             ProfileMenuItem(icon: "list.bullet", text: "My Rentals") {
                                 showingRentals = true
                             }
@@ -75,7 +93,9 @@ struct UserProfileView: View {
                         }
                         .padding(.horizontal, 20)
                         
-                        Section(header: Text("Support & Info").font(.headline)) {
+                        Section(header: Text("Support & Info")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)) {
                             ProfileMenuItem(icon: "envelope", text: "Contact Us") {
                                 showingContactUs = true
                             }
@@ -86,19 +106,23 @@ struct UserProfileView: View {
                         .padding(.horizontal, 20)
                     }
                 }
+                .background(Color(.systemBackground))
                 
+                // Logga ut-knapp (på vit bakgrund)
                 if viewModel.authUser != nil {
                     Button(action: signOut) {
                         Text("Log Out")
-                            .font(.headline)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
                             .foregroundColor(.white)
                             .frame(height: 55)
                             .frame(maxWidth: .infinity)
                             .background(Color.red)
                             .cornerRadius(10)
+                            .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
                     }
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 20)
+                    .background(Color(.systemBackground))
                 }
             }
             .navigationTitle("Profile")
@@ -107,12 +131,12 @@ struct UserProfileView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
                         if selectedTab != nil {
-                            selectedTab = "search" // Switch to Search tab if in TabsView
+                            selectedTab = "search"
                         }
-                        dismiss() // Dismiss to previous context
+                        dismiss()
                     }) {
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.yellow)
+                            .foregroundColor(.blue)
                     }
                 }
             }
@@ -121,8 +145,9 @@ struct UserProfileView: View {
             .navigationDestination(isPresented: $showingPrivacyPolicy) { PrivacyPolicyView() }
             .navigationDestination(isPresented: $showingRentals) { UserRentalsView() }
             .task { await viewModel.loadCurrentUser() }
+            .background(Color(.systemBackground)) // Vit bakgrund för hela vyn
         }
-        .environmentObject(authViewModel) // Ensure authViewModel is passed down
+        .environmentObject(authViewModel)
     }
     
     private func resetPassword() {
@@ -141,11 +166,29 @@ struct UserProfileView: View {
         Task {
             do {
                 try AuthenticationManager.shared.signOut()
-                authViewModel.checkAuthenticationStatus() // Force update auth state
-                dismiss() // Dismiss view
+                authViewModel.checkAuthenticationStatus()
+                dismiss()
             } catch {
                 print("Sign-out failed: \(error.localizedDescription)")
             }
+        }
+    }
+}
+
+// Gradientbakgrund bara för headern
+struct GradientBackground: View {
+    var body: some View {
+        GeometryReader { geometry in
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.gray.opacity(0.2), // Ljusgrå högst upp
+                    Color.blue.opacity(0.1), // Mjuk blå i mitten
+                    Color.clear // Transparent längst ner i headern
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
@@ -159,18 +202,19 @@ struct ProfileMenuItem: View {
         Button(action: action) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(.yellow)
-                    .font(.headline)
+                    .foregroundColor(.blue)
+                    .font(.system(size: 20, weight: .medium))
                 Text(text)
-                    .font(.headline)
-                    .foregroundColor(.black)
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundColor(.primary)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .foregroundColor(.gray)
             }
             .padding()
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.yellow.opacity(0.2)))
-            .shadow(radius: 2)
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 2)
         }
     }
 }
@@ -178,5 +222,5 @@ struct ProfileMenuItem: View {
 #Preview {
     UserProfileView(selectedTab: .constant(nil))
         .environmentObject(CartManager())
-        .environmentObject(AuthenticationViewModel()) // Add for preview
+        .environmentObject(AuthenticationViewModel())
 }
