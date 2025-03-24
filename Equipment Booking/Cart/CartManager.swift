@@ -16,6 +16,13 @@ class CartManager: ObservableObject {
     @Published var cartItems: [CartItem] = []
     let isReadOnly: Bool // ✅ Added for unauthenticated users to prevent unauthorized user to add items
     
+    func totalCost() -> Double {
+        cartItems.reduce(0) { total, item in
+            let days = Calendar.current.dateComponents([.day], from: item.pickupDate, to: item.returnDate).day ?? 1
+            return total + Double(item.quantity) * item.tool.price * Double(days)
+        }
+    }
+    
     init(isReadOnly: Bool = false) {
         self.isReadOnly = isReadOnly
     }
@@ -117,6 +124,8 @@ struct RentalItem: Codable, Identifiable {
         case quantity
     }
 }
+
+
 
 
 

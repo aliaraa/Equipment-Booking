@@ -5,7 +5,7 @@
 //  Created by Rene Mbanguka on 3/9/25.
 //
 
-// RentalManager.swift
+
 import Foundation
 import FirebaseFirestore
 
@@ -23,7 +23,6 @@ final class RentalManager: ObservableObject {
     func fetchUserRentals(userId: String) async throws -> [Rental] {
         let snapshot = try await rentalsCollection
             .whereField("user_id", isEqualTo: userId)
-            .whereField("status", isEqualTo: "active")
             .getDocuments()
         return snapshot.documents.compactMap { try? $0.data(as: Rental.self) }
     }
