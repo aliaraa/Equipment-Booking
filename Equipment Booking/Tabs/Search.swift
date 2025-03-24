@@ -18,67 +18,83 @@ struct Search: View {
     }
     
     var body: some View {
-        if #available(iOS 16.0, *) {
-           
-                VStack {
-                    HStack {
-                        TextField("Search...", text: $searchText)
-                            .frame(maxWidth: .infinity, maxHeight: 40)
-                            .padding(10)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .padding([.top, .leading, .trailing])
-                        
-                        Button(action: { isShowingResults = true }) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.headline)
-                                .foregroundColor(Color.white)
-                                .frame(maxWidth: 40, maxHeight: 60)
-                                .background(searchText.isEmpty ? Color.gray : Color.blue)
-                                .cornerRadius(8)
-                                .padding([.top, .trailing])
-                        }
-                    }
+        NavigationStack {
+            VStack(spacing: 20) {
+                // Sökfält och knapp
+                HStack(spacing: 12) {
+                    TextField("Search...", text: $searchText)
+                        .padding(.horizontal, 12)
+                        .frame(height: 50)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                        )
+                        .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
                     
-                    NavigationLink(destination: CategoryView(category: "Construction", title: "Construction")) {
-                        Text("Construction")
-                            .font(.title2)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity, minHeight: 100)
-                            .background(Color.orange)
-                            .cornerRadius(8)
-                            .padding([.top, .leading, .trailing])
+                    Button(action: { isShowingResults = true }) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(searchText.isEmpty ? Color.gray : Color.blue)
+                            .cornerRadius(12)
+                            .shadow(color: searchText.isEmpty ? Color.gray.opacity(0.3) : Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
                     }
-                    
-                    NavigationLink(destination: CategoryView(category: "Industrial", title: "Industrial")) {
-                        Text("Industrial")
-                            .font(.title2)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity, minHeight: 100)
-                            .background(Color.gray)
-                            .cornerRadius(8)
-                            .padding([.top, .leading, .trailing])
-                    }
-                    
-                    NavigationLink(destination: CategoryView(category: "Electrical", title: "Electrical")) {
-                        Text("Electrical")
-                            .font(.title2)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity, minHeight: 100)
-                            .background(Color.yellow)
-                            .cornerRadius(8)
-                            .padding([.top, .leading, .trailing])
-                    }
-                    
-                    Spacer()
                 }
-                .sheet(isPresented: $isShowingResults) {
-                    SearchResultsView(tools: filteredTools)
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+                
+                // Kategorier
+                VStack(spacing: 16) {
+                    CategoryCard(category: "Construction", destination: CategoryView(category: "Construction", title: "Construction"), color: Color.orange)
+                    CategoryCard(category: "Industrial", destination: CategoryView(category: "Industrial", title: "Industrial"), color: Color.gray)
+                    CategoryCard(category: "Electrical", destination: CategoryView(category: "Electrical", title: "Electrical"), color: Color.yellow)
                 }
+                .padding(.horizontal, 16)
+                
+                Spacer()
+            }
+            .background(Color(.systemBackground))
+            .navigationTitle("Search")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Search")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                }
+            }
+            .sheet(isPresented: $isShowingResults) {
+                SearchResultsView(tools: filteredTools)
             }
         }
     }
+}
 
+// Hjälpkomponent för kategorikort
+struct CategoryCard: View {
+    let category: String
+    let destination: CategoryView
+    let color: Color
+    
+    var body: some View {
+        NavigationLink(destination: destination) {
+            Text(category)
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity, minHeight: 100)
+                .background(color)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
+                .shadow(color: .gray.opacity(0.3), radius: 5, x: 0, y: 3)
+        }
+    }
+}
 
 #Preview {
     Search()

@@ -247,13 +247,9 @@ struct ProfileTextField: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(Color(.systemBackground))
         .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
-        )
-        .shadow(color: .gray.opacity(0.1), radius: 3)
+        .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 2)
     }
 }
 

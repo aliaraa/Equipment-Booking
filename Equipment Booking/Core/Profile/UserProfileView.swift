@@ -4,7 +4,6 @@
 //
 //  Created by Rene Mbanguka on 1/18/25.
 //
-// UserProfileView.swift
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
@@ -36,10 +35,10 @@ struct UserProfileView: View {
                 // Profilheader med gradientbakgrund
                 ZStack {
                     GradientBackground()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 300) // Utökad höjd för headern
+                        .frame(height: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
                     
-                    VStack(spacing: 12) {
+                    VStack(spacing: 0) {
                         AsyncImage(url: URL(string: viewModel.user?.photoUrl ?? "")) { image in
                             image
                                 .resizable()
@@ -62,16 +61,26 @@ struct UserProfileView: View {
                             .foregroundColor(.primary)
                         
                         if viewModel.authUser != nil {
-                            Button("Edit Profile") {
-                                showingEditProfile = true
+                            Button(action: { showingEditProfile = true }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "pencil")
+                                        .font(.system(size: 16, weight: .semibold))
+                                    Text("Edit Profile")
+                                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 20)
+                                .background(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .cornerRadius(20)
+                                .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 3)
                             }
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 16)
-                            .background(Color.blue)
-                            .cornerRadius(10)
-                            .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
                         }
                     }
                     .padding(.vertical, 20)
@@ -83,7 +92,9 @@ struct UserProfileView: View {
                         Section(header: Text("Your Account")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
-                            .padding(.top, 10)) {
+                            .frame(maxWidth: .infinity, alignment: .leading) // Flytta till vänster
+                            .padding(.top, 10)
+                        ) {
                             ProfileMenuItem(icon: "list.bullet", text: "My Rentals") {
                                 showingRentals = true
                             }
@@ -95,7 +106,9 @@ struct UserProfileView: View {
                         
                         Section(header: Text("Support & Info")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)) {
+                            .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity, alignment: .leading) // Flytta till vänster
+                        ) {
                             ProfileMenuItem(icon: "envelope", text: "Contact Us") {
                                 showingContactUs = true
                             }
@@ -145,7 +158,7 @@ struct UserProfileView: View {
             .navigationDestination(isPresented: $showingPrivacyPolicy) { PrivacyPolicyView() }
             .navigationDestination(isPresented: $showingRentals) { UserRentalsView() }
             .task { await viewModel.loadCurrentUser() }
-            .background(Color(.systemBackground)) // Vit bakgrund för hela vyn
+            .background(Color(.systemBackground))
         }
         .environmentObject(authViewModel)
     }
@@ -181,9 +194,9 @@ struct GradientBackground: View {
         GeometryReader { geometry in
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.gray.opacity(0.2), // Ljusgrå högst upp
-                    Color.blue.opacity(0.1), // Mjuk blå i mitten
-                    Color.clear // Transparent längst ner i headern
+                    Color.gray.opacity(0.2),
+                    Color.blue.opacity(0.1),
+                    Color.clear
                 ]),
                 startPoint: .top,
                 endPoint: .bottom

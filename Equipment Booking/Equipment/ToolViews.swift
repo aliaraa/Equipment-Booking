@@ -66,12 +66,12 @@ struct ToolRow: View {
                     .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
             )
             
-            Image(systemName: "chevron.right")
+         /*   Image(systemName: "chevron.right")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.gray.opacity(0.6))
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.trailing, 12)
-                .alignmentGuide(VerticalAlignment.center) { d in d[VerticalAlignment.center] }
+                .alignmentGuide(VerticalAlignment.center) { d in d[VerticalAlignment.center] } */
         }
         .padding(.vertical, 6)
         .task {

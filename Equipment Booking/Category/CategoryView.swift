@@ -23,57 +23,62 @@ struct CategoryView: View {
     }
     
     var body: some View {
-       
-            VStack {
-                // Search bar
-                HStack {
-                    TextField("Search in \(title)", text: $searchText)
-                        .padding(.leading)
-                        .frame(maxWidth: .infinity, maxHeight: 50)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-                        .padding([.top, .leading])
-                    
-                    Button(action: { isShowingResults.toggle() }) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: 40, maxHeight: 50)
-                            .background(searchText.isEmpty ? Color.gray : Color.blue)
-                            .cornerRadius(8)
-                            .padding([.top, .trailing])
-                    }
-                    .disabled(searchText.isEmpty)
-                }
+        VStack(spacing: 0) {
+            // Sökfält och knapp
+            HStack(spacing: 12) {
+                TextField("Search...", text: $searchText)
+                    .padding(.horizontal, 12)
+                    .frame(height: 50)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    )
+                    .shadow(color: .gray.opacity(0.2), radius: 4, x: 0, y: 2)
                 
-                List(isShowingResults ? filteredTools : dataManager.toolData.filter { $0.category == category }) { tool in
-                    ToolRow(tool: tool)
-                }
-                .listStyle(PlainListStyle())
-                .onChange(of: searchText) { newValue in
-                    if newValue.isEmpty {
-                        isShowingResults = false
-                    }
-                }
-            }
-            .navigationTitle("\(title) Tools")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("\(title) Tools")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                Button(action: { isShowingResults = true }) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 50, height: 50)
+                        .background(searchText.isEmpty ? Color.gray : Color.blue)
+                        .cornerRadius(12)
+                        .shadow(color: searchText.isEmpty ? Color.gray.opacity(0.3) : Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+            
+            // Lista utan chevron och separators
+            List(isShowingResults ? filteredTools : dataManager.toolData.filter { $0.category == category }) { tool in
+                ToolRow(tool: tool)
+                    .listRowSeparator(.hidden) // Tar bort linjen mellan items
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)) // Justerar padding
+            }
+            .listStyle(PlainListStyle())
+            .onChange(of: searchText) { newValue in
+                if newValue.isEmpty {
+                    isShowingResults = false
+                }
+            }
+        }
+        .navigationTitle("\(title) Tools")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("\(title) Tools")
+                    .font(.system(size: 22, weight: .bold, design: .rounded)) // Uppdaterad typografi
+                    .foregroundColor(.primary)
+            }
+        }
+        .background(Color(.systemBackground))
     }
 }
+
 
 
 #Preview {
     CategoryView(category: "Construction", title: "Construction")
         .environmentObject(CartManager())
 }
-
-
-
