@@ -18,6 +18,10 @@ struct UserRentalsView: View {
     @StateObject private var equipmentManager = EquipmentDataManager()
     @State private var rentals: [Rental] = []
     @State private var showCartView = false
+    @State private var isHistoryExpanded = false
+    @State private var showDateFilterSheet = false
+    @State private var startDate = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+    @State private var endDate = Date()
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -26,32 +30,87 @@ struct UserRentalsView: View {
         return formatter
     }()
     
-    // Filtrera aktiva och historiska hyror
     private var activeRentals: [Rental] {
         rentals.filter { $0.status.lowercased() == "active" }
     }
     
     private var rentalHistory: [Rental] {
         rentals.filter { $0.status.lowercased() != "active" }
+            .filter { $0.returnDate >= startDate && $0.returnDate <= endDate }
     }
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Aktiva hyror
                     rentalsSection(
                         title: "Active Rentals",
                         rentals: activeRentals,
                         emptyMessage: "You have no active rentals."
                     )
                     
-                    // Historik
-                    rentalsSection(
-                        title: "Rental History",
-                        rentals: rentalHistory,
-                        emptyMessage: "You have no rental history yet."
-                    )
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Rental History")
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Button(action: { withAnimation { isHistoryExpanded.toggle() } }) {
+                                Image(systemName: isHistoryExpanded ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        .padding(.top, 8)
+                        
+                        if isHistoryExpanded {
+                            Button(action: { showDateFilterSheet = true }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "calendar")
+                                        .font(.system(size: 16))
+                                    Text("Filter by Date")
+                                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 16)
+                                .background(Color.blue)
+                                .cornerRadius(10)
+                                .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                            }
+                            .padding(.vertical, 8)
+                            
+                            Text("Showing rentals from \(dateFormatter.string(from: startDate)) to \(dateFormatter.string(from: endDate))")
+                                .font(.system(size: 14, weight: .medium, design: .rounded))
+                                .foregroundColor(.gray)
+                                .padding(.bottom, 4)
+                            
+                            if rentalHistory.isEmpty {
+                                Text("No rentals found for this period.")
+                                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                                    .foregroundColor(.gray)
+                                    .padding(.vertical, 8)
+                            } else {
+                                ForEach(rentalHistory) { rental in
+                                    RentalRow(rental: rental, equipmentManager: equipmentManager) { rentalId, items in
+                                        Task {
+                                            do {
+                                                try await rentalManager.returnRental(rentalId: rentalId, items: items)
+                                                let userId = try AuthenticationManager.shared.getAuthenticatedUser().uid
+                                                rentals = try await rentalManager.fetchUserRentals(userId: userId)
+                                                print("Updated rentals after return: \(rentals.map { "\($0.id): \($0.status)" }.joined(separator: ", "))")
+                                            } catch {
+                                                print("Error returning rental: \(error)")
+                                            }
+                                        }
+                                    }
+                                    .padding(.bottom, 8)
+                                }
+                            }
+                        }
+                    }
                 }
                 .padding(.horizontal)
             }
@@ -76,6 +135,85 @@ struct UserRentalsView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showDateFilterSheet) {
+                // Förbättrad sheet med rullande hjul
+                VStack(spacing: 20) {
+                    // Rubrik och stängningsknapp
+                    HStack {
+                        Text("Filter Rental History")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Button(action: { showDateFilterSheet = false }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                    
+                    // Startdatum
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Start Date: \(dateFormatter.string(from: startDate))")
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundColor(.blue)
+                        DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
+                            .datePickerStyle(.wheel)
+                            .labelsHidden()
+                            .frame(height: 120) // Minskad höjd på hjulen
+                            .clipped() // Förhindrar att hjulen går utanför ramen
+                    }
+                    .padding(.vertical, 8)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
+                    
+                    // Slutdatum
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("End Date: \(dateFormatter.string(from: endDate))")
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundColor(.blue)
+                        DatePicker("End Date", selection: $endDate, displayedComponents: .date)
+                            .datePickerStyle(.wheel)
+                            .labelsHidden()
+                            .frame(height: 120) // Minskad höjd på hjulen
+                            .clipped()
+                    }
+                    .padding(.vertical, 8)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
+                    
+                    // Knappar
+                    HStack(spacing: 16) {
+                        Button(action: { showDateFilterSheet = false }) {
+                            Text("Cancel")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundColor(.gray)
+                                .padding(.vertical, 12)
+                                .frame(maxWidth: .infinity)
+                                .background(Color(.systemGray5))
+                                .cornerRadius(10)
+                        }
+                        
+                        Button(action: { showDateFilterSheet = false }) {
+                            Text("Apply Filter")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding(.vertical, 12)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.blue)
+                                .cornerRadius(10)
+                        }
+                    }
+                    .padding(.top, 8)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(Color(.systemBackground))
+                .presentationDetents([.medium])
+            }
             .sheet(isPresented: $showCartView) {
                 CartView()
             }
@@ -83,6 +221,7 @@ struct UserRentalsView: View {
                 do {
                     let userId = try AuthenticationManager.shared.getAuthenticatedUser().uid
                     rentals = try await rentalManager.fetchUserRentals(userId: userId)
+                    print("Fetched \(rentals.count) rentals: \(rentals.map { "\($0.id): \($0.status)" }.joined(separator: ", "))")
                 } catch {
                     print("Error fetching rentals: \(error)")
                 }
@@ -111,6 +250,7 @@ struct UserRentalsView: View {
                                 try await rentalManager.returnRental(rentalId: rentalId, items: items)
                                 let userId = try AuthenticationManager.shared.getAuthenticatedUser().uid
                                 self.rentals = try await rentalManager.fetchUserRentals(userId: userId)
+                                print("Updated rentals after return: \(rentals.map { "\($0.id): \($0.status)" }.joined(separator: ", "))")
                             } catch {
                                 print("Error returning rental: \(error)")
                             }
@@ -152,7 +292,6 @@ struct RentalRow: View {
             ForEach(rental.items) { item in
                 if let tool = equipmentManager.toolData.first(where: { $0.id == item.id }) {
                     HStack(alignment: .top, spacing: 12) {
-                        // Bild
                         if let imageURL = tool.imageURL, let url = URL(string: imageURL) {
                             AsyncImage(url: url) { phase in
                                 switch phase {
@@ -192,9 +331,7 @@ struct RentalRow: View {
                                 .cornerRadius(8)
                         }
                         
-                        // Info om verktyget
                         VStack(alignment: .leading, spacing: 8) {
-                            // Namn och returknapp
                             HStack {
                                 Text(tool.name)
                                     .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -222,7 +359,6 @@ struct RentalRow: View {
                                 }
                             }
                             
-                            // Status och beskrivning
                             HStack {
                                 Text(rental.status.capitalized)
                                     .font(.system(size: 12, weight: .medium, design: .rounded))
@@ -239,7 +375,6 @@ struct RentalRow: View {
                                     .truncationMode(.tail)
                             }
                             
-                            // Datum och kostnad
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack(spacing: 12) {
                                     Text("Pickup: \(dateFormatter.string(from: rental.pickupDate))")
@@ -270,7 +405,6 @@ struct RentalRow: View {
                                 }
                             }
                             
-                            // Överlämnad-info
                             if isOverdue(rental.returnDate) {
                                 Text("Overdue by \(daysOverdue(rental.returnDate)) days")
                                     .font(.system(size: 13, weight: .medium, design: .rounded))
