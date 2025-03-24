@@ -4,6 +4,7 @@
 //
 //  Created by Rene Mbanguka on 1/18/25.
 //
+
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
@@ -32,7 +33,6 @@ struct UserProfileView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Profilheader med gradientbakgrund
                 ZStack {
                     GradientBackground()
                         .frame(height: 200)
@@ -86,13 +86,12 @@ struct UserProfileView: View {
                     .padding(.vertical, 20)
                 }
                 
-                // Meny (utan gradient, bara vit bakgrund)
                 ScrollView {
                     VStack(spacing: 20) {
                         Section(header: Text("Your Account")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading) // Flytta till vänster
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.top, 10)
                         ) {
                             ProfileMenuItem(icon: "list.bullet", text: "My Rentals") {
@@ -107,7 +106,7 @@ struct UserProfileView: View {
                         Section(header: Text("Support & Info")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading) // Flytta till vänster
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         ) {
                             ProfileMenuItem(icon: "envelope", text: "Contact Us") {
                                 showingContactUs = true
@@ -121,7 +120,6 @@ struct UserProfileView: View {
                 }
                 .background(Color(.systemBackground))
                 
-                // Logga ut-knapp (på vit bakgrund)
                 if viewModel.authUser != nil {
                     Button(action: signOut) {
                         Text("Log Out")
@@ -158,6 +156,9 @@ struct UserProfileView: View {
             .navigationDestination(isPresented: $showingPrivacyPolicy) { PrivacyPolicyView() }
             .navigationDestination(isPresented: $showingRentals) { UserRentalsView() }
             .task { await viewModel.loadCurrentUser() }
+            .onChange(of: viewModel.user?.photoUrl) { newPhotoUrl in // observe change in photoUrl
+                print("PhotoUrl updated in EditView: \(newPhotoUrl ?? "nil")") // Debug
+            }
             .background(Color(.systemBackground))
         }
         .environmentObject(authViewModel)
@@ -188,7 +189,6 @@ struct UserProfileView: View {
     }
 }
 
-// Gradientbakgrund bara för headern
 struct GradientBackground: View {
     var body: some View {
         GeometryReader { geometry in

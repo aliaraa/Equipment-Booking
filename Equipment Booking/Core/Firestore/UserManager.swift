@@ -159,12 +159,6 @@ final class UserManager {
         }
     }
 
-
-    
-//    func getUser(userID: String) async throws -> DBUser {
-//        try await userDocument(userId: userID).getDocument(as: DBUser.self ) //Decode to DBUser format
-//        
-//    }
      
     
     func updateUserAdminStatus(userId: String, isAdmin: Bool) async throws {

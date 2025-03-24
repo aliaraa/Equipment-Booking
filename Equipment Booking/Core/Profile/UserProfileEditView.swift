@@ -26,7 +26,6 @@ struct UserProfileEditView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header med gradient och bildväljare
             ZStack {
                 GradientBackground()
                     .frame(height: 200)
@@ -81,10 +80,8 @@ struct UserProfileEditView: View {
                 .padding(.top, 20)
             }
             
-            // Formulär med anpassad layout
             ScrollView {
                 VStack(spacing: 20) {
-                    // Personlig information
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Personal information")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -97,8 +94,6 @@ struct UserProfileEditView: View {
                             isEditable: true,
                             onEditingChanged: checkForChanges
                         )
-                        
-                        
                         ProfileTextField(
                             icon: "person.fill",
                             placeholder: "Last name",
@@ -106,10 +101,8 @@ struct UserProfileEditView: View {
                             isEditable: true,
                             onEditingChanged: checkForChanges
                         )
-                        
                     }
                     
-                    // Ytterligare detaljer
                     VStack(alignment: .leading, spacing: 12) {
                         Text("More information")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -145,7 +138,6 @@ struct UserProfileEditView: View {
                         )
                     }
                     
-                    // Spara-knapp
                     Button(action: saveProfileChanges) {
                         Text("Save changes")
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -166,6 +158,9 @@ struct UserProfileEditView: View {
         .navigationTitle("Edit profile")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { loadUserData() }
+        .onChange(of: viewModel.user?.photoUrl) { newPhotoUrl in // observe change in photoUrl
+            print("PhotoUrl updated in EditView: \(newPhotoUrl ?? "nil")") // Debug
+        }
     }
     
     private func checkForChanges() {
@@ -182,6 +177,10 @@ struct UserProfileEditView: View {
                 address = user.address ?? ""
                 companyName = user.companyName ?? ""
                 profession = user.profession ?? ""
+                print("Loaded photoUrl in EditView: \(user.photoUrl ?? "nil")") // Debug
+                if let photoUrl = user.photoUrl, let url = URL(string: photoUrl) {
+                    profileImage = try? await loadImage(from: url)
+                }
             }
         }
     }
@@ -189,30 +188,30 @@ struct UserProfileEditView: View {
     private func saveProfileChanges() {
         Task {
             do {
+                guard let userId = viewModel.user?.userId else {
+                    print("No user ID available")
+                    return
+                }
+                
+                var photoUrl = viewModel.user?.photoUrl
+                
                 if let selectedPhoto = selectedPhoto,
                    let data = try? await selectedPhoto.loadTransferable(type: Data.self) {
-                    let storageRef = Storage.storage().reference().child("profile_images/\(UUID().uuidString).jpg")
-                    _ = try await storageRef.putDataAsync(data)
-                    let photoUrl = try await storageRef.downloadURL().absoluteString
-                    
-                    try await viewModel.updateUserProfile(
-                        firstName: firstName,
-                        lastName: lastName,
-                        phone: phone,
-                        address: address,
-                        companyName: companyName,
-                        profession: profession
-                    )
-                } else {
-                    try await viewModel.updateUserProfile(
-                        firstName: firstName,
-                        lastName: lastName,
-                        phone: phone,
-                        address: address,
-                        companyName: companyName,
-                        profession: profession
-                    )
+                    let storageRef = Storage.storage().reference().child("profile_images/\(userId).jpg")
+                    _ = try await storageRef.putDataAsync(data, metadata: nil)
+                    photoUrl = try await storageRef.downloadURL().absoluteString
                 }
+                
+                try await viewModel.updateUserProfile(
+                    firstName: firstName,
+                    lastName: lastName,
+                    phone: phone,
+                    address: address,
+                    companyName: companyName,
+                    profession: profession,
+                    photoUrl: photoUrl
+                )
+                
                 isSaveButtonActive = false
                 dismiss()
             } catch {
@@ -220,8 +219,15 @@ struct UserProfileEditView: View {
             }
         }
     }
+    
+    private func loadImage(from url: URL) async throws -> Image? {
+        let (data, _) = try await URLSession.shared.data(from: url)
+        if let uiImage = UIImage(data: data) {
+            return Image(uiImage: uiImage)
+        }
+        return nil
+    }
 }
-
 
 struct ProfileTextField: View {
     let icon: String
