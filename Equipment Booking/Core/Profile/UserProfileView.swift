@@ -10,7 +10,8 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct UserProfileView: View {
-    @StateObject private var viewModel = UserProfileViewModel()
+//    @StateObject private var viewModel = UserProfileViewModel()
+    @EnvironmentObject private var viewModel: UserProfileViewModel //  environment object /global var
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authViewModel: AuthenticationViewModel
     @Binding var selectedTab: String?
@@ -39,15 +40,44 @@ struct UserProfileView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 20))
                     
                     VStack(spacing: 0) {
-                        AsyncImage(url: URL(string: viewModel.user?.photoUrl ?? "")) { image in
-                            image
+                        if let profileImage = viewModel.profileImage {
+                            Image(uiImage: profileImage)
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 100, height: 100)
                                 .clipShape(Circle())
                                 .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
                                 .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
-                        } placeholder: {
+                        } else if let photoUrl = viewModel.user?.photoUrl, let url = URL(string: photoUrl) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .empty:
+                                    ProgressView()
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 100, height: 100)
+                                        .clipShape(Circle())
+                                        .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
+                                        .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                                case .failure:
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .resizable()
+                                        .frame(width: 100, height: 100)
+                                        .foregroundColor(.blue)
+                                        .background(Color(.systemGray6))
+                                        .clipShape(Circle())
+                                @unknown default:
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .resizable()
+                                        .frame(width: 100, height: 100)
+                                        .foregroundColor(.blue)
+                                        .background(Color(.systemGray6))
+                                        .clipShape(Circle())
+                                }
+                            }
+                        } else {
                             Image(systemName: "person.crop.circle.fill")
                                 .resizable()
                                 .frame(width: 100, height: 100)
@@ -151,13 +181,20 @@ struct UserProfileView: View {
                     }
                 }
             }
-            .navigationDestination(isPresented: $showingEditProfile) { UserProfileEditView() }
+            .navigationDestination(isPresented: $showingEditProfile) {
+                UserProfileEditView()
+                    .onDisappear {
+                        Task {
+                            await viewModel.loadCurrentUser()
+                        }
+                    }
+            }
             .navigationDestination(isPresented: $showingContactUs) { ContactUsView() }
             .navigationDestination(isPresented: $showingPrivacyPolicy) { PrivacyPolicyView() }
             .navigationDestination(isPresented: $showingRentals) { UserRentalsView() }
             .task { await viewModel.loadCurrentUser() }
-            .onChange(of: viewModel.user?.photoUrl) { newPhotoUrl in // observe change in photoUrl
-                print("PhotoUrl updated in EditView: \(newPhotoUrl ?? "nil")") // Debug
+            .onChange(of: viewModel.user?.photoUrl) { newPhotoUrl in
+//                print("PhotoUrl updated in ProfileView: \(newPhotoUrl ?? "nil")")
             }
             .background(Color(.systemBackground))
         }

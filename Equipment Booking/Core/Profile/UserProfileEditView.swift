@@ -11,7 +11,8 @@ import FirebaseStorage
 import PhotosUI
 
 struct UserProfileEditView: View {
-    @StateObject private var viewModel = UserProfileViewModel()
+//    @StateObject private var viewModel = UserProfileViewModel()
+    @EnvironmentObject private var viewModel: UserProfileViewModel // Use environment/global object
     @Environment(\.dismiss) var dismiss
     
     @State private var firstName: String = ""
@@ -23,6 +24,7 @@ struct UserProfileEditView: View {
     @State private var isSaveButtonActive: Bool = false
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var profileImage: Image? = nil
+    @State private var isLoadingImage: Bool = false // Loading state
     
     var body: some View {
         VStack(spacing: 0) {
@@ -33,21 +35,34 @@ struct UserProfileEditView: View {
                 
                 VStack(spacing: 12) {
                     PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                        Group {
-                            if let profileImage = profileImage {
+                        ZStack {
+                            if let profileImage = profileImage ?? (viewModel.profileImage.map { Image(uiImage: $0) }) {
                                 profileImage
                                     .resizable()
                                     .scaledToFill()
                             } else if let photoUrl = viewModel.user?.photoUrl, let url = URL(string: photoUrl) {
-                                AsyncImage(url: url) { image in
-                                    image.resizable().scaledToFill()
-                                } placeholder: {
-                                    Image(systemName: "person.crop.circle.fill")
-                                        .foregroundColor(.gray)
+                                AsyncImage(url: url) { phase in
+                                    switch phase {
+                                    case .empty:
+                                        ProgressView() // Loading indicator
+                                    case .success(let image):
+                                        image.resizable().scaledToFill()
+                                    case .failure:
+                                        Image(systemName: "person.crop.circle.fill")
+                                            .foregroundColor(.gray)
+                                    @unknown default:
+                                        Image(systemName: "person.crop.circle.fill")
+                                            .foregroundColor(.gray)
+                                    }
                                 }
                             } else {
                                 Image(systemName: "person.crop.circle.fill")
                                     .foregroundColor(.gray)
+                            }
+                            if isLoadingImage {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                                    .scaleEffect(1.5)
                             }
                         }
                         .frame(width: 100, height: 100)
@@ -65,11 +80,13 @@ struct UserProfileEditView: View {
                     }
                     .onChange(of: selectedPhoto) { newItem in
                         Task {
+                            isLoadingImage = true
                             if let data = try? await newItem?.loadTransferable(type: Data.self),
                                let uiImage = UIImage(data: data) {
                                 profileImage = Image(uiImage: uiImage)
                                 isSaveButtonActive = true
                             }
+                            isLoadingImage = false
                         }
                     }
                     
@@ -158,8 +175,8 @@ struct UserProfileEditView: View {
         .navigationTitle("Edit profile")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { loadUserData() }
-        .onChange(of: viewModel.user?.photoUrl) { newPhotoUrl in // observe change in photoUrl
-            print("PhotoUrl updated in EditView: \(newPhotoUrl ?? "nil")") // Debug
+        .onChange(of: viewModel.user?.photoUrl) { newPhotoUrl in
+//            print("PhotoUrl updated in EditView: \(newPhotoUrl ?? "nil")")
         }
     }
     
@@ -177,31 +194,49 @@ struct UserProfileEditView: View {
                 address = user.address ?? ""
                 companyName = user.companyName ?? ""
                 profession = user.profession ?? ""
-                print("Loaded photoUrl in EditView: \(user.photoUrl ?? "nil")") // Debug
-                if let photoUrl = user.photoUrl, let url = URL(string: photoUrl) {
-                    profileImage = try? await loadImage(from: url)
-                }
+                print("Loaded photoUrl in EditView: \(user.photoUrl ?? "nil")")
+                // Use preloaded image from viewModel if available
+                profileImage = viewModel.profileImage.map { Image(uiImage: $0) }
             }
         }
     }
-    
+ 
     private func saveProfileChanges() {
         Task {
             do {
+                // Ensure user ID is available
                 guard let userId = viewModel.user?.userId else {
                     print("No user ID available")
                     return
                 }
                 
+                // Start with the existing photo URL, if any
                 var photoUrl = viewModel.user?.photoUrl
                 
+                // Handle image upload with resizing if a new photo is selected
                 if let selectedPhoto = selectedPhoto,
-                   let data = try? await selectedPhoto.loadTransferable(type: Data.self) {
-                    let storageRef = Storage.storage().reference().child("profile_images/\(userId).jpg")
-                    _ = try await storageRef.putDataAsync(data, metadata: nil)
-                    photoUrl = try await storageRef.downloadURL().absoluteString
+                   let data = try? await selectedPhoto.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    isLoadingImage = true // Show loading indicator
+                    
+                    // Resize the image to 200x200 pixels (adjust size as needed)
+                    let resizedImage = uiImage.resized(to: CGSize(width: 200, height: 200))
+                    if let resizedData = resizedImage?.jpegData(compressionQuality: 0.8) { // 80% quality ..reduce image size
+                        let storageRef = Storage.storage().reference().child("profile_images/\(userId).jpg")
+                        
+                        // Upload the resized image data
+                        _ = try await storageRef.putDataAsync(resizedData, metadata: nil)
+                        
+                        // Get the download URL after upload
+                        photoUrl = try await storageRef.downloadURL().absoluteString
+                    } else {
+                        print("Failed to resize or compress image")
+                    }
+                    
+                    isLoadingImage = false // Hide loading indicator
                 }
                 
+                // Update the user profile with new data and photo URL
                 try await viewModel.updateUserProfile(
                     firstName: firstName,
                     lastName: lastName,
@@ -212,20 +247,25 @@ struct UserProfileEditView: View {
                     photoUrl: photoUrl
                 )
                 
+                // Reset UI state and dismiss the view
                 isSaveButtonActive = false
                 dismiss()
             } catch {
-                print("Error updating profile: \(error.localizedDescription)")
+//                print("Error updating profile: \(error.localizedDescription)")
+                isLoadingImage = false // Ensure loading indicator is hidden on error
             }
         }
     }
     
-    private func loadImage(from url: URL) async throws -> Image? {
-        let (data, _) = try await URLSession.shared.data(from: url)
-        if let uiImage = UIImage(data: data) {
-            return Image(uiImage: uiImage)
-        }
-        return nil
+
+}
+
+extension UIImage {
+    func resized(to size: CGSize) -> UIImage? {
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        draw(in: CGRect(origin: .zero, size: size))
+        return UIGraphicsGetImageFromCurrentImageContext()
     }
 }
 
