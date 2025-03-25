@@ -9,22 +9,22 @@ import SwiftUI
 
 struct RootView: View {
     @StateObject private var authViewModel = AuthenticationViewModel()
-    @StateObject private var userProfileViewModel = UserProfileViewModel() // for managing user profile data
+    @StateObject private var userProfileViewModel = UserProfileViewModel()
     @EnvironmentObject var cartManager: CartManager
+    @State private var selectedTab: String? = "search" // Default tab
     
     var body: some View {
         ZStack {
             if authViewModel.isAuthenticated {
                 if #available(iOS 18.0, *) {
-                    TabsView()
-                        .environmentObject(userProfileViewModel) // Pass to TabsView
+                    TabsView(selectedTab: $selectedTab)
+                        .environmentObject(userProfileViewModel)
+                        .environmentObject(cartManager)
                 } else {
                     // Fallback on earlier versions
                 }
             } else {
-                NavigationStack {
-                    UserAuthenticationView(showSignInView: .constant(false))
-                }
+                UserAuthenticationView(showSignInView: .constant(false))
             }
         }
         .onAppear {
@@ -36,16 +36,14 @@ struct RootView: View {
             }
         }
         .environmentObject(authViewModel)
-        .environmentObject(userProfileViewModel) // Provide user profile data globally
+        .environmentObject(userProfileViewModel)
     }
 }
 
 struct RootView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationStack {
-            RootView()
-                .environmentObject(CartManager())
-        }
+        RootView()
+            .environmentObject(CartManager())
     }
 }
 

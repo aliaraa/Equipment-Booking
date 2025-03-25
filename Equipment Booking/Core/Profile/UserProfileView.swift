@@ -10,8 +10,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct UserProfileView: View {
-//    @StateObject private var viewModel = UserProfileViewModel()
-    @EnvironmentObject private var viewModel: UserProfileViewModel //  environment object /global var
+    @EnvironmentObject private var viewModel: UserProfileViewModel
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authViewModel: AuthenticationViewModel
     @Binding var selectedTab: String?
@@ -32,172 +31,166 @@ struct UserProfileView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                ZStack {
-                    GradientBackground()
-                        .frame(height: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                    
-                    VStack(spacing: 0) {
-                        if let profileImage = viewModel.profileImage {
-                            Image(uiImage: profileImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
-                                .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
-                        } else if let photoUrl = viewModel.user?.photoUrl, let url = URL(string: photoUrl) {
-                            AsyncImage(url: url) { phase in
-                                switch phase {
-                                case .empty:
-                                    ProgressView()
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 100, height: 100)
-                                        .clipShape(Circle())
-                                        .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
-                                        .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
-                                case .failure:
-                                    Image(systemName: "person.crop.circle.fill")
-                                        .resizable()
-                                        .frame(width: 100, height: 100)
-                                        .foregroundColor(.blue)
-                                        .background(Color(.systemGray6))
-                                        .clipShape(Circle())
-                                @unknown default:
-                                    Image(systemName: "person.crop.circle.fill")
-                                        .resizable()
-                                        .frame(width: 100, height: 100)
-                                        .foregroundColor(.blue)
-                                        .background(Color(.systemGray6))
-                                        .clipShape(Circle())
-                                }
-                            }
-                        } else {
-                            Image(systemName: "person.crop.circle.fill")
-                                .resizable()
-                                .frame(width: 100, height: 100)
-                                .foregroundColor(.blue)
-                                .background(Color(.systemGray6))
-                                .clipShape(Circle())
-                        }
-                        
-                        Text(greeting)
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
-                        
-                        if viewModel.authUser != nil {
-                            Button(action: { showingEditProfile = true }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "pencil")
-                                        .font(.system(size: 16, weight: .semibold))
-                                    Text("Edit Profile")
-                                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                }
-                                .foregroundColor(.white)
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, 20)
-                                .background(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .cornerRadius(20)
-                                .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 3)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 20)
-                }
+        VStack(spacing: 0) {
+            ZStack {
+                GradientBackground()
+                    .frame(height: 200)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
                 
-                ScrollView {
-                    VStack(spacing: 20) {
-                        Section(header: Text("Your Account")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.top, 10)
-                        ) {
-                            ProfileMenuItem(icon: "list.bullet", text: "My Rentals") {
-                                showingRentals = true
-                            }
-                            ProfileMenuItem(icon: "key.fill", text: "Reset Password") {
-                                resetPassword()
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        
-                        Section(header: Text("Support & Info")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        ) {
-                            ProfileMenuItem(icon: "envelope", text: "Contact Us") {
-                                showingContactUs = true
-                            }
-                            ProfileMenuItem(icon: "doc.text", text: "Privacy & Policy") {
-                                showingPrivacyPolicy = true
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                }
-                .background(Color(.systemBackground))
-                
-                if viewModel.authUser != nil {
-                    Button(action: signOut) {
-                        Text("Log Out")
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
-                            .frame(height: 55)
-                            .frame(maxWidth: .infinity)
-                            .background(Color.red)
-                            .cornerRadius(10)
+                VStack(spacing: 0) {
+                    if let profileImage = viewModel.profileImage {
+                        Image(uiImage: profileImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 100, height: 100)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
                             .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                    } else if let photoUrl = viewModel.user?.photoUrl, let url = URL(string: photoUrl) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 100, height: 100)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
+                                    .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                            case .failure:
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .frame(width: 100, height: 100)
+                                    .foregroundColor(.blue)
+                                    .background(Color(.systemGray6))
+                                    .clipShape(Circle())
+                            @unknown default:
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .frame(width: 100, height: 100)
+                                    .foregroundColor(.blue)
+                                    .background(Color(.systemGray6))
+                                    .clipShape(Circle())
+                            }
+                        }
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .frame(width: 100, height: 100)
+                            .foregroundColor(.blue)
+                            .background(Color(.systemGray6))
+                            .clipShape(Circle())
+                    }
+                    
+                    Text(greeting)
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                    
+                    if viewModel.authUser != nil {
+                        Button(action: { showingEditProfile = true }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 16, weight: .semibold))
+                                Text("Edit Profile")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 20)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(20)
+                            .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 3)
+                        }
+                    }
+                }
+                .padding(.vertical, 20)
+            }
+            
+            ScrollView {
+                VStack(spacing: 20) {
+                    Section(header: Text("Your Account")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 10)
+                    ) {
+                        ProfileMenuItem(icon: "list.bullet", text: "My Rentals") {
+                            showingRentals = true
+                        }
+                        ProfileMenuItem(icon: "key.fill", text: "Reset Password") {
+                            resetPassword()
+                        }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 20)
-                    .background(Color(.systemBackground))
-                }
-            }
-            .navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        if selectedTab != nil {
-                            selectedTab = "search"
+                    
+                    Section(header: Text("Support & Info")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    ) {
+                        ProfileMenuItem(icon: "envelope", text: "Contact Us") {
+                            showingContactUs = true
                         }
-                        dismiss()
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.blue)
-                    }
-                }
-            }
-            .navigationDestination(isPresented: $showingEditProfile) {
-                UserProfileEditView()
-                    .onDisappear {
-                        Task {
-                            await viewModel.loadCurrentUser()
+                        ProfileMenuItem(icon: "doc.text", text: "Privacy & Policy") {
+                            showingPrivacyPolicy = true
                         }
                     }
-            }
-            .navigationDestination(isPresented: $showingContactUs) { ContactUsView() }
-            .navigationDestination(isPresented: $showingPrivacyPolicy) { PrivacyPolicyView() }
-            .navigationDestination(isPresented: $showingRentals) { UserRentalsView() }
-            .task { await viewModel.loadCurrentUser() }
-            .onChange(of: viewModel.user?.photoUrl) { newPhotoUrl in
-//                print("PhotoUrl updated in ProfileView: \(newPhotoUrl ?? "nil")")
+                    .padding(.horizontal, 20)
+                }
             }
             .background(Color(.systemBackground))
+            
+            if viewModel.authUser != nil {
+                Button(action: signOut) {
+                    Text("Log Out")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                        .frame(height: 55)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.red)
+                        .cornerRadius(10)
+                        .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 20)
+                .background(Color(.systemBackground))
+            }
         }
+        .navigationTitle("Profile")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    selectedTab = "search" // Return to TabsView’s search tab
+                    dismiss()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.blue)
+                }
+            }
+        }
+        .sheet(isPresented: $showingEditProfile) {
+            UserProfileEditView()
+                .environmentObject(viewModel)
+                .onDisappear {
+                    Task {
+                        await viewModel.loadCurrentUser()
+                    }
+                }
+        }
+        .sheet(isPresented: $showingContactUs) { ContactUsView() }
+        .sheet(isPresented: $showingPrivacyPolicy) { PrivacyPolicyView() }
+        .sheet(isPresented: $showingRentals) { UserRentalsView() }
+        .task { await viewModel.loadCurrentUser() }
+        .background(Color(.systemBackground))
         .environmentObject(authViewModel)
     }
     
@@ -273,4 +266,6 @@ struct ProfileMenuItem: View {
     UserProfileView(selectedTab: .constant(nil))
         .environmentObject(CartManager())
         .environmentObject(AuthenticationViewModel())
+        .environmentObject(UserProfileViewModel())
 }
+
