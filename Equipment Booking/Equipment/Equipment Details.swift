@@ -160,7 +160,7 @@ struct Equipment_Details: View {
                             .animation(.easeInOut(duration: 0.3), value: showMore)
                         
                         Button(action: { showMore.toggle() }) {
-                            Text(showMore ? "Visa mindre" : "Visa mer")
+                            Text(showMore ? "Show less" : "Show more")
                                 .font(.system(size: 14, weight: .medium, design: .rounded))
                                 .foregroundColor(Color.accentColor)
                                 .padding(.vertical, 4)
@@ -388,7 +388,7 @@ struct Equipment_Details: View {
                     nextAvailableDate = try await equipmentManager.getNextAvailableDate(forToolId: tool.id)
                     selectPickupDate = nextAvailableDate
                     selectReturnDate = Calendar.current.date(byAdding: .day, value: 7, to: selectPickupDate) ?? selectPickupDate
-                    updateAvailability() // Initial uppdatering
+                    updateAvailability() 
                 } catch {
                     print("Error initializing: \(error)")
                     availableQuantity = totalQuantity

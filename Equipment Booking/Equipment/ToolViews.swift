@@ -40,7 +40,7 @@ struct ToolRow: View {
                     .padding(.horizontal, 12)
                 
                 HStack(spacing: 12) {
-                    Text("Price: \(tool.price) SEK/day")
+                    Text("Price: \(String(format: "%.2f", tool.price)) SEK/day")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.blue)
                         .padding(.vertical, 4)
@@ -66,12 +66,7 @@ struct ToolRow: View {
                     .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
             )
             
-         /*   Image(systemName: "chevron.right")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.gray.opacity(0.6))
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 12)
-                .alignmentGuide(VerticalAlignment.center) { d in d[VerticalAlignment.center] } */
+
         }
         .padding(.vertical, 6)
         .task {
@@ -84,7 +79,7 @@ struct ToolRow: View {
                     returnDate: nextWeek
                 )
                 totalQuantity = tool.numberOfItems // Totalt antal från verktyget självt
-                availableQuantity = available // Bara "available" från tuplen
+                availableQuantity = available
             } catch {
                 print("Error fetching availability: \(error)")
                 totalQuantity = tool.numberOfItems
