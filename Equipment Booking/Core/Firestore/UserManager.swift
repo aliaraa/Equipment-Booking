@@ -16,8 +16,8 @@ struct DBUser: Codable {
     let photoUrl: String? // Corresponds to 'img_url'
     let dateCreated: Date? // Optional, as Firestore does not provide this by default
     let isAdmin: Bool? // Corresponds to 'is_admin', decoded from both string and boolean
-    let firstName: String? // Corresponds to 'firstname'
-    let lastName: String? // Corresponds to 'lastname'
+    var firstName: String? // Corresponds to 'firstname', var for potential updates (e.g. from Google or apple sign-in)
+    var lastName: String? // Corresponds to 'lastname', var for potential updates (e.g. from Google or apple sign-in)
     let phone: String?
     let address: String?
     let companyName: String?

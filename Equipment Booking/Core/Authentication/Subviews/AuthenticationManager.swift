@@ -13,19 +13,14 @@ struct AuthDataResultModel {
     let email: String?
     let photoUrl: String?
     let isAnonymous: Bool
-    
-    // for profile data fetching
-
-    let dateCreated : Date?
-    let isAdmin : Bool?
-    let firstName : String?
-    let lastName : String?
-    let phone : String?
-    let address : String?
-    let companyName :String?
-    let profession : String?
-    
-    
+    let dateCreated: Date?
+    let isAdmin: Bool?
+    let firstName: String?
+    let lastName: String?
+    let phone: String?
+    let address: String?
+    let companyName: String?
+    let profession: String?
     
     init(user: User) {
         self.uid = user.uid
@@ -40,23 +35,18 @@ struct AuthDataResultModel {
         self.address = nil
         self.companyName = nil
         self.profession = nil
-        
     }
-    
 }
 
-enum AuthProvideroption: String {
+enum AuthProviderOption: String {
     case email = "password"
     case google = "google.com"
     case apple = "apple.com"
 }
 
-
 final class AuthenticationManager {
-    static let shared  = AuthenticationManager()
-    private init () {}
-    
-    // Function to get user
+    static let shared = AuthenticationManager()
+    private init() {}
     
     func getAuthenticatedUser() throws -> AuthDataResultModel {
         guard let user = Auth.auth().currentUser else {
@@ -65,75 +55,40 @@ final class AuthenticationManager {
         return AuthDataResultModel(user: user)
     }
     
-    // Function to get provider service for sign in
-    // allows to select what to show after successful login
-    
-    
-    // Provider function (login method)
-    
-    func getProviders() throws  -> [AuthProvideroption] {
+    func getProviders() throws -> [AuthProviderOption] {
         guard let providerData = Auth.auth().currentUser?.providerData else {
             throw URLError(.badServerResponse)
         }
-        
-        var providers: [AuthProvideroption] = []
+        var providers: [AuthProviderOption] = []
         for provider in providerData {
-            if  let option = AuthProvideroption(rawValue: provider.providerID) {
+            if let option = AuthProviderOption(rawValue: provider.providerID) {
                 providers.append(option)
-                
             } else {
-                assertionFailure("Provide option not found: \(provider.providerID)")
+                assertionFailure("Provider option not found: \(provider.providerID)")
             }
-            //
         }
         return providers
-        
     }
     
-    
-    //Function to sign out
-    
-    func signOut () throws {
+    func signOut() throws {
         try Auth.auth().signOut()
-        
     }
-    
 }
 
-// MARK: SIGN IN EMAIL/PASSWORD
-
-extension AuthenticationManager{
-    // creates a user , not leaving the user logged in.
+// MARK: - SIGN IN EMAIL/PASSWORD
+extension AuthenticationManager {
     @discardableResult
     func createUser(email: String, password: String) async throws -> AuthDataResultModel {
-        // Temporarily create a user
         let authDataResult = try await Auth.auth().createUser(withEmail: email, password: password)
-
-        // Save user details to the database (optional, depends on your app's requirements)
         let user = AuthDataResultModel(user: authDataResult.user)
-        
-        // Add the user to your Firestore database or wherever you're managing users
-        let userModel = AuthDataResultModel(user: authDataResult.user)
-        try await UserManager.shared.createNewUser(user: DBUser(auth: userModel))
-
-        //try await UserManager.shared.createNewUser(user: DBUser(auth: authDataResult.user))
-                
-        
-        
-        // Immediately sign the user out after creation
+        try await UserManager.shared.createNewUser(user: DBUser(auth: user))
         try await Auth.auth().signOut()
-        
-        return user // Return user details without leaving them signed in
-        
+        return user
     }
     
-    
-// Sign in user function with security verification
     @discardableResult
     func signInUser(email: String, password: String) async throws -> AuthDataResultModel {
         let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-
-        // try signing in, and handle errors properly
         do {
             let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: password)
             return AuthDataResultModel(user: authDataResult.user)
@@ -146,51 +101,39 @@ extension AuthenticationManager{
             }
         }
     }
-
     
-
-    //Function to reset password
-    func resetPassword (email: String) async throws {
+    func resetPassword(email: String) async throws {
         try await Auth.auth().sendPasswordReset(withEmail: email)
     }
     
-    //Function to update password
-    func updatePassword (password: String) async throws {
+    func updatePassword(password: String) async throws {
         guard let user = Auth.auth().currentUser else {
-            throw URLError (.badServerResponse)
+            throw URLError(.badServerResponse)
         }
         try await user.updatePassword(to: password)
     }
     
-    //Function to update email
-    func updateEmail (email: String) async throws {
+    func updateEmail(email: String) async throws {
         guard let user = Auth.auth().currentUser else {
-            throw URLError (.badServerResponse)
+            throw URLError(.badServerResponse)
         }
-        // try await user.updateEmail(to: email) //deprecated function
         try await user.sendEmailVerification(beforeUpdatingEmail: email)
     }
-    
 }
 
-// MARK: SIGN IN SSO (GOOGLE & APPLE)
-
-extension AuthenticationManager{
-    
+// MARK: - SIGN IN SSO (GOOGLE & APPLE)
+extension AuthenticationManager {
     @discardableResult
-    // function to sign in with google using auth credentials
     func signInWithGoogle(tokens: GoogleSignInResultModel) async throws -> AuthDataResultModel {
         let credential = GoogleAuthProvider.credential(withIDToken: tokens.idToken, accessToken: tokens.accessToken)
         return try await signIn(credential: credential)
-        
     }
     
+    // Generic sign-in method for SSO credentials (used by both Google and Apple)
     func signIn(credential: AuthCredential) async throws -> AuthDataResultModel {
         let authDataResult = try await Auth.auth().signIn(with: credential)
         return AuthDataResultModel(user: authDataResult.user)
-        
     }
-
 }
 
 

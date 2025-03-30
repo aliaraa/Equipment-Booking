@@ -24,7 +24,7 @@ struct UserAuthenticationView: View {
     @State private var showInlineSignUp: Bool = false
     @State private var navigateToTabsView: Bool = false
     @State private var selectedTab: String? = "search"
-    @State private var navigateToSearch: Bool = false // New state for Search navigation
+    @State private var navigateToSearch: Bool = false
     
     @FocusState private var focusedField: Field?
     
@@ -141,8 +141,29 @@ struct UserAuthenticationView: View {
                     }
                     .frame(height: 55)
                     
-                    SignInWithAppleButtonViewRepresentable(type: .default, style: .black)
-                        .frame(height: 55)
+                    // Updated Sign In with Apple button with onRequest and onCompletion handlers
+                    SignInWithAppleButtonViewRepresentable(type: .default, style: .black) { request in
+                        let nonce = SignInWithAppleHelper.randomNonceString()
+                        viewModel.currentNonce = nonce // Store raw nonce in viewModel
+                        request.requestedScopes = [.email, .fullName]
+                        request.nonce = SignInWithAppleHelper.sha256(nonce) // Hash for Apple
+                    } onCompletion: { result in
+                        Task {
+                            do {
+                                guard let nonce = viewModel.currentNonce else {
+                                    throw NSError(domain: "NonceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Nonce not set."])
+                                }
+                                try await viewModel.signInWithApple(result: result, nonce: nonce) // Pass the stored nonce value
+                                await userProfileViewModel.loadCurrentUser()
+                                navigateToTabsView = true
+                            } catch {
+                                print("Apple Sign-In Error: \(error)")
+                                errorMessage = "Failed to sign in with Apple. Please try again."
+                                showInlineSignUp = false
+                            }
+                        }
+                    }
+                    .frame(height: 55)
                 }
                 
                 if !showInlineSignUp {
@@ -155,7 +176,6 @@ struct UserAuthenticationView: View {
                 
                 Spacer()
                 
-                // Centered Search tab button
                 Button(action: {
                     navigateToSearch = true
                 }) {
@@ -185,7 +205,7 @@ struct UserAuthenticationView: View {
                         EmptyView()
                     }
                     NavigationLink(destination: TabsView(selectedTab: .constant("search"))
-                        .environmentObject(CartManager(isReadOnly: true)), // Read-only for non-authenticated
+                        .environmentObject(CartManager(isReadOnly: true)),
                         isActive: $navigateToSearch) {
                         EmptyView()
                     }
@@ -218,18 +238,67 @@ struct UserAuthenticationView: View {
     }
 }
 
+// Updated SignInWithAppleButtonViewRepresentable to handle request and completion
 struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
     let type: ASAuthorizationAppleIDButton.ButtonType
     let style: ASAuthorizationAppleIDButton.Style
+    let onRequest: (ASAuthorizationAppleIDRequest) -> Void
+    let onCompletion: (Result<ASAuthorization, Error>) -> Void
+    
+    init(type: ASAuthorizationAppleIDButton.ButtonType,
+         style: ASAuthorizationAppleIDButton.Style,
+         onRequest: @escaping (ASAuthorizationAppleIDRequest) -> Void = { _ in },
+         onCompletion: @escaping (Result<ASAuthorization, Error>) -> Void = { _ in }) {
+        self.type = type
+        self.style = style
+        self.onRequest = onRequest
+        self.onCompletion = onCompletion
+    }
     
     func makeUIView(context: Context) -> ASAuthorizationAppleIDButton {
-        ASAuthorizationAppleIDButton(authorizationButtonType: type, authorizationButtonStyle: style)
+        let button = ASAuthorizationAppleIDButton(authorizationButtonType: type, authorizationButtonStyle: style)
+        button.addTarget(context.coordinator, action: #selector(context.coordinator.didTapButton), for: .touchUpInside)
+        return button
     }
     
     func updateUIView(_ uiView: ASAuthorizationAppleIDButton, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+        let parent: SignInWithAppleButtonViewRepresentable
+        
+        init(_ parent: SignInWithAppleButtonViewRepresentable) {
+            self.parent = parent
+        }
+        
+        @objc func didTapButton() {
+            let request = ASAuthorizationAppleIDProvider().createRequest()
+            parent.onRequest(request)
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            controller.delegate = self
+            controller.presentationContextProvider = self
+            controller.performRequests()
+        }
+        
+        func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+            parent.onCompletion(.success(authorization))
+        }
+        
+        func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+            parent.onCompletion(.failure(error))
+        }
+        
+        func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+            UIApplication.shared.windows.first { $0.isKeyWindow } ?? UIWindow()
+        }
+    }
 }
 
 #Preview {
     UserAuthenticationView(showSignInView: .constant(true))
         .environmentObject(UserProfileViewModel())
 }
+
