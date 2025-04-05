@@ -18,6 +18,7 @@
 		A1ABAC8A2D0671A1009F2067 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A1ABAC892D0671A1009F2067 /* FirebaseStorage */; };
 		A1B245202D20DD9200491EAB /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2451F2D20DD9200491EAB /* FirebaseFirestore */; };
 		A1B245362D20ED6100491EAB /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = A1B245352D20ED6100491EAB /* FirebaseFirestoreCombine-Community */; };
+		A1BB99C72D9B254700016FA4 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = A1BB99C62D9B254700016FA4 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 			files = (
 				A11D06E02D556D4600E35A3B /* GoogleSignInSwift in Frameworks */,
 				A1ABAC822D0671A1009F2067 /* FirebaseAnalytics in Frameworks */,
+				A1BB99C72D9B254700016FA4 /* FirebaseMessaging in Frameworks */,
 				A11D06DE2D556D4600E35A3B /* GoogleSignIn in Frameworks */,
 				A1ABAC862D0671A1009F2067 /* FirebaseCore in Frameworks */,
 				A1B245362D20ED6100491EAB /* FirebaseFirestoreCombine-Community in Frameworks */,
@@ -109,6 +111,7 @@
 				A1B245352D20ED6100491EAB /* FirebaseFirestoreCombine-Community */,
 				A11D06DD2D556D4600E35A3B /* GoogleSignIn */,
 				A11D06DF2D556D4600E35A3B /* GoogleSignInSwift */,
+				A1BB99C62D9B254700016FA4 /* FirebaseMessaging */,
 			);
 			productName = "Equipment Booking";
 			productReference = 5053FC3C2CF351FC008036F8 /* Equipment Booking.app */;
@@ -447,6 +450,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1ABAC802D0671A1009F2067 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseFirestoreCombine-Community";
+		};
+		A1BB99C62D9B254700016FA4 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1ABAC802D0671A1009F2067 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

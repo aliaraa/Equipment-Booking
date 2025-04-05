@@ -183,7 +183,7 @@ struct UserAuthenticationView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.yellow)
                         Text("Explore")
-                            .font(.caption)
+                            .font(.headline)
                             .foregroundColor(.yellow)
                     }
                     .padding(.vertical, 10)
