@@ -21,6 +21,7 @@ struct AuthDataResultModel {
     let address: String?
     let companyName: String?
     let profession: String?
+    let isEmailVerified: Bool // Added
     
     init(user: User) {
         self.uid = user.uid
@@ -35,6 +36,7 @@ struct AuthDataResultModel {
         self.address = nil
         self.companyName = nil
         self.profession = nil
+        self.isEmailVerified = user.isEmailVerified // Set from Firebase User
     }
 }
 

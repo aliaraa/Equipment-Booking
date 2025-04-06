@@ -176,23 +176,23 @@ struct UserAuthenticationView: View {
                 
                 Spacer()
                 
-                Button(action: {
-                    navigateToSearch = true
-                }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.yellow)
-                        Text("Explore")
-                            .font(.headline)
-                            .foregroundColor(.yellow)
-                    }
-                    .padding(.vertical, 10)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        Color.white.opacity(0.1)
-                            .background(.ultraThinMaterial)
-                    )
-                }
+//                Button(action: {
+//                    navigateToSearch = true
+//                }) {
+//                    VStack(spacing: 4) {
+//                        Image(systemName: "magnifyingglass")
+//                            .foregroundColor(.yellow)
+//                        Text("Explore")
+//                            .font(.headline)
+//                            .foregroundColor(.yellow)
+//                    }
+//                    .padding(.vertical, 10)
+//                    .frame(maxWidth: .infinity)
+//                    .background(
+//                        Color.white.opacity(0.1)
+//                            .background(.ultraThinMaterial)
+//                    )
+//                }
                 
                 NavigationLink(destination: SignUpView().environmentObject(viewModel), isActive: $navigateToSignUp) {
                     EmptyView()
