@@ -76,7 +76,9 @@ class CartManager: ObservableObject {
             items: rentalItems,
             pickupDate: pickupDate,
             returnDate: returnDate,
-            status: "active"
+            status: "active",
+            notificationSent : false,
+            notificationOpened : false
         )
     }
     
@@ -91,6 +93,7 @@ class CartManager: ObservableObject {
 }
 
 // Rental model for Firebase
+
 struct Rental: Identifiable, Codable {
     let id: String
     let userId: String
@@ -98,6 +101,8 @@ struct Rental: Identifiable, Codable {
     let pickupDate: Date
     let returnDate: Date
     let status: String
+    let notificationSent: Bool?
+    let notificationOpened: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -106,8 +111,28 @@ struct Rental: Identifiable, Codable {
         case pickupDate = "pickup_date"
         case returnDate = "return_date"
         case status
+        case notificationSent = "notification_sent"
+        case notificationOpened = "notification_opened"
     }
 }
+
+//struct Rental: Identifiable, Codable {
+//    let id: String
+//    let userId: String
+//    let items: [RentalItem]
+//    let pickupDate: Date
+//    let returnDate: Date
+//    let status: String
+//    
+//    enum CodingKeys: String, CodingKey {
+//        case id
+//        case userId = "user_id"
+//        case items
+//        case pickupDate = "pickup_date"
+//        case returnDate = "return_date"
+//        case status
+//    }
+//}
 
 // RentalItem for Firebase, conforms to Identifiable
 struct RentalItem: Codable, Identifiable {
@@ -124,8 +149,3 @@ struct RentalItem: Codable, Identifiable {
         case quantity
     }
 }
-
-
-
-
-

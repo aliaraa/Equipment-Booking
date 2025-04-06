@@ -22,3 +22,4 @@ class ProfileImageCache {
         cache.object(forKey: key as NSString)
     }
 }
+

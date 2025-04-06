@@ -15,6 +15,19 @@ final class UserProfileViewModel: ObservableObject {
     @Published private(set) var user: DBUser? = nil
     @Published var authUser: AuthDataResultModel? = nil
     @Published var profileImage: UIImage? = nil
+    @Published var notifications: [Notification] = []
+    @Published var unreadCount: Int = 0
+    
+    private var listener: ListenerRegistration?
+    
+    struct Notification: Identifiable {
+        let id: String
+        let title: String
+        let body: String
+        let rentalId: String
+        let timestamp: Date
+        var isRead: Bool
+    }
     
     init() {}
     
@@ -22,12 +35,10 @@ final class UserProfileViewModel: ObservableObject {
         do {
             let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
             self.authUser = authDataResult
-            
             self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
             print("Loaded user photoUrl: \(self.user?.photoUrl ?? "nil")")
-            
-            // Load profile image from cache or network
             await loadProfileImage()
+            await loadNotifications()
             
             if user?.firstName == nil || user?.lastName == nil {
                 if let googleProfile = Auth.auth().currentUser?.providerData.first(where: { $0.providerID == "google.com" }) {
@@ -57,12 +68,14 @@ final class UserProfileViewModel: ObservableObject {
                     try await UserManager.shared.createNewUser(user: updatedUser)
                 }
             }
+            
         } catch {
             print("Failed to load user: \(error.localizedDescription)")
             self.user = DBUser(
                 userId: "unknown",
                 email: "Unknown User",
                 photoUrl: nil,
+                dateCreated: Date(),
                 firstName: "Anonymous",
                 lastName: "User"
             )
@@ -74,38 +87,75 @@ final class UserProfileViewModel: ObservableObject {
             print("No user ID available for update")
             return
         }
-        
         let db = Firestore.firestore()
         let userRef = db.collection("users").document(userId)
-        var updatedData: [String: Any] = [
+        let updatedData: [String: Any] = [
             "firstname": firstName,
             "lastname": lastName,
             "phone": phone,
             "address": address,
             "company_name": companyName,
-            "profession": profession
+            "profession": profession,
+            "img_url": photoUrl ?? FieldValue.delete()
         ]
-        
-        if let photoUrl = photoUrl {
-            updatedData["img_url"] = photoUrl
-        } else if user?.photoUrl == nil {
-            updatedData["img_url"] = FieldValue.delete()
-        }
-        
         try await userRef.updateData(updatedData)
         print("User profile updated with photoUrl: \(photoUrl ?? "nil")")
-        
         self.user = try await UserManager.shared.getUser(userID: userId)
         await loadProfileImage()
     }
     
-    // Load image from cache or network
+    func loadNotifications() async {
+        guard let userId = user?.userId else {
+            print("No user ID for notifications")
+            return
+        }
+        let db = Firestore.firestore()
+        listener?.remove()
+        listener = db.collection("users").document(userId).collection("notifications")
+            .order(by: "timestamp", descending: true)
+            .addSnapshotListener { snapshot, error in
+                if let error = error {
+                    print("Failed to load notifications: \(error.localizedDescription)")
+                    return
+                }
+                guard let docs = snapshot?.documents else { return }
+                self.notifications = docs.map { doc in
+                    let data = doc.data()
+                    return Notification(
+                        id: doc.documentID,
+                        title: data["title"] as? String ?? "",
+                        body: data["body"] as? String ?? "",
+                        rentalId: data["rentalId"] as? String ?? "",
+                        timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
+                        isRead: data["isRead"] as? Bool ?? false
+                    )
+                }
+                self.unreadCount = self.notifications.filter { !$0.isRead }.count
+            }
+    }
+    
+    func markNotificationAsRead(id: String, rentalId: String) async {
+        guard let userId = user?.userId else {
+            print("No user ID to mark notification")
+            return
+        }
+        let db = Firestore.firestore()
+        do {
+            try await db.collection("users").document(userId).collection("notifications")
+                .document(id).updateData(["isRead": true])
+            try await db.collection("rentals").document(rentalId)
+                .updateData(["notification_opened": true])
+            print("Marked notification \(id) as read and opened for rental \(rentalId)")
+        } catch {
+            print("Failed to mark notification: \(error.localizedDescription)")
+        }
+    }
+    
     private func loadProfileImage() async {
         guard let photoUrl = user?.photoUrl, let url = URL(string: photoUrl) else {
             self.profileImage = nil
             return
         }
-        
         let cacheKey = photoUrl
         if let cachedImage = ProfileImageCache.shared.getImage(forKey: cacheKey) {
             self.profileImage = cachedImage
@@ -128,5 +178,8 @@ final class UserProfileViewModel: ObservableObject {
             return nil
         }
     }
+    
+    deinit {
+        listener?.remove()
+    }
 }
-

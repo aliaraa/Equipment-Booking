@@ -135,8 +135,3 @@ extension AuthenticationManager {
         return AuthDataResultModel(user: authDataResult.user)
     }
 }
-
-
-    
-
-
