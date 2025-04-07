@@ -175,24 +175,7 @@ struct UserAuthenticationView: View {
                 }
                 
                 Spacer()
-                
-//                Button(action: {
-//                    navigateToSearch = true
-//                }) {
-//                    VStack(spacing: 4) {
-//                        Image(systemName: "magnifyingglass")
-//                            .foregroundColor(.yellow)
-//                        Text("Explore")
-//                            .font(.headline)
-//                            .foregroundColor(.yellow)
-//                    }
-//                    .padding(.vertical, 10)
-//                    .frame(maxWidth: .infinity)
-//                    .background(
-//                        Color.white.opacity(0.1)
-//                            .background(.ultraThinMaterial)
-//                    )
-//                }
+
                 
                 NavigationLink(destination: SignUpView().environmentObject(viewModel), isActive: $navigateToSignUp) {
                     EmptyView()
@@ -204,7 +187,7 @@ struct UserAuthenticationView: View {
                         isActive: $navigateToTabsView) {
                         EmptyView()
                     }
-                    NavigationLink(destination: TabsView(selectedTab: .constant("search"))
+                    NavigationLink(destination: TabsView(selectedTab: $selectedTab)
                         .environmentObject(CartManager(isReadOnly: true)),
                         isActive: $navigateToSearch) {
                         EmptyView()

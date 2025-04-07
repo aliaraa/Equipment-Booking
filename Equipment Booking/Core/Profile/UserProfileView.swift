@@ -187,7 +187,7 @@ struct UserProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    if authViewModel.isAuthenticated { // Only show when authenticated
+                    if authViewModel.isAuthenticated {
                         Button(action: {
                             selectedTab = "search"
                             dismiss()
@@ -198,7 +198,7 @@ struct UserProfileView: View {
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    if authViewModel.isAuthenticated { // Only show when authenticated
+                    if authViewModel.isAuthenticated {
                         NavigationLink(destination: NotificationsView(viewModel: viewModel), isActive: $navigateToNotifications) {
                             ZStack {
                                 Image(systemName: "bell.fill")
@@ -219,10 +219,16 @@ struct UserProfileView: View {
                 }
             }
             .background(
-                NavigationLink(destination: UserAuthenticationView(showSignInView: .constant(true))
-                    .environmentObject(authViewModel)
-                    .environmentObject(UserProfileViewModel()),
-                    isActive: $navigateToLogin) { EmptyView() }
+                Group {
+                    NavigationLink(destination: UserAuthenticationView(showSignInView: .constant(true))
+                        .environmentObject(authViewModel)
+                        .environmentObject(UserProfileViewModel()),
+                        isActive: $navigateToLogin) { EmptyView() }
+                    NavigationLink(destination: UserProfileEditView()
+                        .environmentObject(viewModel)
+                        .onDisappear { Task { await viewModel.loadCurrentUser() } },
+                        isActive: $navigateToEditProfile) { EmptyView() }
+                }
             )
             .task {
                 authViewModel.checkAuthenticationStatus()
@@ -235,7 +241,7 @@ struct UserProfileView: View {
                     title: Text("Password Reset"),
                     message: Text(resetPasswordMessage ?? ""),
                     dismissButton: .default(Text("OK")) {
-                        navigateToLogin = true
+                        signOut()
                     }
                 )
             }
@@ -276,6 +282,10 @@ struct UserProfileView: View {
         }
     }
 }
+
+// GradientBackground, ProfileMenuItem, NotificationsView unchanged
+
+
 
 // GradientBackground, ProfileMenuItem, NotificationsView
 
