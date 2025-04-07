@@ -36,149 +36,158 @@ struct UserProfileView: View {
     
     var body: some View {
         NavigationStack {
-            if authViewModel.isAuthenticated {
-                VStack(spacing: 0) {
-                    ZStack {
-                        GradientBackground()
-                            .frame(height: 200)
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                        
-                        VStack(spacing: 0) {
-                            if let profileImage = viewModel.profileImage {
-                                Image(uiImage: profileImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 100, height: 100)
-                                    .clipShape(Circle())
-                                    .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
-                                    .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
-                            } else if let photoUrl = viewModel.user?.photoUrl, let url = URL(string: photoUrl) {
-                                AsyncImage(url: url) { phase in
-                                    switch phase {
-                                    case .empty:
-                                        ProgressView()
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 100, height: 100)
-                                            .clipShape(Circle())
-                                            .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
-                                            .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
-                                    case .failure:
-                                        Image(systemName: "person.crop.circle.fill")
-                                            .resizable()
-                                            .frame(width: 100, height: 100)
-                                            .foregroundColor(.blue)
-                                            .background(Color(.systemGray6))
-                                            .clipShape(Circle())
-                                    @unknown default:
-                                        Image(systemName: "person.crop.circle.fill")
-                                            .resizable()
-                                            .frame(width: 100, height: 100)
-                                            .foregroundColor(.blue)
-                                            .background(Color(.systemGray6))
-                                            .clipShape(Circle())
+            Group {
+                if authViewModel.isAuthenticated {
+                    VStack(spacing: 0) {
+                        ZStack {
+                            GradientBackground()
+                                .frame(height: 200)
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                            
+                            VStack(spacing: 0) {
+                                if let profileImage = viewModel.profileImage {
+                                    Image(uiImage: profileImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 100, height: 100)
+                                        .clipShape(Circle())
+                                        .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
+                                        .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                                } else if let photoUrl = viewModel.user?.photoUrl, let url = URL(string: photoUrl) {
+                                    AsyncImage(url: url) { phase in
+                                        switch phase {
+                                        case .empty:
+                                            ProgressView()
+                                        case .success(let image):
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 100, height: 100)
+                                                .clipShape(Circle())
+                                                .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
+                                                .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                                        case .failure:
+                                            Image(systemName: "person.crop.circle.fill")
+                                                .resizable()
+                                                .frame(width: 100, height: 100)
+                                                .foregroundColor(.blue)
+                                                .background(Color(.systemGray6))
+                                                .clipShape(Circle())
+                                        @unknown default:
+                                            Image(systemName: "person.crop.circle.fill")
+                                                .resizable()
+                                                .frame(width: 100, height: 100)
+                                                .foregroundColor(.blue)
+                                                .background(Color(.systemGray6))
+                                                .clipShape(Circle())
+                                        }
                                     }
+                                } else {
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .resizable()
+                                        .frame(width: 100, height: 100)
+                                        .foregroundColor(.blue)
+                                        .background(Color(.systemGray6))
+                                        .clipShape(Circle())
                                 }
-                            } else {
-                                Image(systemName: "person.crop.circle.fill")
-                                    .resizable()
-                                    .frame(width: 100, height: 100)
-                                    .foregroundColor(.blue)
-                                    .background(Color(.systemGray6))
-                                    .clipShape(Circle())
-                            }
-                            
-                            Text(greeting)
-                                .font(.system(size: 24, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
-                            
-                            if viewModel.authUser != nil {
-                                Button(action: { navigateToEditProfile = true }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "pencil")
-                                            .font(.system(size: 16, weight: .semibold))
-                                        Text("Edit Profile")
-                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.vertical, 10)
-                                    .padding(.horizontal, 20)
-                                    .background(
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]),
-                                            startPoint: .leading,
-                                            endPoint: .trailing
+                                
+                                Text(greeting)
+                                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primary)
+                                
+                                if viewModel.authUser != nil {
+                                    Button(action: { navigateToEditProfile = true }) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "pencil")
+                                                .font(.system(size: 16, weight: .semibold))
+                                            Text("Edit Profile")
+                                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                        }
+                                        .foregroundColor(.white)
+                                        .padding(.vertical, 10)
+                                        .padding(.horizontal, 20)
+                                        .background(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]),
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
                                         )
-                                    )
-                                    .cornerRadius(20)
-                                    .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 3)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 20)
-                    }
-                    
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            Section(header: Text("Your Account")
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.top, 10)
-                            ) {
-                                NavigationLink(destination: UserRentalsView(), isActive: $navigateToRentals) {
-                                    ProfileMenuItem(icon: "list.bullet", text: "My Rentals") {
-                                        navigateToRentals = true
-                                    }
-                                }
-                                ProfileMenuItem(icon: "key.fill", text: "Reset Password") {
-                                    resetPassword()
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                            
-                            Section(header: Text("Support & Info")
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            ) {
-                                NavigationLink(destination: ContactUsView(), isActive: $navigateToContactUs) {
-                                    ProfileMenuItem(icon: "envelope", text: "Contact Us") {
-                                        navigateToContactUs = true
-                                    }
-                                }
-                                NavigationLink(destination: PrivacyPolicyView(), isActive: $navigateToPrivacyPolicy) {
-                                    ProfileMenuItem(icon: "doc.text", text: "Privacy & Policy") {
-                                        navigateToPrivacyPolicy = true
+                                        .cornerRadius(20)
+                                        .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 3)
                                     }
                                 }
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.vertical, 20)
                         }
-                    }
-                    .background(Color(.systemBackground))
-                    
-                    if viewModel.authUser != nil {
-                        Button(action: signOut) {
-                            Text("Log Out")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .foregroundColor(.white)
-                                .frame(height: 55)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.red)
-                                .cornerRadius(10)
-                                .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                        
+                        ScrollView {
+                            VStack(spacing: 20) {
+                                Section(header: Text("Your Account")
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.top, 10)
+                                ) {
+                                    NavigationLink(destination: UserRentalsView(), isActive: $navigateToRentals) {
+                                        ProfileMenuItem(icon: "list.bullet", text: "My Rentals") {
+                                            navigateToRentals = true
+                                        }
+                                    }
+                                    ProfileMenuItem(icon: "key.fill", text: "Reset Password") {
+                                        resetPassword()
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                                
+                                Section(header: Text("Support & Info")
+                                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                ) {
+                                    NavigationLink(destination: ContactUsView(), isActive: $navigateToContactUs) {
+                                        ProfileMenuItem(icon: "envelope", text: "Contact Us") {
+                                            navigateToContactUs = true
+                                        }
+                                    }
+                                    NavigationLink(destination: PrivacyPolicyView(), isActive: $navigateToPrivacyPolicy) {
+                                        ProfileMenuItem(icon: "doc.text", text: "Privacy & Policy") {
+                                            navigateToPrivacyPolicy = true
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                            }
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 20)
                         .background(Color(.systemBackground))
+                        
+                        if viewModel.authUser != nil {
+                            Button(action: signOut) {
+                                Text("Log Out")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.white)
+                                    .frame(height: 55)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.red)
+                                    .cornerRadius(10)
+                                    .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 2)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 20)
+                            .background(Color(.systemBackground))
+                        }
                     }
+                } else {
+                    Color.clear
+                        .onAppear {
+                            navigateToLogin = true
+                        }
                 }
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar { // Explicitly define toolbar content
-                    ToolbarItem(placement: .navigationBarLeading) {
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if authViewModel.isAuthenticated { // Only show when authenticated
                         Button(action: {
                             selectedTab = "search"
                             dismiss()
@@ -187,7 +196,9 @@ struct UserProfileView: View {
                                 .foregroundColor(.blue)
                         }
                     }
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if authViewModel.isAuthenticated { // Only show when authenticated
                         NavigationLink(destination: NotificationsView(viewModel: viewModel), isActive: $navigateToNotifications) {
                             ZStack {
                                 Image(systemName: "bell.fill")
@@ -206,11 +217,6 @@ struct UserProfileView: View {
                         }
                     }
                 }
-            } else {
-                Color.clear
-                    .onAppear {
-                        navigateToLogin = true
-                    }
             }
             .background(
                 NavigationLink(destination: UserAuthenticationView(showSignInView: .constant(true))
@@ -347,5 +353,3 @@ struct NotificationsView: View {
         .environmentObject(AuthenticationViewModel())
         .environmentObject(UserProfileViewModel())
 }
-
-
