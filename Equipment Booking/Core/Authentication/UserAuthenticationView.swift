@@ -24,7 +24,6 @@ struct UserAuthenticationView: View {
     @State private var showInlineSignUp: Bool = false
     @State private var navigateToTabsView: Bool = false
     @State private var selectedTab: String? = "search"
-    @State private var navigateToSearch: Bool = false
     
     @FocusState private var focusedField: Field?
     
@@ -141,19 +140,18 @@ struct UserAuthenticationView: View {
                     }
                     .frame(height: 55)
                     
-                    // Updated Sign In with Apple button with onRequest and onCompletion handlers
                     SignInWithAppleButtonViewRepresentable(type: .default, style: .black) { request in
                         let nonce = SignInWithAppleHelper.randomNonceString()
-                        viewModel.currentNonce = nonce // Store raw nonce in viewModel
+                        viewModel.currentNonce = nonce
                         request.requestedScopes = [.email, .fullName]
-                        request.nonce = SignInWithAppleHelper.sha256(nonce) // Hash for Apple
+                        request.nonce = SignInWithAppleHelper.sha256(nonce)
                     } onCompletion: { result in
                         Task {
                             do {
                                 guard let nonce = viewModel.currentNonce else {
                                     throw NSError(domain: "NonceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Nonce not set."])
                                 }
-                                try await viewModel.signInWithApple(result: result, nonce: nonce) // Pass the stored nonce value
+                                try await viewModel.signInWithApple(result: result, nonce: nonce)
                                 await userProfileViewModel.loadCurrentUser()
                                 navigateToTabsView = true
                             } catch {
@@ -175,27 +173,24 @@ struct UserAuthenticationView: View {
                 }
                 
                 Spacer()
-
-                
-                NavigationLink(destination: SignUpView().environmentObject(viewModel), isActive: $navigateToSignUp) {
-                    EmptyView()
-                }
-                
-                if #available(iOS 18.0, *) {
-                    NavigationLink(destination: TabsView(selectedTab: $selectedTab)
-                        .environmentObject(CartManager(isReadOnly: !viewModel.isAuthenticated)),
-                        isActive: $navigateToTabsView) {
-                        EmptyView()
-                    }
-                    NavigationLink(destination: TabsView(selectedTab: $selectedTab)
-                        .environmentObject(CartManager(isReadOnly: true)),
-                        isActive: $navigateToSearch) {
-                        EmptyView()
-                    }
-                }
             }
             .padding()
             .navigationBarTitleDisplayMode(.inline)
+            .background(
+                Group {
+                    NavigationLink(destination: SignUpView().environmentObject(viewModel), isActive: $navigateToSignUp) {
+                        EmptyView()
+                    }
+                    if #available(iOS 18.0, *) {
+                        NavigationLink(destination: TabsView(selectedTab: $selectedTab)
+                            .environmentObject(CartManager(isReadOnly: !viewModel.isAuthenticated)),
+                            isActive: $navigateToTabsView)
+                                       {
+                            EmptyView()
+                        }
+                    }
+                }
+            )
             .sheet(isPresented: $showForgotPassword) {
                 ForgotPasswordView(email: $viewModel.email, onDismiss: { showForgotPassword = false })
             }
