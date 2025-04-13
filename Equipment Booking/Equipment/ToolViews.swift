@@ -48,6 +48,8 @@ struct ToolRow: View {
                         .background(Color.blue.opacity(0.1))
                         .cornerRadius(6)
                     
+                    Spacer()
+                    
                     Text("Available: \(availableQuantity) of \(totalQuantity)")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(availableQuantity > 0 ? .green.opacity(0.8) : .red.opacity(0.8))
