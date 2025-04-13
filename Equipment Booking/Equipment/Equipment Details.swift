@@ -1,13 +1,8 @@
-//
-//  Equipment Details.swift
-//  Equipment Booking
-//
-//  Created by Ali Ara on 2025-01-05.
-//
-
-// Dismiss view on "Add to Cart" and ensure cart updates
-
 // Equipment_Details.swift
+// Equipment Booking
+//
+// Created by Ali Ara on 2025-01-05.
+
 import SwiftUI
 
 struct Equipment_Details: View {
@@ -66,7 +61,7 @@ struct Equipment_Details: View {
         Task {
             guard let returnDate = selectReturnDate else {
                 availableQuantity = totalQuantity
-                availabilityMessage = "No return date selected. Showing total quantity: \(totalQuantity)."
+                availabilityMessage = "Select a return date to check availability."
                 return
             }
             
@@ -78,8 +73,12 @@ struct Equipment_Details: View {
                 )
                 availableQuantity = available
                 
-                if available < totalQuantity {
-                    availabilityMessage = "Limited availability due to bookings:"
+                if available == totalQuantity {
+                    // No extra text when all tools are available
+                    availabilityMessage = ""
+                } else {
+                    // Show details only when there is limited availability
+                    availabilityMessage = "Limited availability:"
                     for booking in bookings {
                         let start = dateFormatter.string(from: booking.pickupDate)
                         let end = dateFormatter.string(from: booking.returnDate)
@@ -87,13 +86,11 @@ struct Equipment_Details: View {
                             availabilityMessage += "\n- \(item.quantity) booked from \(start) to \(end)"
                         }
                     }
-                } else {
-                    availabilityMessage = "Full availability: \(availableQuantity) available."
                 }
             } catch {
                 print("Error fetching availability: \(error)")
                 availableQuantity = totalQuantity
-                availabilityMessage = "Error fetching availability. Showing total quantity: \(totalQuantity)."
+                availabilityMessage = "Error fetching availability."
             }
         }
     }
@@ -102,14 +99,14 @@ struct Equipment_Details: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    // Verktygsnamn
+                    // Tool name
                     Text(tool.name)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
                         .padding(.top, 20)
                         .padding(.horizontal, 16)
                     
-                    // Bild
+                    // Image
                     if let imageURL = tool.imageURL, let url = URL(string: imageURL) {
                         AsyncImage(url: url) { phase in
                             switch phase {
@@ -147,7 +144,7 @@ struct Equipment_Details: View {
                         .padding(.horizontal, 16)
                     }
                     
-                    // Beskrivning
+                    // Description
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Description")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -175,7 +172,7 @@ struct Equipment_Details: View {
                     .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
                     .padding(.horizontal, 16)
                     
-                    // Tillgänglighet
+                    // Availability
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Availability")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -203,6 +200,7 @@ struct Equipment_Details: View {
                                 .foregroundColor(availableQuantity > 0 ? .green : .red)
                         }
                         
+                        // Show message only if it's not empty
                         if !availabilityMessage.isEmpty {
                             Text(availabilityMessage)
                                 .font(.system(size: 14, weight: .regular, design: .rounded))
@@ -216,7 +214,7 @@ struct Equipment_Details: View {
                     .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
                     .padding(.horizontal, 16)
                     
-                    // Antal
+                    // Quantity
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Quantity")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -254,7 +252,7 @@ struct Equipment_Details: View {
                     .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
                     .padding(.horizontal, 16)
                     
-                    // Datumval
+                    // Booking Dates
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Booking Dates")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -313,7 +311,7 @@ struct Equipment_Details: View {
                     .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
                     .padding(.horizontal, 16)
                     
-                    // Add to Cart-knapp
+                    // Add to Cart button
                     Button(action: {
                         if let returnDate = selectReturnDate {
                             cartManager.addToCart(tool, quantity: quantity, pickupDate: selectPickupDate, returnDate: returnDate)
@@ -388,11 +386,11 @@ struct Equipment_Details: View {
                     nextAvailableDate = try await equipmentManager.getNextAvailableDate(forToolId: tool.id)
                     selectPickupDate = nextAvailableDate
                     selectReturnDate = Calendar.current.date(byAdding: .day, value: 7, to: selectPickupDate) ?? selectPickupDate
-                    updateAvailability() 
+                    updateAvailability()
                 } catch {
                     print("Error initializing: \(error)")
                     availableQuantity = totalQuantity
-                    availabilityMessage = "Error initializing. Showing total quantity: \(totalQuantity)."
+                    availabilityMessage = "Error initializing availability."
                 }
             }
             .onChange(of: selectPickupDate) { _ in updateAvailability() }
