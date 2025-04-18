@@ -1,0 +1,1820 @@
+// UserProfileView()
+
+import SwiftUI
+import FirebaseAuth
+import FirebaseFirestore
+
+
+struct UserProfileView: View {
+    @EnvironmentObject private var viewModel: UserProfileViewModel
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @Environment(\.dismiss) var dismiss
+    @Binding var selectedTab: String?
+    
+    @State private var navigateToEditProfile = false
+    @State private var navigateToContactUs = false
+    @State private var navigateToPrivacyPolicy = false
+    @State private var navigateToRentals = false
+    @State private var navigateToNotifications = false
+    @State private var showResetPasswordAlert = false
+    @State private var resetPasswordMessage: String?
+    
+    private var greeting: String {
+        if let firstName = viewModel.user?.firstName, !firstName.isEmpty {
+            return "Welcome, \(firstName)"
+        } else if let email = viewModel.user?.email, let prefix = email.split(separator: "@").first {
+            return "Welcome, \(prefix)"
+        } else {
+            return "Welcome, User"
+        }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                if authViewModel.isAuthenticated {
+                    ZStack {
+                        GradientBackground()
+                            .frame(height: 200)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                        
+                        VStack(spacing: 0) {
+                            if let photoUrl = viewModel.user?.photoUrl, let baseUrl = URL(string: photoUrl) {
+                                let cacheBusterUrl = URL(string: baseUrl.absoluteString + "?t=\(Int(Date().timeIntervalSince1970))")!
+                                AsyncImage(url: cacheBusterUrl) { phase in
+                                    switch phase {
+                                    case .empty:
+                                        ProgressView()
+                                    case .success(let image):
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 100, height: 100)
+                                            .clipShape(Circle())
+                                            .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
+                                            .shadow(color: .gray.opacity(0.2), radius: 2)
+                                    case .failure:
+                                        Image(systemName: "person.crop.circle.fill")
+                                            .resizable()
+                                            .frame(width: 100, height: 100)
+                                            .foregroundColor(.blue)
+                                            .background(Color(.systemGray6))
+                                            .clipShape(Circle())
+                                    @unknown default:
+                                        Image(systemName: "person.crop.circle.fill")
+                                            .resizable()
+                                            .frame(width: 100, height: 100)
+                                            .foregroundColor(.blue)
+                                            .background(Color(.systemGray6))
+                                            .clipShape(Circle())
+                                    }
+                                }
+                            } else {
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .frame(width: 100, height: 100)
+                                    .foregroundColor(.blue)
+                                    .background(Color(.systemGray6))
+                                    .clipShape(Circle())
+                            }
+                            
+                            Text(greeting)
+                                .font(.system(size: 24, weight: .bold, design: .rounded))
+                                .foregroundColor(.primary)
+                            
+                            if viewModel.authUser != nil {
+                                Button(action: { navigateToEditProfile = true }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "pencil")
+                                            .font(.system(size: 16, weight: .semibold))
+                                        Text("Edit Profile")
+                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 20)
+                                    .background(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]),
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .cornerRadius(20)
+                                    .shadow(color: .blue.opacity(0.3), radius: 5)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 20)
+                    }
+                    
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            Section(header: Text("Your Account")
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundColor(.primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.top, 10)
+                            ) {
+                                NavigationLink(destination: UserRentalsView(), isActive: $navigateToRentals) {
+                                    ProfileMenuItem(icon: "list.bullet", text: "My Rentals") {
+                                        navigateToRentals = true
+                                    }
+                                }
+                                ProfileMenuItem(icon: "key.fill", text: "Reset Password") {
+                                    resetPassword()
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            
+                            Section(header: Text("Support & Info")
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundColor(.primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            ) {
+                                NavigationLink(destination: ContactUsView(), isActive: $navigateToContactUs) {
+                                    ProfileMenuItem(icon: "envelope", text: "Contact Us") {
+                                        navigateToContactUs = true
+                                    }
+                                }
+                                NavigationLink(destination: PrivacyPolicyView(), isActive: $navigateToPrivacyPolicy) {
+                                    ProfileMenuItem(icon: "doc.text", text: "Privacy & Policy") {
+                                        navigateToPrivacyPolicy = true
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                    }
+                    .background(Color(.systemBackground))
+                    
+                    if viewModel.authUser != nil {
+                        Button(action: signOut) {
+                            Text("Log Out")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundColor(.white)
+                                .frame(height: 55)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.red)
+                                .cornerRadius(10)
+                                .shadow(color: .gray.opacity(0.2), radius: 2)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 20)
+                        .background(Color(.systemBackground))
+                    }
+                } else {
+                    Color.clear
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if authViewModel.isAuthenticated {
+                        Button(action: {
+                            selectedTab = "search"
+                            dismiss()
+                        }) {
+                            Image(systemName: "chevron.left")
+                                .foregroundColor(.blue)
+                        }
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if authViewModel.isAuthenticated {
+                        NavigationLink(destination: NotificationsView(viewModel: viewModel), isActive: $navigateToNotifications) {
+                            ZStack {
+                                Image(systemName: "bell.fill")
+                                    .foregroundColor(viewModel.unreadCount > 0 ? .blue : .gray)
+                                    .font(.system(size: 20))
+                                if viewModel.unreadCount > 0 {
+                                    Text("\(viewModel.unreadCount)")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(4)
+                                        .background(Color.red)
+                                        .clipShape(Circle())
+                                        .offset(x: 10, y: -10)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .background(
+                NavigationLink(destination: UserProfileEditView()
+                    .environmentObject(viewModel)
+                    .onDisappear {
+                        Task { await viewModel.loadCurrentUser(forceServer: true) }
+                    },
+                    isActive: $navigateToEditProfile) { EmptyView() }
+            )
+            .task {
+                if authViewModel.isAuthenticated && viewModel.user == nil {
+                    await viewModel.loadCurrentUser(forceServer: true)
+                }
+            }
+            .alert(isPresented: $showResetPasswordAlert) {
+                Alert(
+                    title: Text("Password Reset"),
+                    message: Text(resetPasswordMessage ?? ""),
+                    dismissButton: .default(Text("OK")) {
+                        signOut()
+                    }
+                )
+            }
+        }
+    }
+    
+    private func resetPassword() {
+        guard let email = viewModel.user?.email else {
+            resetPasswordMessage = "Email not available"
+            showResetPasswordAlert = true
+            return
+        }
+        Task {
+            do {
+                try await AuthenticationManager.shared.resetPassword(email: email)
+                resetPasswordMessage = "Password reset link sent to \(email)"
+                showResetPasswordAlert = true
+            } catch {
+                resetPasswordMessage = "Failed to send reset email: \(error)"
+                showResetPasswordAlert = true
+            }
+        }
+    }
+    
+    private func signOut() {
+        Task {
+            do {
+                try AuthenticationManager.shared.signOut()
+                authViewModel.checkAuthenticationStatus()
+                selectedTab = "search"
+                dismiss()
+            } catch {
+                print("Sign-out failed: \(error)")
+            }
+        }
+    }
+}
+
+
+// GradientBackground, ProfileMenuItem, NotificationsView
+
+struct GradientBackground: View {
+    var body: some View {
+        GeometryReader { geometry in
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.gray.opacity(0.2),
+                    Color.blue.opacity(0.1),
+                    Color.clear
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+}
+
+struct ProfileMenuItem: View {
+    let icon: String
+    let text: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(.blue)
+                    .font(.system(size: 20, weight: .medium))
+                Text(text)
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundColor(.primary)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.gray)
+            }
+            .padding()
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+            .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 2)
+        }
+    }
+}
+
+struct NotificationsView: View {
+    @ObservedObject var viewModel: UserProfileViewModel
+
+    var body: some View {
+        List {
+            ForEach(viewModel.notifications) { notification in
+                VStack(alignment: .leading) {
+                    Text(notification.title)
+                        .font(.headline)
+                        .foregroundColor(notification.isRead ? .gray : .black)
+                    Text(notification.body)
+                        .font(.subheadline)
+                    Text(notification.timestamp, style: .date)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                .onTapGesture {
+                    Task { await viewModel.markNotificationAsRead(id: notification.id, rentalId: notification.rentalId) }
+                }
+            }
+        }
+        .navigationTitle("Notifications")
+    }
+}
+
+#Preview {
+    UserProfileView(selectedTab: .constant(nil))
+        .environmentObject(CartManager())
+        .environmentObject(AuthenticationViewModel())
+        .environmentObject(UserProfileViewModel())
+}
+
+
+//  UserProfileEditView.swift
+//  Equipment Booking
+//
+//  Created by XXXX YYYY on 1/20/25.
+//
+
+import SwiftUI
+import PhotosUI
+import UIKit
+import FirebaseAuth
+import FirebaseStorage
+import Photos
+
+struct UserProfileEditView: View {
+    @EnvironmentObject private var viewModel: UserProfileViewModel
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var firstName: String = ""
+    @State private var lastName: String = ""
+    @State private var phone: String = ""
+    @State private var address: String = ""
+    @State private var companyName: String = ""
+    @State private var profession: String = ""
+    @State private var isSaveButtonActive: Bool = false
+    @State private var selectedPhoto: PhotosPickerItem? = nil
+    @State private var profileImage: Image? = nil
+    @State private var isLoadingImage: Bool = false
+    @State private var showErrorAlert: Bool = false
+    @State private var errorMessage: String?
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                GradientBackground()
+                    .frame(height: 200)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                
+                VStack(spacing: 12) {
+                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                        ZStack {
+                            if let profileImage = profileImage ?? (viewModel.profileImage.map { Image(uiImage: $0) }) {
+                                profileImage
+                                    .resizable()
+                                    .scaledToFill()
+                            } else if let photoUrl = viewModel.user?.photoUrl, let url = URL(string: photoUrl) {
+                                Async_Image(url: url)
+                            } else {
+                                Image(systemName: "person.crop.circle.fill")
+                                    .foregroundColor(.gray)
+                            }
+                            if isLoadingImage {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                                    .scaleEffect(1.5)
+                            }
+                        }
+                        .frame(width: 100, height: 100)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                        .shadow(radius: 6)
+                        .overlay(
+                            Image(systemName: "camera.fill")
+                                .foregroundColor(.white)
+                                .font(.system(size: 16))
+                                .padding(6)
+                                .background(Circle().fill(Color.blue.opacity(0.8)))
+                                .offset(x: 35, y: 35)
+                        )
+                    }
+                    .onChange(of: selectedPhoto) { newItem in
+                        Task {
+                            isLoadingImage = true
+                            do {
+                                if let data = try await newItem?.loadTransferable(type: Data.self),
+                                   let uiImage = UIImage(data: data) {
+                                    profileImage = Image(uiImage: uiImage)
+                                    isSaveButtonActive = true
+                                }
+                            } catch {
+                                print("Photo picker error: \(error)")
+                            }
+                            isLoadingImage = false
+                        }
+                    }
+                    
+                    Text(viewModel.user?.email ?? "No email")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .padding(.top, 20)
+            }
+            
+            ScrollView {
+                VStack(spacing: 20) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Personal information")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        
+                        ProfileTextField(
+                            icon: "person.fill",
+                            placeholder: "First name",
+                            text: $firstName,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                        ProfileTextField(
+                            icon: "person.fill",
+                            placeholder: "Last name",
+                            text: $lastName,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("More information")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                        
+                        ProfileTextField(
+                            icon: "phone.fill",
+                            placeholder: "Phone number",
+                            text: $phone,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                        ProfileTextField(
+                            icon: "house.fill",
+                            placeholder: "Mailing address",
+                            text: $address,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                        ProfileTextField(
+                            icon: "building.2.fill",
+                            placeholder: "Company name",
+                            text: $companyName,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                        ProfileTextField(
+                            icon: "briefcase.fill",
+                            placeholder: "Profession",
+                            text: $profession,
+                            isEditable: true,
+                            onEditingChanged: checkForChanges
+                        )
+                    }
+                    
+                    Button(action: saveProfileChanges) {
+                        Text("Save changes")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(isSaveButtonActive ? Color.green.opacity(0.9) : Color.gray.opacity(0.5))
+                            .cornerRadius(12)
+                            .shadow(radius: 4)
+                    }
+                    .disabled(!isSaveButtonActive || isLoadingImage)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
+            }
+            .background(Color(.systemBackground))
+        }
+        .navigationTitle("Edit profile")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            DispatchQueue.asyncOnce(token: "loadUserData") {
+                loadUserData()
+            }
+        }
+//        .onAppear { DispatchQueue.asyncOnce(token: "loadUserData") {
+//            loadUserData()
+//        } }
+        .alert("Profile Save Error", isPresented: $showErrorAlert, actions: {
+            Button("OK") {
+                showErrorAlert = false
+                dismiss()
+            }
+        }, message: {
+            Text(errorMessage ?? "Failed to save profile changes")
+        })
+    }
+    
+    private func checkForChanges() {
+        isSaveButtonActive = firstName != (viewModel.user?.firstName ?? "") ||
+        lastName != (viewModel.user?.lastName ?? "") ||
+        phone != (viewModel.user?.phone ?? "") ||
+        address != (viewModel.user?.address ?? "") ||
+        companyName != (viewModel.user?.companyName ?? "") ||
+        profession != (viewModel.user?.profession ?? "") ||
+        selectedPhoto != nil
+    }
+    
+    
+    private func loadUserData() {
+        guard firstName.isEmpty else { return } // Avoid reloading if data is already set
+        Task {
+            print("Loading user data in EditView")
+            await viewModel.loadCurrentUser(forceServer: true)
+            if let user = viewModel.user {
+                firstName = user.firstName ?? ""
+                lastName = user.lastName ?? ""
+                phone = user.phone ?? ""
+                address = user.address ?? ""
+                companyName = user.companyName ?? ""
+                profession = user.profession ?? ""
+                print("EditView loaded: firstName=\(user.firstName ?? "nil"), img_url=\(user.photoUrl ?? "nil")")
+            } else {
+                print("No user data loaded")
+            }
+        }
+    }
+    
+    //    private func loadUserData() {
+    //        Task {
+    //            print("Loading user data in EditView")
+    //            await viewModel.loadCurrentUser(forceServer: true)
+    //            if let user = viewModel.user {
+    //                firstName = user.firstName ?? ""
+    //                lastName = user.lastName ?? ""
+    //                phone = user.phone ?? ""
+    //                address = user.address ?? ""
+    //                companyName = user.companyName ?? ""
+    //                profession = user.profession ?? ""
+    //                print("EditView loaded: firstName=\(user.firstName ?? "nil"), img_url=\(user.photoUrl ?? "nil")")
+    //            } else {
+    //                print("No user data loaded")
+    //            }
+    //        }
+    //    }
+    
+    private func saveProfileChanges() {
+        Task {
+            print("Starting saveProfileChanges")
+            var saveError: Error?
+            defer {
+                isSaveButtonActive = false
+                selectedPhoto = nil
+                isLoadingImage = false
+                if let error = saveError {
+                    errorMessage = error.localizedDescription.contains("permission") ?
+                        "Unable to save due to permission settings. Please try again or contact support." :
+                        error.localizedDescription
+                    print("Save error: \(errorMessage ?? "nil")")
+                    showErrorAlert = true
+                } else {
+                    print("Save successful, dismissing")
+                    dismiss()
+                }
+            }
+            
+            do {
+                guard let userId = viewModel.user?.userId else {
+                    print("Save failed: No user ID")
+                    saveError = NSError(domain: "UserProfileEdit", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user ID"])
+                    return
+                }
+                
+                let currentUid = Auth.auth().currentUser?.uid
+                print("Authenticated user UID: \(currentUid ?? "none")")
+                print("viewModel.userId: \(userId)")
+                if currentUid == nil {
+                    print("Save failed: No authenticated user")
+                    saveError = NSError(domain: "UserProfileEdit", code: -5, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
+                    return
+                }
+                if currentUid != userId {
+                    print("WARNING: UID mismatch. Falling back to authenticated UID.")
+                }
+                
+                // Refresh auth token
+                if let user = Auth.auth().currentUser {
+                    do {
+                        let token = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
+                            user.getIDTokenForcingRefresh(true) { token, error in
+                                if let error = error {
+                                    continuation.resume(throwing: error)
+                                } else if let token = token {
+                                    continuation.resume(returning: token)
+                                } else {
+                                    continuation.resume(throwing: NSError(domain: "Auth", code: -1, userInfo: [NSLocalizedDescriptionKey: "No token returned"]))
+                                }
+                            }
+                        }
+                        print("Token refreshed successfully: \(token.prefix(20))...")
+                    } catch {
+                        print("Token refresh failed: \(error)")
+                        saveError = error
+                        return
+                    }
+                }
+                
+                var photoUrl: String? = viewModel.user?.photoUrl
+                isLoadingImage = true
+                    do {
+                        print("Loading photo data")
+                        // Verify photo library permissions
+                        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+                        if status != .authorized {
+                            print("Save failed: Photo library access not authorized")
+                            saveError = NSError(domain: "UserProfileEdit", code: -7, userInfo: [NSLocalizedDescriptionKey: "Photo library access denied"])
+                            return
+                        }
+                        do {
+                            guard let data = try await selectedPhoto?.loadTransferable(type: Data.self) else {
+                                print("Save failed: No photo data")
+                                saveError = NSError(domain: "UserProfileEdit", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to load photo"])
+                                return
+                            }
+                            guard let uiImage = UIImage(data: data) else {
+                                print("Save failed: Invalid image data")
+                                saveError = NSError(domain: "UserProfileEdit", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid image data"])
+                                return
+                            }
+                            let resizedImage = uiImage.resized(to: CGSize(width: 200, height: 200))
+                            guard let resizedData = resizedImage?.jpegData(compressionQuality: 0.8) else {
+                                print("Save failed: Failed to resize image")
+                                saveError = NSError(domain: "UserProfileEdit", code: -4, userInfo: [NSLocalizedDescriptionKey: "Failed to resize image"])
+                                return
+                            }
+//                if let selectedPhoto = selectedPhoto {
+//                    isLoadingImage = true
+//                    do {
+//                        print("Loading photo data")
+//                        guard let data = try await selectedPhoto.loadTransferable(type: Data.self) else {
+//                            print("Save failed: No photo data")
+//                            saveError = NSError(domain: "UserProfileEdit", code: -2, userInfo: [NSLocalizedDescriptionKey: "Failed to load photo"])
+//                            return
+//                        }
+//                        guard let uiImage = UIImage(data: data) else {
+//                            print("Save failed: Invalid image data")
+//                            saveError = NSError(domain: "UserProfileEdit", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid image data"])
+//                            return
+//                        }
+//                        let resizedImage = uiImage.resized(to: CGSize(width: 200, height: 200))
+//                        guard let resizedData = resizedImage?.jpegData(compressionQuality: 0.8) else {
+//                            print("Save failed: Failed to resize image")
+//                            saveError = NSError(domain: "UserProfileEdit", code: -4, userInfo: [NSLocalizedDescriptionKey: "Failed to resize image"])
+//                            return
+//                        }
+                        let storageUserId = currentUid ?? userId
+                        let storageRef = Storage.storage().reference().child("profile_images/\(storageUserId).jpg")
+                        print("Storage path: \(storageRef.fullPath)")
+                        do {
+                            let metadata = StorageMetadata()
+                            metadata.contentType = "image/jpeg"
+                            // Retry upload up to 2 times
+                            var lastError: Error?
+                            for attempt in 1...3 {
+                                do {
+                                    _ = try await storageRef.putDataAsync(resizedData, metadata: metadata)
+                                    photoUrl = try await storageRef.downloadURL().absoluteString
+                                    print("Uploaded new photoUrl: \(photoUrl ?? "nil")")
+                                    lastError = nil
+                                    break
+                                } catch {
+                                    print("Upload attempt \(attempt) failed: \(error)")
+                                    lastError = error
+                                    if attempt < 3 {
+                                        // Refresh token before retry
+                                        if let user = Auth.auth().currentUser {
+                                            _ = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
+                                                user.getIDTokenForcingRefresh(true) { token, error in
+                                                    if let error = error {
+                                                        continuation.resume(throwing: error)
+                                                    } else if let token = token {
+                                                        continuation.resume(returning: token)
+                                                    } else {
+                                                        continuation.resume(throwing: NSError(domain: "Auth", code: -1, userInfo: [NSLocalizedDescriptionKey: "No token returned"]))
+                                                    }
+                                                }
+                                            }
+                                            print("Retried token refresh for attempt \(attempt + 1)")
+                                        }
+                                    }
+                                }
+                            }
+                            if let error = lastError {
+                                throw error
+                            }
+                            if let oldUrl = viewModel.user?.photoUrl, oldUrl != photoUrl {
+                                ProfileImageCache.shared.removeImage(forKey: oldUrl)
+                            }
+                        } catch {
+                            print("Image upload failed with error: \(error)")
+                            saveError = error
+                            return
+                        }
+                    } catch {
+                        print("Photo loading failed: \(error)")
+                        if error._code == 4097 {
+                            print("FileProvider error detected. Suggest checking iCloud settings or testing on a device.")
+                        }
+                        saveError = error
+                        return
+                    }
+                }
+                
+                print("Updating Firestore: firstName=\(firstName), img_url=\(photoUrl ?? "nil")")
+                try await viewModel.updateUserProfile(
+                    firstName: firstName.isEmpty ? nil : firstName,
+                    lastName: lastName.isEmpty ? nil : lastName,
+                    phone: phone.isEmpty ? nil : phone,
+                    address: address.isEmpty ? nil : address,
+                    companyName: companyName.isEmpty ? nil : companyName,
+                    profession: profession.isEmpty ? nil : profession,
+                    photoUrl: photoUrl
+                )
+                print("Firestore update complete")
+            } catch {
+                print("Profile update failed: \(error)")
+                saveError = error
+            }
+        }
+    }
+
+    
+
+}
+
+struct Async_Image: View {
+    let url: URL
+    
+    var body: some View {
+        AsyncImage(url: url) { phase in
+            switch phase {
+            case .empty:
+                ProgressView()
+            case .success(let image):
+                image
+                    .resizable()
+                    .scaledToFill()
+            case .failure:
+                Image(systemName: "person.crop.circle.fill")
+                    .foregroundColor(.gray)
+            @unknown default:
+                Image(systemName: "person.crop.circle.fill")
+                    .foregroundColor(.gray)
+            }
+        }
+    }
+}
+
+struct ProfileTextField: View {
+    let icon: String
+    let placeholder: String
+    @Binding var text: String
+    let isEditable: Bool
+    let onEditingChanged: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(.blue.opacity(0.8))
+                .font(.system(size: 18, weight: .medium))
+            TextField(placeholder, text: $text, onEditingChanged: { _ in onEditingChanged() })
+                .font(.system(size: 16, design: .rounded))
+                .foregroundColor(.primary)
+                .disabled(!isEditable)
+            if !text.isEmpty && isEditable {
+                Button(action: { text = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray.opacity(0.7))
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 2)
+    }
+}
+
+extension UIImage {
+    func resized(to size: CGSize) -> UIImage? {
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        draw(in: CGRect(origin: .zero, size: size))
+        return UIGraphicsGetImageFromCurrentImageContext()
+    }
+}
+
+extension DispatchQueue {
+    static var onceTokens: [String] = []
+    static func asyncOnce(token: String = #function, execute: @escaping () -> Void) {
+        objc_sync_enter(self); defer { objc_sync_exit(self) }
+        guard !onceTokens.contains(token) else { return }
+        onceTokens.append(token)
+        DispatchQueue.main.async { execute() }
+    }
+}
+
+#Preview {
+    UserProfileEditView()
+        .environmentObject(UserProfileViewModel())
+}
+
+
+//  UserProfileViewModel.swift
+//  Equipment Booking
+//
+//  Created by XXXX YYYY on 2/9/25.
+//
+
+import Firebase
+import FirebaseAuth
+import FirebaseFirestore
+import UIKit
+
+@MainActor
+final class UserProfileViewModel: ObservableObject {
+    @Published private(set) var user: DBUser? = nil
+    @Published var authUser: AuthDataResultModel? = nil
+    @Published var profileImage: UIImage? = nil
+    @Published var notifications: [Notification] = []
+    @Published var unreadCount: Int = 0
+    
+    private var listener: ListenerRegistration?
+    
+    struct Notification: Identifiable {
+        let id: String
+        let title: String
+        let body: String
+        let rentalId: String
+        let timestamp: Date
+        var isRead: Bool
+    }
+    
+    init() {}
+    
+    func loadCurrentUser(forceServer: Bool = false) async {
+        do {
+            let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
+            self.authUser = authDataResult
+            self.user = try await UserManager.shared.getUser(userID: authDataResult.uid, forceServer: forceServer)
+            print("Loaded user: firstName=\(self.user?.firstName ?? "nil"), photoUrl=\(self.user?.photoUrl ?? "nil")")
+            await loadProfileImage()
+            await loadNotifications()
+            
+            if user?.firstName == nil || user?.lastName == nil {
+                if let googleProfile = Auth.auth().currentUser?.providerData.first(where: { $0.providerID == "google.com" }) {
+                    let firstName = googleProfile.displayName?.components(separatedBy: " ").first
+                    let lastName = googleProfile.displayName?.components(separatedBy: " ").dropFirst().joined(separator: " ")
+                    let photoUrl = googleProfile.photoURL?.absoluteString
+                    
+                    self.user = DBUser(
+                        userId: authDataResult.uid,
+                        email: authDataResult.email,
+                        photoUrl: photoUrl ?? authDataResult.photoUrl,
+                        firstName: firstName ?? authDataResult.email,
+                        lastName: lastName
+                    )
+                    await loadProfileImage()
+                } else {
+                    self.user = DBUser(
+                        userId: authDataResult.uid,
+                        email: authDataResult.email,
+                        photoUrl: authDataResult.photoUrl,
+                        firstName: authDataResult.email,
+                        lastName: nil
+                    )
+                }
+                
+                if let updatedUser = self.user {
+                    try await UserManager.shared.createNewUser(user: updatedUser)
+                }
+            }
+        } catch {
+            print("Failed to load user: \(error)")
+            self.user = DBUser(
+                userId: "unknown",
+                email: "Unknown User",
+                photoUrl: nil,
+                dateCreated: Date(),
+                firstName: "Anonymous",
+                lastName: "User"
+            )
+        }
+    }
+    //  Sync user and reload the image
+    //  Fetches user with forceServer: true to get the new img_url.
+    //  Clears cache and profileImage, then reloads the image.
+    func updateUserProfile(firstName: String?, lastName: String?, phone: String?, address: String?, companyName: String?, profession: String?, photoUrl: String?) async throws {
+        guard let userId = user?.userId else {
+            print("No user ID available for update")
+            throw NSError(domain: "UserProfile", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user ID"])
+        }
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(userId)
+        var updatedData: [String: Any] = [
+            "firstname": firstName ?? FieldValue.delete(),
+            "lastname": lastName ?? FieldValue.delete(),
+            "phone": phone ?? FieldValue.delete(),
+            "address": address ?? FieldValue.delete(),
+            "company_name": companyName ?? FieldValue.delete(),
+            "profession": profession ?? FieldValue.delete()
+        ]
+        if let photoUrl = photoUrl {
+            updatedData["img_url"] = photoUrl
+        } else {
+            updatedData["img_url"] = FieldValue.delete()
+        }
+        try await userRef.updateData(updatedData)
+        print("Updated Firestore profile: firstName=\(firstName ?? "nil"), photoUrl=\(photoUrl ?? "nil")")
+        
+        self.user = try await UserManager.shared.getUser(userID: userId, forceServer: true)
+        if let oldPhotoUrl = user?.photoUrl, oldPhotoUrl != photoUrl {
+            ProfileImageCache.shared.removeImage(forKey: oldPhotoUrl)
+        }
+        self.profileImage = nil
+        await loadProfileImage()
+    }
+    
+
+    
+    func loadNotifications() async {
+        guard let userId = user?.userId else {
+            print("No user ID for notifications")
+            return
+        }
+        let db = Firestore.firestore()
+        listener?.remove()
+        listener = db.collection("users").document(userId).collection("notifications")
+            .order(by: "timestamp", descending: true)
+            .addSnapshotListener { snapshot, error in
+                if let error = error {
+                    print("Failed to load notifications: \(error)")
+                    return
+                }
+                guard let docs = snapshot?.documents else { return }
+                self.notifications = docs.map { doc in
+                    let data = doc.data()
+                    return Notification(
+                        id: doc.documentID,
+                        title: data["title"] as? String ?? "",
+                        body: data["body"] as? String ?? "",
+                        rentalId: data["rentalId"] as? String ?? "",
+                        timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
+                        isRead: data["isRead"] as? Bool ?? false
+                    )
+                }
+                self.unreadCount = self.notifications.filter { !$0.isRead }.count
+            }
+    }
+    
+    func markNotificationAsRead(id: String, rentalId: String) async {
+        guard let userId = user?.userId else {
+            print("No user ID to mark notification")
+            return
+        }
+        let db = Firestore.firestore()
+        do {
+            try await db.collection("users").document(userId).collection("notifications")
+                .document(id).updateData(["isRead": true])
+            try await db.collection("rentals").document(rentalId)
+                .updateData(["notification_opened": true])
+            print("Marked notification \(id) as read and opened for rental \(rentalId)")
+        } catch {
+            print("Failed to mark notification: \(error)")
+        }
+    }
+    
+    private func loadProfileImage() async {
+        guard let photoUrl = user?.photoUrl, let url = URL(string: photoUrl) else {
+            self.profileImage = nil
+            print("No photoUrl to load image")
+            return
+        }
+        let cacheKey = photoUrl
+        if let cachedImage = ProfileImageCache.shared.getImage(forKey: cacheKey) {
+            self.profileImage = cachedImage
+            print("Loaded profile image from cache: \(cacheKey)")
+        } else {
+            if let image = await loadImage(from: url) {
+                self.profileImage = image
+                ProfileImageCache.shared.setImage(image, forKey: cacheKey)
+                print("Loaded and cached profile image: \(cacheKey)")
+            } else {
+                self.profileImage = nil
+                print("Failed to load image for: \(cacheKey)")
+            }
+        }
+    }
+    
+    private func loadImage(from url: URL) async -> UIImage? {
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            return UIImage(data: data)
+        } catch {
+            print("Failed to load image from \(url): \(error)")
+            return nil
+        }
+    }
+    
+    deinit {
+        listener?.remove()
+    }
+}
+
+
+//  UserManager.swift
+//  Equipment Booking
+//
+//  Created by XXXX YYYY on 12/29/24.
+//
+
+import Foundation
+import FirebaseFirestore
+import FirebaseFirestoreCombineSwift
+
+struct DBUser: Codable {
+    let userId: String
+    let isAnonymous: Bool?
+    let email: String?
+    let photoUrl: String? // Corresponds to 'img_url'
+    let dateCreated: Date? // Optional, as Firestore does not provide this by default
+    let isAdmin: Bool? // Corresponds to 'is_admin', decoded from both string and boolean
+    var firstName: String? // Corresponds to 'firstname', var for potential updates (e.g. from Google or apple sign-in)
+    var lastName: String? // Corresponds to 'lastname', var for potential updates (e.g. from Google or apple sign-in)
+    let phone: String?
+    let address: String?
+    let companyName: String?
+    let profession: String?
+    
+
+    init(auth: AuthDataResultModel) {
+        self.userId = auth.uid
+        self.isAnonymous = auth.isAnonymous
+        self.email = auth.email
+        self.photoUrl = auth.photoUrl
+        self.dateCreated = Date() // Placeholder, as Firestore does not include dateCreated
+        self.isAdmin = false // Default to false for new users
+        self.firstName = auth.firstName ?? ""
+        self.lastName = auth.lastName ?? ""
+        self.phone = auth.phone ?? ""
+        self.address = auth.address ?? ""
+        self.companyName = auth.companyName ?? ""
+        self.profession = auth.profession ?? ""
+    }
+
+    init(
+        userId: String,
+        isAnonymous: Bool? = nil,
+        email: String? = nil,
+        photoUrl: String? = nil,
+        dateCreated: Date? = nil,
+        isAdmin: Bool? = nil,
+        firstName: String? = nil,
+        lastName: String? = nil,
+        phone: String? = nil,
+        address: String? = nil,
+        companyName: String? = nil,
+        profession: String? = nil
+        
+        
+    ) {
+        self.userId = userId
+        self.isAnonymous = isAnonymous
+        self.email = email
+        self.photoUrl = photoUrl
+        self.dateCreated = dateCreated
+        self.isAdmin = isAdmin
+        self.firstName = firstName
+        self.lastName = lastName
+        self.phone = phone
+        self.address = address
+        self.companyName = companyName
+        self.profession = profession
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.userId = try container.decode(String.self, forKey: .userId)
+        self.isAnonymous = try container.decodeIfPresent(Bool.self, forKey: .isAnonymous)
+        self.email = try container.decodeIfPresent(String.self, forKey: .email)
+        self.photoUrl = try container.decodeIfPresent(String.self, forKey: .photoUrl)
+        self.dateCreated = try container.decodeIfPresent(Date.self, forKey: .dateCreated)
+        
+        // Decode 'is_admin' as either Bool or String
+        if let isAdminBool = try? container.decode(Bool.self, forKey: .isAdmin) {
+            self.isAdmin = isAdminBool
+        } else if let isAdminString = try? container.decode(String.self, forKey: .isAdmin), let isAdminBool = Bool(isAdminString) {
+            self.isAdmin = isAdminBool
+        } else {
+            self.isAdmin = nil
+        }
+
+        self.firstName = try container.decodeIfPresent(String.self, forKey: .firstName)
+        self.lastName = try container.decodeIfPresent(String.self, forKey: .lastName)
+        self.phone = try container.decodeIfPresent(String.self, forKey: .phone)
+        self.address = try container.decodeIfPresent(String.self, forKey: .address)
+        self.companyName = try container.decodeIfPresent(String.self, forKey: .companyName)
+        self.profession = try container.decodeIfPresent(String.self, forKey: .profession)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case userId = "doc_id"
+        case isAnonymous = "is_anonymous"
+        case email = "email"
+        case photoUrl = "img_url"
+        case dateCreated = "date_created"
+        case isAdmin = "is_admin" // Matches 'is_admin' in Firestore
+        case firstName = "firstname"
+        case lastName = "lastname"
+        case phone = "phone"
+        case address = "address"
+        case companyName = "company_name" // Matches 'companty_name' in Firestore
+        case profession = "profession"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.userId, forKey: .userId)
+        try container.encodeIfPresent(self.isAnonymous, forKey: .isAnonymous)
+        try container.encodeIfPresent(self.email, forKey: .email)
+        try container.encodeIfPresent(self.photoUrl, forKey: .photoUrl)
+        try container.encodeIfPresent(self.dateCreated, forKey: .dateCreated)
+        try container.encodeIfPresent(self.isAdmin, forKey: .isAdmin)
+        try container.encodeIfPresent(self.firstName, forKey: .firstName)
+        try container.encodeIfPresent(self.lastName, forKey: .lastName)
+        try container.encodeIfPresent(self.phone, forKey: .phone)
+        try container.encodeIfPresent(self.address, forKey: .address)
+        try container.encodeIfPresent(self.companyName, forKey: .companyName)
+        try container.encodeIfPresent(self.profession, forKey: .profession)
+    }
+}
+
+final class UserManager {
+    static let shared = UserManager()
+    private init() {}
+    
+    private let userCollection = Firestore.firestore().collection("users")
+    
+    private func userDocument(userId: String) -> DocumentReference {
+        userCollection.document(userId)
+    }
+    
+    func createNewUser(user: DBUser) async throws {
+        try userDocument(userId: user.userId).setData(from: user, merge: false)
+    }
+    
+    func getUser(userID: String, forceServer: Bool = false) async throws -> DBUser {
+        print("Fetching user with userID: \(userID)")
+        let documentSnapshot = try await userDocument(userId: userID).getDocument(source: forceServer ? .server : .cache) // Use .cache to avoid unnecessary server calls
+        print("Fetched user data: \(documentSnapshot.data() ?? [:])")
+        
+        do {
+            return try documentSnapshot.data(as: DBUser.self)
+        } catch {
+            print("Decoding error: \(error)")
+            throw error
+        }
+    }
+    
+
+    
+    func updateUserAdminStatus(userId: String, isAdmin: Bool) async throws {
+        let data: [String: Any] = [
+            DBUser.CodingKeys.isAdmin.rawValue: isAdmin
+        ]
+        try await userDocument(userId: userId).updateData(data)
+    }
+}
+
+
+import SwiftUI
+import GoogleSignIn
+import GoogleSignInSwift
+import AuthenticationServices
+
+struct UserAuthenticationView: View {
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @EnvironmentObject var userProfileViewModel: UserProfileViewModel
+    @EnvironmentObject var cartManager: CartManager
+    @Environment(\.dismiss) var dismiss
+    @State private var email: String = ""
+    @State private var password: String = ""
+    @State private var emailErrorMessage: String?
+    @Binding var showSignInView: Bool
+    @State private var showPassword: Bool = false
+    @State private var showForgotPassword: Bool = false
+    @State private var errorMessage: String? = nil
+    @State private var navigateToSignUp: Bool = false
+    @State private var showInlineSignUp: Bool = false
+    @State private var navigateToTabsView: Bool = false
+    @State private var selectedTab: String? = "search"
+    
+    @FocusState private var focusedField: Field?
+    
+    enum Field {
+        case email, password
+    }
+    
+    private var isSignInButtonEnabled: Bool {
+        return emailErrorMessage == nil && !authViewModel.password.isEmpty
+    }
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text("Log in")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.yellow)
+                
+                CustomTextField(icon: "envelope", placeholder: "Email", text: $authViewModel.email)
+                    .focused($focusedField, equals: .email)
+                    .onChange(of: focusedField) { newFocus in
+                        if newFocus != .email {
+                            emailErrorMessage = ValidationHelper.validateEmail(authViewModel.email)
+                        } else {
+                            emailErrorMessage = nil
+                        }
+                    }
+                
+                if let emailErrorMessage = emailErrorMessage {
+                    Text(emailErrorMessage)
+                        .foregroundColor(.red)
+                        .font(.subheadline)
+                }
+                
+                CustomSecureField(icon: "lock", placeholder: "Password", text: $authViewModel.password, isSecure: !showPassword, toggle: { showPassword.toggle() })
+                    .focused($focusedField, equals: .password)
+                
+                if let errorMessage = errorMessage {
+                    VStack {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding(.bottom, 5)
+                        
+                        if showInlineSignUp {
+                            HStack {
+                                Button("New User? Sign Up") {
+                                    navigateToSignUp = true
+                                }
+                                .foregroundColor(.blue)
+                                
+                                Spacer()
+                                
+                                Button("Forgot Password?") {
+                                    showForgotPassword = true
+                                }
+                                .foregroundColor(.blue)
+                            }
+                        }
+                    }
+                }
+                
+                Button {
+                    Task {
+                        do {
+                            try await authViewModel.signIn()
+                            errorMessage = nil
+                            await userProfileViewModel.loadCurrentUser()
+                            selectedTab = "search"
+                            print("Sign-in: selectedTab set to \(selectedTab ?? "nil")")
+                            navigateToTabsView = true
+                            showSignInView = false
+                            dismiss()
+                        } catch let error as NSError {
+                            handleSignInError(error)
+                        }
+                    }
+                } label: {
+                    Text("Sign In")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(height: 55)
+                        .frame(maxWidth: .infinity)
+                        .background(isSignInButtonEnabled ? Color.blue : Color.gray.opacity(0.5))
+                        .cornerRadius(10)
+                }
+                .disabled(!isSignInButtonEnabled)
+                
+                HStack {
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 8)
+                    Text("or")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 8)
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 8)
+                }
+                .padding(.vertical, 8)
+                
+                VStack(spacing: 20) {
+                    GoogleSignInButton(viewModel: GoogleSignInButtonViewModel(scheme: .dark, style: .wide, state: .normal)) {
+                        Task {
+                            do {
+                                try await authViewModel.signInGoogle()
+                                await userProfileViewModel.loadCurrentUser()
+                                selectedTab = "search"
+                                print("Google Sign-in: selectedTab set to \(selectedTab ?? "nil")")
+                                navigateToTabsView = true
+                                showSignInView = false
+                                dismiss()
+                            } catch {
+                                print("Google Sign-In Error: \(error)")
+                                errorMessage = "Failed to sign in with Google. Please try again."
+                                showInlineSignUp = false
+                            }
+                        }
+                    }
+                    .frame(height: 55)
+                    
+                    SignInWithAppleButtonViewRepresentable(type: .default, style: .black) { request in
+                        let nonce = SignInWithAppleHelper.randomNonceString()
+                        authViewModel.currentNonce = nonce
+                        request.requestedScopes = [.email, .fullName]
+                        request.nonce = SignInWithAppleHelper.sha256(nonce)
+                    } onCompletion: { result in
+                        Task {
+                            do {
+                                guard let nonce = authViewModel.currentNonce else {
+                                    throw NSError(domain: "NonceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Nonce not set."])
+                                }
+                                try await authViewModel.signInWithApple(result: result, nonce: nonce)
+                                await userProfileViewModel.loadCurrentUser()
+                                selectedTab = "search"
+                                print("Apple Sign-in: selectedTab set to \(selectedTab ?? "nil")")
+                                navigateToTabsView = true
+                                showSignInView = false
+                                dismiss()
+                            } catch {
+                                print("Apple Sign-In Error: \(error)")
+                                errorMessage = "Failed to sign in with Apple. Please try again."
+                                showInlineSignUp = false
+                            }
+                        }
+                    }
+                    .frame(height: 55)
+                }
+                
+                if !showInlineSignUp {
+                    Button("Don't have an account? Sign Up") {
+                        navigateToSignUp = true
+                    }
+                    .foregroundColor(.blue)
+                    .padding(.top, 10)
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+            .background(
+                Group {
+                    NavigationLink(destination: SignUpView().environmentObject(authViewModel), isActive: $navigateToSignUp) {
+                        EmptyView()
+                    }
+                    NavigationLink(destination: TabsView(selectedTab: $selectedTab)
+                        .environmentObject(authViewModel)
+                        .environmentObject(cartManager)
+                        .environmentObject(userProfileViewModel),
+                        isActive: $navigateToTabsView) {
+                        EmptyView()
+                    }
+                }
+            )
+            .sheet(isPresented: $showForgotPassword) {
+                ForgotPasswordView(email: $authViewModel.email, onDismiss: { showForgotPassword = false })
+            }
+            .onAppear {
+                if authViewModel.isAuthenticated {
+                    print("UserAuthenticationView: User already authenticated, dismissing")
+                    dismiss()
+                }
+            }
+        }
+    }
+    
+    private func handleSignInError(_ error: NSError) {
+        print("Sign-in error: \(error.domain) - \(error.localizedDescription)")
+        switch error.code {
+        case 404:
+            errorMessage = "Email not registered. Please sign up or try again."
+            showInlineSignUp = true
+        case 401:
+            errorMessage = "Incorrect password. Please try again."
+            showInlineSignUp = true
+        case 400:
+            errorMessage = "Invalid email format. Please check and try again."
+            showInlineSignUp = false
+        default:
+            errorMessage = "An unexpected error occurred."
+            showInlineSignUp = true
+        }
+    }
+}
+
+// SignInWithAppleButtonViewRepresentable
+
+struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
+    let type: ASAuthorizationAppleIDButton.ButtonType
+    let style: ASAuthorizationAppleIDButton.Style
+    let onRequest: (ASAuthorizationAppleIDRequest) -> Void
+    let onCompletion: (Result<ASAuthorization, Error>) -> Void
+
+    init(type: ASAuthorizationAppleIDButton.ButtonType,
+         style: ASAuthorizationAppleIDButton.Style,
+         onRequest: @escaping (ASAuthorizationAppleIDRequest) -> Void = { _ in },
+         onCompletion: @escaping (Result<ASAuthorization, Error>) -> Void = { _ in }) {
+        self.type = type
+        self.style = style
+        self.onRequest = onRequest
+        self.onCompletion = onCompletion
+    }
+
+    func makeUIView(context: Context) -> ASAuthorizationAppleIDButton {
+        let button = ASAuthorizationAppleIDButton(authorizationButtonType: type, authorizationButtonStyle: style)
+        button.addTarget(context.coordinator, action: #selector(context.coordinator.didTapButton), for: .touchUpInside)
+        return button
+    }
+
+    func updateUIView(_ uiView: ASAuthorizationAppleIDButton, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+        let parent: SignInWithAppleButtonViewRepresentable
+
+        init(_ parent: SignInWithAppleButtonViewRepresentable) {
+            self.parent = parent
+        }
+
+        @objc func didTapButton() {
+            let request = ASAuthorizationAppleIDProvider().createRequest()
+            parent.onRequest(request)
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            controller.delegate = self
+            controller.presentationContextProvider = self
+            controller.performRequests()
+        }
+
+        func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+            parent.onCompletion(.success(authorization))
+        }
+
+        func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+            parent.onCompletion(.failure(error))
+        }
+
+        func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+            UIApplication.shared.windows.first { $0.isKeyWindow } ?? UIWindow()
+        }
+    }
+}
+
+#Preview {
+    UserAuthenticationView(showSignInView: .constant(true))
+        .environmentObject(UserProfileViewModel())
+}
+
+
+import Foundation
+import FirebaseAuth
+import CryptoKit
+import AuthenticationServices
+
+@MainActor
+final class AuthenticationViewModel: ObservableObject {
+    @Published var email: String = ""
+    @Published var password: String = ""
+    @Published var authUser: AuthDataResultModel? = nil
+    @Published var isAuthenticated: Bool = false
+    @Published var isEmailVerified: Bool = false // Track verification
+    var currentNonce: String?
+    
+    init() {
+            checkAuthenticationStatus()
+        }
+    
+    func checkAuthenticationStatus() {
+            
+        if let user = Auth.auth().currentUser {
+            self.authUser = AuthDataResultModel(user: user)
+            self.isAuthenticated = true
+            self.isEmailVerified = user.isEmailVerified
+            print("AuthViewModel: isAuthenticated=\(isAuthenticated), UID=\(Auth.auth().currentUser?.uid ?? "none")")
+        } else {
+            self.isAuthenticated = false
+            self.isEmailVerified = false
+        }
+    }
+    
+    func signInGoogle() async throws {
+        let helper = SignInGoogleHelper()
+        let tokens = try await helper.signIn()
+        let authDataResult = try await AuthenticationManager.shared.signInWithGoogle(tokens: tokens)
+        self.authUser = authDataResult
+        self.isAuthenticated = true
+        let user = DBUser(auth: authDataResult)
+        try await UserManager.shared.createNewUser(user: user)
+    }
+    
+    func signIn() async throws {
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedEmail.isEmpty, !trimmedPassword.isEmpty else {
+            throw NSError(domain: "InvalidInput", code: 422, userInfo: [NSLocalizedDescriptionKey: "Email and password cannot be empty."])
+        }
+        do {
+            let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: trimmedPassword)
+            self.authUser = AuthDataResultModel(user: authDataResult.user)
+            self.isAuthenticated = true
+            self.isEmailVerified = authDataResult.user.isEmailVerified
+        } catch let error as NSError {
+            // Error handling unchanged
+            if let authErrorCode = AuthErrorCode(_bridgedNSError: error) {
+                switch authErrorCode {
+                case .userNotFound:
+                    throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "Email not registered. Please sign up or try again."])
+                case .invalidEmail:
+                    throw NSError(domain: "InvalidEmail", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid email format. Please check and try again."])
+                case .wrongPassword:
+                    throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "Incorrect password. Try again."])
+                default:
+                    throw NSError(domain: "UnknownError", code: 500, userInfo: [NSLocalizedDescriptionKey: "An unexpected error occurred."])
+                }
+            } else {
+                switch error.code {
+                case 17011: throw NSError(domain: "EmailNotRegistered", code: 404, userInfo: [NSLocalizedDescriptionKey: "Email not registered. Please sign up or try again."])
+                case 17009: throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "Incorrect password. Try again."])
+                case 17008: throw NSError(domain: "InvalidEmail", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid email format. Please check and try again."])
+                case 17005: throw NSError(domain: "UserDisabled", code: 403, userInfo: [NSLocalizedDescriptionKey: "This account has been disabled."])
+                default:
+                    print("🔥 Failed to map error. Returning generic error.")
+                    throw NSError(domain: "UnknownError", code: 500, userInfo: [NSLocalizedDescriptionKey: "An unexpected error occurred."])
+                }
+            }
+        }
+    }
+    
+    func signUpAndLogin(email: String, password: String) async throws {
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        do {
+            let authDataResult = try await AuthenticationManager.shared.createUser(email: normalizedEmail, password: trimmedPassword)
+            self.authUser = authDataResult
+            self.isAuthenticated = false // User is signed out by createUser
+            self.isEmailVerified = authDataResult.isEmailVerified
+            
+            // Send email verification (user is signed out, so we need to sign in briefly)
+            let tempSignIn = try await Auth.auth().signIn(withEmail: normalizedEmail, password: trimmedPassword)
+            try await tempSignIn.user.sendEmailVerification()
+            try await AuthenticationManager.shared.signOut() // Sign out again
+        } catch {
+            print("Sign-up error: \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
+    func resendEmailVerification(email: String, password: String) async throws {
+        // Sign in temporarily to resend verification
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: trimmedPassword)
+        try await authDataResult.user.sendEmailVerification()
+        try await AuthenticationManager.shared.signOut()
+    }
+    
+    func refreshEmailVerificationStatus(email: String, password: String) async throws -> Bool {
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: trimmedPassword)
+        try await authDataResult.user.reload()
+        let isVerified = authDataResult.user.isEmailVerified
+        try await AuthenticationManager.shared.signOut()
+        self.isEmailVerified = isVerified
+        return isVerified
+    }
+    
+    func signInWithApple(result: Result<ASAuthorization, Error>, nonce: String) async throws {
+        switch result {
+        case .success(let authorization):
+            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let appleIDToken = appleIDCredential.identityToken,
+                  let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+                throw NSError(domain: "AppleSignInError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve Apple ID token."])
+            }
+            let credential = OAuthProvider.credential(
+                withProviderID: "apple.com",
+                idToken: idTokenString,
+                rawNonce: nonce
+            )
+            let authDataResult = try await AuthenticationManager.shared.signIn(credential: credential)
+            self.authUser = authDataResult
+            self.isAuthenticated = true
+            var user = DBUser(auth: authDataResult)
+            if let fullName = appleIDCredential.fullName {
+                user.firstName = fullName.givenName
+                user.lastName = fullName.familyName
+            }
+            try await UserManager.shared.createNewUser(user: user)
+        case .failure(let error):
+            throw error
+        }
+    }
+}
+
+// SignInWithAppleHelper
+
+// Helper for generating nonce (unchanged)
+struct SignInWithAppleHelper {
+    static func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        var randomBytes = [UInt8](repeating: 0, count: length)
+        let errorCode = SecRandomCopyBytes(kSecRandomDefault, length, &randomBytes)
+        if errorCode != errSecSuccess {
+            fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+        }
+        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        let nonce = randomBytes.map { charset[Int($0) % charset.count] }
+        return String(nonce)
+    }
+    
+    static func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        return hashedData.compactMap { String(format: "%02x", $0) }.joined()
+    }
+}
+
+
+//  AuthenticationManager.swift
+//  Equipment Booking
+//
+//  Created by XXXX YYYY on 12/9/24.
+//
+
+import Foundation
+import FirebaseAuth
+
+struct AuthDataResultModel {
+    let uid: String
+    let email: String?
+    let photoUrl: String?
+    let isAnonymous: Bool
+    let dateCreated: Date?
+    let isAdmin: Bool?
+    let firstName: String?
+    let lastName: String?
+    let phone: String?
+    let address: String?
+    let companyName: String?
+    let profession: String?
+    let isEmailVerified: Bool // Added
+    
+    init(user: User) {
+        self.uid = user.uid
+        self.email = user.email
+        self.photoUrl = user.photoURL?.absoluteString
+        self.isAnonymous = user.isAnonymous
+        self.dateCreated = user.metadata.creationDate
+        self.isAdmin = nil
+        self.firstName = nil
+        self.lastName = nil
+        self.phone = nil
+        self.address = nil
+        self.companyName = nil
+        self.profession = nil
+        self.isEmailVerified = user.isEmailVerified // Set from Firebase User
+    }
+}
+
+enum AuthProviderOption: String {
+    case email = "password"
+    case google = "google.com"
+    case apple = "apple.com"
+}
+
+final class AuthenticationManager {
+    static let shared = AuthenticationManager()
+    private init() {}
+    
+    func getAuthenticatedUser() throws -> AuthDataResultModel {
+        guard let user = Auth.auth().currentUser else {
+            throw URLError(.badServerResponse)
+        }
+        print("AuthenticationManager UID: \(user.uid)")
+        return AuthDataResultModel(user: user)
+    }
+    
+//    func getAuthenticatedUser() throws -> AuthDataResultModel {
+//        guard let user = Auth.auth().currentUser else {
+//            throw URLError(.badServerResponse)
+//        }
+//        return AuthDataResultModel(user: user)
+//    }
+    
+    func getProviders() throws -> [AuthProviderOption] {
+        guard let providerData = Auth.auth().currentUser?.providerData else {
+            throw URLError(.badServerResponse)
+        }
+        var providers: [AuthProviderOption] = []
+        for provider in providerData {
+            if let option = AuthProviderOption(rawValue: provider.providerID) {
+                providers.append(option)
+            } else {
+                assertionFailure("Provider option not found: \(provider.providerID)")
+            }
+        }
+        return providers
+    }
+    
+    func signOut() throws {
+        try Auth.auth().signOut()
+    }
+}
+
+// MARK: - SIGN IN EMAIL/PASSWORD
+extension AuthenticationManager {
+    @discardableResult
+    func createUser(email: String, password: String) async throws -> AuthDataResultModel {
+        let authDataResult = try await Auth.auth().createUser(withEmail: email, password: password)
+        let user = AuthDataResultModel(user: authDataResult.user)
+        try await UserManager.shared.createNewUser(user: DBUser(auth: user))
+        try await Auth.auth().signOut()
+        return user
+    }
+    
+    @discardableResult
+    func signInUser(email: String, password: String) async throws -> AuthDataResultModel {
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        do {
+            let authDataResult = try await Auth.auth().signIn(withEmail: normalizedEmail, password: password)
+            return AuthDataResultModel(user: authDataResult.user)
+        } catch let error as NSError {
+            switch error.code {
+            case AuthErrorCode.wrongPassword.rawValue:
+                throw NSError(domain: "InvalidPassword", code: 401, userInfo: [NSLocalizedDescriptionKey: "Password is incorrect."])
+            default:
+                throw error
+            }
+        }
+    }
+    
+    func resetPassword(email: String) async throws {
+        try await Auth.auth().sendPasswordReset(withEmail: email)
+    }
+    
+    func updatePassword(password: String) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw URLError(.badServerResponse)
+        }
+        try await user.updatePassword(to: password)
+    }
+    
+    func updateEmail(email: String) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw URLError(.badServerResponse)
+        }
+        try await user.sendEmailVerification(beforeUpdatingEmail: email)
+    }
+}
+
+// MARK: - SIGN IN SSO (GOOGLE & APPLE)
+extension AuthenticationManager {
+    @discardableResult
+    func signInWithGoogle(tokens: GoogleSignInResultModel) async throws -> AuthDataResultModel {
+        let credential = GoogleAuthProvider.credential(withIDToken: tokens.idToken, accessToken: tokens.accessToken)
+        return try await signIn(credential: credential)
+    }
+    
+    // Generic sign-in method for SSO credentials (used by both Google and Apple)
+    func signIn(credential: AuthCredential) async throws -> AuthDataResultModel {
+        let authDataResult = try await Auth.auth().signIn(with: credential)
+        return AuthDataResultModel(user: authDataResult.user)
+    }
+}

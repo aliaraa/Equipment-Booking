@@ -11,8 +11,10 @@ import GoogleSignInSwift
 import AuthenticationServices
 
 struct UserAuthenticationView: View {
-    @StateObject private var viewModel = AuthenticationViewModel()
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
     @EnvironmentObject var userProfileViewModel: UserProfileViewModel
+    @EnvironmentObject var cartManager: CartManager
+    @Environment(\.dismiss) var dismiss
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var emailErrorMessage: String?
@@ -32,7 +34,7 @@ struct UserAuthenticationView: View {
     }
     
     private var isSignInButtonEnabled: Bool {
-        return emailErrorMessage == nil && !viewModel.password.isEmpty
+        return emailErrorMessage == nil && !authViewModel.password.isEmpty
     }
     
     var body: some View {
@@ -43,11 +45,11 @@ struct UserAuthenticationView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.yellow)
                 
-                CustomTextField(icon: "envelope", placeholder: "Email", text: $viewModel.email)
+                CustomTextField(icon: "envelope", placeholder: "Email", text: $authViewModel.email)
                     .focused($focusedField, equals: .email)
                     .onChange(of: focusedField) { newFocus in
                         if newFocus != .email {
-                            emailErrorMessage = ValidationHelper.validateEmail(viewModel.email)
+                            emailErrorMessage = ValidationHelper.validateEmail(authViewModel.email)
                         } else {
                             emailErrorMessage = nil
                         }
@@ -59,7 +61,7 @@ struct UserAuthenticationView: View {
                         .font(.subheadline)
                 }
                 
-                CustomSecureField(icon: "lock", placeholder: "Password", text: $viewModel.password, isSecure: !showPassword, toggle: { showPassword.toggle() })
+                CustomSecureField(icon: "lock", placeholder: "Password", text: $authViewModel.password, isSecure: !showPassword, toggle: { showPassword.toggle() })
                     .focused($focusedField, equals: .password)
                 
                 if let errorMessage = errorMessage {
@@ -89,10 +91,14 @@ struct UserAuthenticationView: View {
                 Button {
                     Task {
                         do {
-                            try await viewModel.signIn()
+                            try await authViewModel.signIn()
                             errorMessage = nil
                             await userProfileViewModel.loadCurrentUser()
+                            selectedTab = "search"
+                            print("Sign-in: selectedTab set to \(selectedTab ?? "nil")")
                             navigateToTabsView = true
+                            showSignInView = false
+                            dismiss()
                         } catch let error as NSError {
                             handleSignInError(error)
                         }
@@ -128,9 +134,13 @@ struct UserAuthenticationView: View {
                     GoogleSignInButton(viewModel: GoogleSignInButtonViewModel(scheme: .dark, style: .wide, state: .normal)) {
                         Task {
                             do {
-                                try await viewModel.signInGoogle()
+                                try await authViewModel.signInGoogle()
                                 await userProfileViewModel.loadCurrentUser()
+                                selectedTab = "search"
+                                print("Google Sign-in: selectedTab set to \(selectedTab ?? "nil")")
                                 navigateToTabsView = true
+                                showSignInView = false
+                                dismiss()
                             } catch {
                                 print("Google Sign-In Error: \(error)")
                                 errorMessage = "Failed to sign in with Google. Please try again."
@@ -142,18 +152,22 @@ struct UserAuthenticationView: View {
                     
                     SignInWithAppleButtonViewRepresentable(type: .default, style: .black) { request in
                         let nonce = SignInWithAppleHelper.randomNonceString()
-                        viewModel.currentNonce = nonce
+                        authViewModel.currentNonce = nonce
                         request.requestedScopes = [.email, .fullName]
                         request.nonce = SignInWithAppleHelper.sha256(nonce)
                     } onCompletion: { result in
                         Task {
                             do {
-                                guard let nonce = viewModel.currentNonce else {
+                                guard let nonce = authViewModel.currentNonce else {
                                     throw NSError(domain: "NonceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Nonce not set."])
                                 }
-                                try await viewModel.signInWithApple(result: result, nonce: nonce)
+                                try await authViewModel.signInWithApple(result: result, nonce: nonce)
                                 await userProfileViewModel.loadCurrentUser()
+                                selectedTab = "search"
+                                print("Apple Sign-in: selectedTab set to \(selectedTab ?? "nil")")
                                 navigateToTabsView = true
+                                showSignInView = false
+                                dismiss()
                             } catch {
                                 print("Apple Sign-In Error: \(error)")
                                 errorMessage = "Failed to sign in with Apple. Please try again."
@@ -178,21 +192,26 @@ struct UserAuthenticationView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(
                 Group {
-                    NavigationLink(destination: SignUpView().environmentObject(viewModel), isActive: $navigateToSignUp) {
+                    NavigationLink(destination: SignUpView().environmentObject(authViewModel), isActive: $navigateToSignUp) {
                         EmptyView()
                     }
-                    if #available(iOS 18.0, *) {
-                        NavigationLink(destination: TabsView(selectedTab: $selectedTab)
-                            .environmentObject(CartManager(isReadOnly: !viewModel.isAuthenticated)),
-                            isActive: $navigateToTabsView)
-                                       {
-                            EmptyView()
-                        }
+                    NavigationLink(destination: TabsView(selectedTab: $selectedTab)
+                        .environmentObject(authViewModel)
+                        .environmentObject(cartManager)
+                        .environmentObject(userProfileViewModel),
+                        isActive: $navigateToTabsView) {
+                        EmptyView()
                     }
                 }
             )
             .sheet(isPresented: $showForgotPassword) {
-                ForgotPasswordView(email: $viewModel.email, onDismiss: { showForgotPassword = false })
+                ForgotPasswordView(email: $authViewModel.email, onDismiss: { showForgotPassword = false })
+            }
+            .onAppear {
+                if authViewModel.isAuthenticated {
+                    print("UserAuthenticationView: User already authenticated, dismissing")
+                    dismiss()
+                }
             }
         }
     }
@@ -216,13 +235,14 @@ struct UserAuthenticationView: View {
     }
 }
 
-// Updated SignInWithAppleButtonViewRepresentable to handle request and completion
+// SignInWithAppleButtonViewRepresentable
+
 struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
     let type: ASAuthorizationAppleIDButton.ButtonType
     let style: ASAuthorizationAppleIDButton.Style
     let onRequest: (ASAuthorizationAppleIDRequest) -> Void
     let onCompletion: (Result<ASAuthorization, Error>) -> Void
-    
+
     init(type: ASAuthorizationAppleIDButton.ButtonType,
          style: ASAuthorizationAppleIDButton.Style,
          onRequest: @escaping (ASAuthorizationAppleIDRequest) -> Void = { _ in },
@@ -232,26 +252,26 @@ struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
         self.onRequest = onRequest
         self.onCompletion = onCompletion
     }
-    
+
     func makeUIView(context: Context) -> ASAuthorizationAppleIDButton {
         let button = ASAuthorizationAppleIDButton(authorizationButtonType: type, authorizationButtonStyle: style)
         button.addTarget(context.coordinator, action: #selector(context.coordinator.didTapButton), for: .touchUpInside)
         return button
     }
-    
+
     func updateUIView(_ uiView: ASAuthorizationAppleIDButton, context: Context) {}
-    
+
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-    
+
     class Coordinator: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
         let parent: SignInWithAppleButtonViewRepresentable
-        
+
         init(_ parent: SignInWithAppleButtonViewRepresentable) {
             self.parent = parent
         }
-        
+
         @objc func didTapButton() {
             let request = ASAuthorizationAppleIDProvider().createRequest()
             parent.onRequest(request)
@@ -260,15 +280,15 @@ struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
             controller.presentationContextProvider = self
             controller.performRequests()
         }
-        
+
         func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
             parent.onCompletion(.success(authorization))
         }
-        
+
         func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
             parent.onCompletion(.failure(error))
         }
-        
+
         func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
             UIApplication.shared.windows.first { $0.isKeyWindow } ?? UIWindow()
         }
@@ -279,4 +299,3 @@ struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
     UserAuthenticationView(showSignInView: .constant(true))
         .environmentObject(UserProfileViewModel())
 }
-

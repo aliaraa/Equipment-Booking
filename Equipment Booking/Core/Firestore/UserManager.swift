@@ -126,46 +126,40 @@ struct DBUser: Codable {
     }
 }
 
-
-
 final class UserManager {
-    
     static let shared = UserManager()
     private init() {}
     
     private let userCollection = Firestore.firestore().collection("users")
     
-    //function to get document/user for a given userID
     private func userDocument(userId: String) -> DocumentReference {
         userCollection.document(userId)
     }
-
-
     
-    func createNewUser(user: DBUser) async  throws {
-        try userDocument(userId: user.userId).setData(from: user, merge: false )
-        
+    func createNewUser(user: DBUser) async throws {
+        try userDocument(userId: user.userId).setData(from: user, merge: false)
     }
     
-    func getUser(userID: String) async throws -> DBUser {
-        let documentSnapshot = try await userDocument(userId: userID).getDocument()
-        print("Raw Firestore data: \(documentSnapshot.data() ?? [:])") // Debugging line
-
+    func getUser(userID: String, forceServer: Bool = false) async throws -> DBUser {
+        print("Fetching user with userID: \(userID)")
+        let documentSnapshot = try await userDocument(userId: userID).getDocument(source: forceServer ? .server : .cache) // Use .cache to avoid unnecessary server calls
+        print("Fetched user data: \(documentSnapshot.data() ?? [:])")
+        
         do {
-            return try documentSnapshot.data(as: DBUser.self) // Decode to DBUser format
+            return try documentSnapshot.data(as: DBUser.self)
         } catch {
             print("Decoding error: \(error)")
             throw error
         }
     }
+    
 
-     
     
     func updateUserAdminStatus(userId: String, isAdmin: Bool) async throws {
-        let data: [String:Any] = [
+        let data: [String: Any] = [
             DBUser.CodingKeys.isAdmin.rawValue: isAdmin
         ]
-        try userDocument(userId: userId).updateData(data)
+        try await userDocument(userId: userId).updateData(data)
     }
-    
 }
+

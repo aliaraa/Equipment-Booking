@@ -8,43 +8,32 @@
 import SwiftUI
 
 struct RootView: View {
-    @StateObject private var authViewModel = AuthenticationViewModel()
-    @StateObject private var userProfileViewModel = UserProfileViewModel()
+    @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @EnvironmentObject var userProfileViewModel: UserProfileViewModel
     @EnvironmentObject var cartManager: CartManager
-    @State private var selectedTab: String? = "search" // Default tab
+    @State private var selectedTab: String? = "search"
     
     var body: some View {
-        ZStack {
-            if authViewModel.isAuthenticated {
-                if #available(iOS 18.0, *) {
-                    TabsView(selectedTab: $selectedTab)
-                        .environmentObject(userProfileViewModel)
-                        .environmentObject(cartManager)
-                } else {
-                    // Fallback on earlier versions
-                }
-            } else {
-                UserAuthenticationView(showSignInView: .constant(false))
-            }
+        if authViewModel.isAuthenticated {
+            TabsView(selectedTab: $selectedTab)
+                .environmentObject(authViewModel)
+                .environmentObject(userProfileViewModel)
+                .environmentObject(cartManager)
+        } else {
+            UserAuthenticationView(showSignInView: .constant(true))
+                .environmentObject(authViewModel)
+                .environmentObject(userProfileViewModel)
+                .environmentObject(cartManager)
         }
-        .onAppear {
-            authViewModel.checkAuthenticationStatus()
-            if authViewModel.isAuthenticated {
-                Task {
-                    await userProfileViewModel.loadCurrentUser() // Preload user and image
-                }
-            }
-        }
-        .environmentObject(authViewModel)
-        .environmentObject(userProfileViewModel)
     }
 }
 
 struct RootView_Previews: PreviewProvider {
     static var previews: some View {
         RootView()
+            .environmentObject(AuthenticationViewModel())
+            .environmentObject(UserProfileViewModel())
             .environmentObject(CartManager())
     }
 }
-
 

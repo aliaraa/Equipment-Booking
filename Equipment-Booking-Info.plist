@@ -5,6 +5,12 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+            <key>NSPhotoLibraryUsageDescription</key>
+            <string>We need access to your photo library to select profile images.</string>
+            <key>NSPhotoLibraryAddUsageDescription</key>
+            <string>We need to save photos to your library for profile image updates.</string>
+            <key>BUNDLE_ID</key>
+            <string>se.Equipment-Booking</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>

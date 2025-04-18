@@ -21,5 +21,10 @@ class ProfileImageCache {
     func getImage(forKey key: String) -> UIImage? {
         cache.object(forKey: key as NSString)
     }
+    
+    func removeImage(forKey key: String) {
+        cache.removeObject(forKey: key as NSString)
+    }
 }
+
 

@@ -19,11 +19,17 @@ final class AuthenticationViewModel: ObservableObject {
     @Published var isEmailVerified: Bool = false // Track verification
     var currentNonce: String?
     
+    init() {
+            checkAuthenticationStatus()
+        }
+    
     func checkAuthenticationStatus() {
+            
         if let user = Auth.auth().currentUser {
             self.authUser = AuthDataResultModel(user: user)
             self.isAuthenticated = true
             self.isEmailVerified = user.isEmailVerified
+            print("AuthViewModel: isAuthenticated=\(isAuthenticated), UID=\(Auth.auth().currentUser?.uid ?? "none")")
         } else {
             self.isAuthenticated = false
             self.isEmailVerified = false

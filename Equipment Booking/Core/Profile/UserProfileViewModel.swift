@@ -5,7 +5,7 @@
 //  Created by Rene Mbanguka on 2/9/25.
 //
 
-import Foundation
+import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 import UIKit
@@ -31,12 +31,12 @@ final class UserProfileViewModel: ObservableObject {
     
     init() {}
     
-    func loadCurrentUser() async {
+    func loadCurrentUser(forceServer: Bool = false) async {
         do {
             let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
             self.authUser = authDataResult
-            self.user = try await UserManager.shared.getUser(userID: authDataResult.uid)
-            print("Loaded user photoUrl: \(self.user?.photoUrl ?? "nil")")
+            self.user = try await UserManager.shared.getUser(userID: authDataResult.uid, forceServer: forceServer)
+            print("Loaded user: firstName=\(self.user?.firstName ?? "nil"), photoUrl=\(self.user?.photoUrl ?? "nil")")
             await loadProfileImage()
             await loadNotifications()
             
@@ -68,9 +68,8 @@ final class UserProfileViewModel: ObservableObject {
                     try await UserManager.shared.createNewUser(user: updatedUser)
                 }
             }
-            
         } catch {
-            print("Failed to load user: \(error.localizedDescription)")
+            print("Failed to load user: \(error)")
             self.user = DBUser(
                 userId: "unknown",
                 email: "Unknown User",
@@ -81,28 +80,41 @@ final class UserProfileViewModel: ObservableObject {
             )
         }
     }
-    
-    func updateUserProfile(firstName: String, lastName: String, phone: String, address: String, companyName: String, profession: String, photoUrl: String? = nil) async throws {
+    //  Sync user and reload the image
+    //  Fetches user with forceServer: true to get the new img_url.
+    //  Clears cache and profileImage, then reloads the image.
+    func updateUserProfile(firstName: String?, lastName: String?, phone: String?, address: String?, companyName: String?, profession: String?, photoUrl: String?) async throws {
         guard let userId = user?.userId else {
             print("No user ID available for update")
-            return
+            throw NSError(domain: "UserProfile", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user ID"])
         }
         let db = Firestore.firestore()
         let userRef = db.collection("users").document(userId)
-        let updatedData: [String: Any] = [
-            "firstname": firstName,
-            "lastname": lastName,
-            "phone": phone,
-            "address": address,
-            "company_name": companyName,
-            "profession": profession,
-            "img_url": photoUrl ?? FieldValue.delete()
+        var updatedData: [String: Any] = [
+            "firstname": firstName ?? FieldValue.delete(),
+            "lastname": lastName ?? FieldValue.delete(),
+            "phone": phone ?? FieldValue.delete(),
+            "address": address ?? FieldValue.delete(),
+            "company_name": companyName ?? FieldValue.delete(),
+            "profession": profession ?? FieldValue.delete()
         ]
+        if let photoUrl = photoUrl {
+            updatedData["img_url"] = photoUrl
+        } else {
+            updatedData["img_url"] = FieldValue.delete()
+        }
         try await userRef.updateData(updatedData)
-        print("User profile updated with photoUrl: \(photoUrl ?? "nil")")
-        self.user = try await UserManager.shared.getUser(userID: userId)
+        print("Updated Firestore profile: firstName=\(firstName ?? "nil"), photoUrl=\(photoUrl ?? "nil")")
+        
+        self.user = try await UserManager.shared.getUser(userID: userId, forceServer: true)
+        if let oldPhotoUrl = user?.photoUrl, oldPhotoUrl != photoUrl {
+            ProfileImageCache.shared.removeImage(forKey: oldPhotoUrl)
+        }
+        self.profileImage = nil
         await loadProfileImage()
     }
+    
+
     
     func loadNotifications() async {
         guard let userId = user?.userId else {
@@ -115,7 +127,7 @@ final class UserProfileViewModel: ObservableObject {
             .order(by: "timestamp", descending: true)
             .addSnapshotListener { snapshot, error in
                 if let error = error {
-                    print("Failed to load notifications: \(error.localizedDescription)")
+                    print("Failed to load notifications: \(error)")
                     return
                 }
                 guard let docs = snapshot?.documents else { return }
@@ -147,24 +159,28 @@ final class UserProfileViewModel: ObservableObject {
                 .updateData(["notification_opened": true])
             print("Marked notification \(id) as read and opened for rental \(rentalId)")
         } catch {
-            print("Failed to mark notification: \(error.localizedDescription)")
+            print("Failed to mark notification: \(error)")
         }
     }
     
     private func loadProfileImage() async {
         guard let photoUrl = user?.photoUrl, let url = URL(string: photoUrl) else {
             self.profileImage = nil
+            print("No photoUrl to load image")
             return
         }
         let cacheKey = photoUrl
         if let cachedImage = ProfileImageCache.shared.getImage(forKey: cacheKey) {
             self.profileImage = cachedImage
-            print("Loaded profile image from cache")
+            print("Loaded profile image from cache: \(cacheKey)")
         } else {
             if let image = await loadImage(from: url) {
                 self.profileImage = image
                 ProfileImageCache.shared.setImage(image, forKey: cacheKey)
-                print("Loaded and cached profile image")
+                print("Loaded and cached profile image: \(cacheKey)")
+            } else {
+                self.profileImage = nil
+                print("Failed to load image for: \(cacheKey)")
             }
         }
     }
@@ -174,7 +190,7 @@ final class UserProfileViewModel: ObservableObject {
             let (data, _) = try await URLSession.shared.data(from: url)
             return UIImage(data: data)
         } catch {
-            print("Failed to load image: \(error.localizedDescription)")
+            print("Failed to load image from \(url): \(error)")
             return nil
         }
     }

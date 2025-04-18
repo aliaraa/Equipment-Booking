@@ -9,15 +9,16 @@
 
 import SwiftUI
 
-@available(iOS 18.0, *)
+import SwiftUI
+
 struct TabsView: View {
-    @EnvironmentObject private var authViewModel: AuthenticationViewModel // Use environment object
+    @EnvironmentObject private var authViewModel: AuthenticationViewModel
     @EnvironmentObject var cartManager: CartManager
-    @Binding var selectedTab: String? // Changed to Binding from RootView
+    @EnvironmentObject var userProfileViewModel: UserProfileViewModel
+    @Binding var selectedTab: String?
     
     init(selectedTab: Binding<String?>) {
         self._selectedTab = selectedTab
-        // Customize UITabBar appearance
         let appearance = UITabBarAppearance()
         appearance.configureWithDefaultBackground()
         appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterial)
@@ -53,24 +54,22 @@ struct TabsView: View {
             }
             .tag("status" as String?)
         }
-        // SwiftUI tab bar enhancements
         .toolbarBackground(.ultraThinMaterial, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarBackground(Color.white.opacity(0.1), for: .tabBar)
         .onAppear {
-            authViewModel.checkAuthenticationStatus()
+            print("TabsView appeared with selectedTab: \(selectedTab ?? "nil")")
+            if selectedTab == nil || authViewModel.isAuthenticated {
+                selectedTab = "search"
+            }
         }
     }
 }
 
 #Preview {
-    if #available(iOS 18.0, *) {
-        TabsView(selectedTab: .constant("search"))
-            .environmentObject(AuthenticationViewModel())
-            .environmentObject(CartManager())
-            .environmentObject(UserProfileViewModel())
-    } else {
-        // Fallback on earlier versions
-    }
+    TabsView(selectedTab: .constant("search"))
+        .environmentObject(AuthenticationViewModel())
+        .environmentObject(CartManager())
+        .environmentObject(UserProfileViewModel())
 }
 
