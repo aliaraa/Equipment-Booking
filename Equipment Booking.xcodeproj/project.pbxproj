@@ -22,8 +22,8 @@
 
 /* Begin PBXFileReference section */
 		5053FC3C2CF351FC008036F8 /* Equipment Booking.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Equipment Booking.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A11538822D54B50B005A740D /* Equipment-Booking-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Equipment-Booking-Info.plist"; sourceTree = "<group>"; };
 		A14162082DAF471F00619198 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		A14DA3AC2DBAE37F00E44172 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -81,8 +81,8 @@
 				5053FC3E2CF351FC008036F8 /* Equipment Booking */,
 				A1B2451E2D20DD9200491EAB /* Frameworks */,
 				5053FC3D2CF351FC008036F8 /* Products */,
-				A11538822D54B50B005A740D /* Equipment-Booking-Info.plist */,
 				A14162082DAF471F00619198 /* GoogleService-Info.plist */,
+				A14DA3AC2DBAE37F00E44172 /* Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -327,7 +327,7 @@
 				DEVELOPMENT_TEAM = GYGH2RJHSZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Equipment-Booking-Info.plist";
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -360,7 +360,7 @@
 				DEVELOPMENT_TEAM = GYGH2RJHSZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Equipment-Booking-Info.plist";
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

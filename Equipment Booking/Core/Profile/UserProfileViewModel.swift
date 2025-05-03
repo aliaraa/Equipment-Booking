@@ -5,197 +5,330 @@
 //  Created by Rene Mbanguka on 2/9/25.
 //
 
-import Firebase
+import Foundation
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseStorage
+import Combine
 import UIKit
 
-@MainActor
-final class UserProfileViewModel: ObservableObject {
-    @Published private(set) var user: DBUser? = nil
-    @Published var authUser: AuthDataResultModel? = nil
-    @Published var profileImage: UIImage? = nil
+class UserProfileViewModel: ObservableObject {
+    @Published var user: DBUser?
+    @Published var authUser: AuthDataResultModel?
     @Published var notifications: [Notification] = []
     @Published var unreadCount: Int = 0
     
-    private var listener: ListenerRegistration?
+    private let db = Firestore.firestore()
+    private var authListenerHandle: AuthStateDidChangeListenerHandle?
+    private var isLoadingUser = false
+    private var lastLoadedUserId: String?
     
-    struct Notification: Identifiable {
-        let id: String
-        let title: String
-        let body: String
-        let rentalId: String
-        let timestamp: Date
-        var isRead: Bool
+    init() {
+        setupAuthListener()
     }
     
-    init() {}
+    deinit {
+        if let handle = authListenerHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+        }
+    }
     
-    func loadCurrentUser(forceServer: Bool = false) async {
-        do {
-            let authDataResult = try AuthenticationManager.shared.getAuthenticatedUser()
-            self.authUser = authDataResult
-            self.user = try await UserManager.shared.getUser(userID: authDataResult.uid, forceServer: forceServer)
-            print("Loaded user: firstName=\(self.user?.firstName ?? "nil"), photoUrl=\(self.user?.photoUrl ?? "nil")")
-            await loadProfileImage()
-            await loadNotifications()
-            
-            if user?.firstName == nil || user?.lastName == nil {
-                if let googleProfile = Auth.auth().currentUser?.providerData.first(where: { $0.providerID == "google.com" }) {
-                    let firstName = googleProfile.displayName?.components(separatedBy: " ").first
-                    let lastName = googleProfile.displayName?.components(separatedBy: " ").dropFirst().joined(separator: " ")
-                    let photoUrl = googleProfile.photoURL?.absoluteString
-                    
-                    self.user = DBUser(
-                        userId: authDataResult.uid,
-                        email: authDataResult.email,
-                        photoUrl: photoUrl ?? authDataResult.photoUrl,
-                        firstName: firstName ?? authDataResult.email,
-                        lastName: lastName
-                    )
-                    await loadProfileImage()
-                } else {
-                    self.user = DBUser(
-                        userId: authDataResult.uid,
-                        email: authDataResult.email,
-                        photoUrl: authDataResult.photoUrl,
-                        firstName: authDataResult.email,
-                        lastName: nil
-                    )
+    private func setupAuthListener() {
+        authListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
+            guard let self = self else { return }
+            if let firebaseUser = firebaseUser {
+                let authUser = AuthDataResultModel(user: firebaseUser)
+                Task {
+                    await MainActor.run { self.authUser = authUser }
+                    await self.loadCurrentUser(userId: authUser.uid, forceServer: true)
+                    print("Auth state changed: UID=\(authUser.uid), email=\(authUser.email ?? "nil")")
                 }
-                
-                if let updatedUser = self.user {
-                    try await UserManager.shared.createNewUser(user: updatedUser)
+            } else {
+                Task {
+                    await MainActor.run {
+                        self.authUser = nil
+                        self.user = nil
+                        self.notifications = []
+                        self.unreadCount = 0
+                        self.lastLoadedUserId = nil
+                    }
+                    print("Auth state changed: User signed out")
+                }
+            }
+        }
+    }
+    
+    func loadCurrentUser(userId: String? = nil, forceServer: Bool = false) async {
+        guard !isLoadingUser else {
+            print("Skipping loadCurrentUser: already in progress")
+            return
+        }
+        let uid = userId ?? Auth.auth().currentUser?.uid
+        guard let uid = uid else {
+            print("No authenticated user")
+            await MainActor.run { self.user = nil }
+            return
+        }
+        if !forceServer, lastLoadedUserId == uid {
+            print("Skipping loadCurrentUser: user \(uid) already loaded")
+            return
+        }
+        isLoadingUser = true
+        defer { isLoadingUser = false }
+        
+        do {
+            let dbUser = try await UserManager.shared.getUser(userID: uid, forceServer: forceServer)
+            print("Loaded user: firstName=\(dbUser.firstName ?? "nil"), photoUrl=\(dbUser.photoUrl ?? "nil")")
+            await MainActor.run {
+                self.user = dbUser
+                self.lastLoadedUserId = uid
+            }
+            
+            // CHANGE: Pre-fetch and cache profile image
+            if let photoUrl = dbUser.photoUrl, !photoUrl.isEmpty {
+                await cacheProfileImage(url: photoUrl)
+            } else {
+                guard Auth.auth().currentUser != nil else {
+                    print("Cannot fetch photoUrl: No authenticated user")
+                    return
+                }
+                let storageRef = Storage.storage().reference().child("profile_images/\(uid).jpg")
+                do {
+                    let url = try await storageRef.downloadURL()
+                    print("Fetched photoUrl from Storage: \(url.absoluteString)")
+                    try await UserManager.shared.updateUser(
+                        userId: uid,
+                        firstName: dbUser.firstName,
+                        lastName: dbUser.lastName,
+                        phone: dbUser.phone,
+                        address: dbUser.address,
+                        companyName: dbUser.companyName,
+                        profession: dbUser.profession,
+                        photoUrl: url.absoluteString
+                    )
+                    await MainActor.run { self.user?.photoUrl = url.absoluteString }
+                    await cacheProfileImage(url: url.absoluteString)
+                    print("Updated Firestore with photoUrl: \(url.absoluteString)")
+                } catch {
+                    print("Failed to fetch photoUrl from Storage: \(error)")
                 }
             }
         } catch {
             print("Failed to load user: \(error)")
-            self.user = DBUser(
-                userId: "unknown",
-                email: "Unknown User",
-                photoUrl: nil,
-                dateCreated: Date(),
-                firstName: "Anonymous",
-                lastName: "User"
-            )
+            await MainActor.run { self.user = nil }
         }
     }
-    //  Sync user and reload the image
-    //  Fetches user with forceServer: true to get the new img_url.
-    //  Clears cache and profileImage, then reloads the image.
-    func updateUserProfile(firstName: String?, lastName: String?, phone: String?, address: String?, companyName: String?, profession: String?, photoUrl: String?) async throws {
-        guard let userId = user?.userId else {
-            print("No user ID available for update")
-            throw NSError(domain: "UserProfile", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user ID"])
-        }
-        let db = Firestore.firestore()
-        let userRef = db.collection("users").document(userId)
-        var updatedData: [String: Any] = [
-            "firstname": firstName ?? FieldValue.delete(),
-            "lastname": lastName ?? FieldValue.delete(),
-            "phone": phone ?? FieldValue.delete(),
-            "address": address ?? FieldValue.delete(),
-            "company_name": companyName ?? FieldValue.delete(),
-            "profession": profession ?? FieldValue.delete()
-        ]
-        if let photoUrl = photoUrl {
-            updatedData["img_url"] = photoUrl
-        } else {
-            updatedData["img_url"] = FieldValue.delete()
-        }
-        try await userRef.updateData(updatedData)
-        print("Updated Firestore profile: firstName=\(firstName ?? "nil"), photoUrl=\(photoUrl ?? "nil")")
-        
-        self.user = try await UserManager.shared.getUser(userID: userId, forceServer: true)
-        if let oldPhotoUrl = user?.photoUrl, oldPhotoUrl != photoUrl {
-            ProfileImageCache.shared.removeImage(forKey: oldPhotoUrl)
-        }
-        self.profileImage = nil
-        await loadProfileImage()
-    }
     
-
-    
-    func loadNotifications() async {
-        guard let userId = user?.userId else {
-            print("No user ID for notifications")
+    // CHANGE: Cache profile image
+    private func cacheProfileImage(url: String) async {
+        if ProfileImageCache.shared.getImage(forKey: url) != nil {
+            print("Image already cached for: \(url)")
             return
         }
-        let db = Firestore.firestore()
-        listener?.remove()
-        listener = db.collection("users").document(userId).collection("notifications")
-            .order(by: "timestamp", descending: true)
-            .addSnapshotListener { snapshot, error in
-                if let error = error {
-                    print("Failed to load notifications: \(error)")
-                    return
-                }
-                guard let docs = snapshot?.documents else { return }
-                self.notifications = docs.map { doc in
-                    let data = doc.data()
-                    return Notification(
-                        id: doc.documentID,
-                        title: data["title"] as? String ?? "",
-                        body: data["body"] as? String ?? "",
-                        rentalId: data["rentalId"] as? String ?? "",
-                        timestamp: (data["timestamp"] as? Timestamp)?.dateValue() ?? Date(),
-                        isRead: data["isRead"] as? Bool ?? false
-                    )
-                }
-                self.unreadCount = self.notifications.filter { !$0.isRead }.count
-            }
-    }
-    
-    func markNotificationAsRead(id: String, rentalId: String) async {
-        guard let userId = user?.userId else {
-            print("No user ID to mark notification")
+        guard let imageUrl = URL(string: url) else {
+            print("Invalid image URL: \(url)")
             return
         }
-        let db = Firestore.firestore()
         do {
-            try await db.collection("users").document(userId).collection("notifications")
-                .document(id).updateData(["isRead": true])
-            try await db.collection("rentals").document(rentalId)
-                .updateData(["notification_opened": true])
-            print("Marked notification \(id) as read and opened for rental \(rentalId)")
-        } catch {
-            print("Failed to mark notification: \(error)")
-        }
-    }
-    
-    private func loadProfileImage() async {
-        guard let photoUrl = user?.photoUrl, let url = URL(string: photoUrl) else {
-            self.profileImage = nil
-            print("No photoUrl to load image")
-            return
-        }
-        let cacheKey = photoUrl
-        if let cachedImage = ProfileImageCache.shared.getImage(forKey: cacheKey) {
-            self.profileImage = cachedImage
-            print("Loaded profile image from cache: \(cacheKey)")
-        } else {
-            if let image = await loadImage(from: url) {
-                self.profileImage = image
-                ProfileImageCache.shared.setImage(image, forKey: cacheKey)
-                print("Loaded and cached profile image: \(cacheKey)")
-            } else {
-                self.profileImage = nil
-                print("Failed to load image for: \(cacheKey)")
+            let (data, _) = try await URLSession.shared.data(from: imageUrl)
+            guard let uiImage = UIImage(data: data) else {
+                print("Failed to create UIImage from data: \(url)")
+                return
             }
-        }
-    }
-    
-    private func loadImage(from url: URL) async -> UIImage? {
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            return UIImage(data: data)
+            await MainActor.run {
+                ProfileImageCache.shared.setImage(uiImage, forKey: url)
+                print("Cached image for: \(url)")
+            }
         } catch {
-            print("Failed to load image from \(url): \(error)")
-            return nil
+            print("Failed to cache image: \(url), error: \(error)")
         }
     }
     
-    deinit {
-        listener?.remove()
+    func updateUserProfile(
+        firstName: String?,
+        lastName: String?,
+        phone: String?,
+        address: String?,
+        companyName: String?,
+        profession: String?,
+        photoUrl: String?
+    ) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            throw NSError(domain: "UserProfileViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "No authenticated user"])
+        }
+        try await UserManager.shared.updateUser(
+            userId: uid,
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+            address: address,
+            companyName: companyName,
+            profession: profession,
+            photoUrl: photoUrl
+        )
+        await loadCurrentUser(userId: uid, forceServer: true)
+    }
+    
+    func markNotificationAsRead(id: String, rentalId: String?) async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            try await db.collection("users").document(uid)
+                .collection("notifications").document(id)
+                .updateData(["isRead": true])
+            if let rentalId = rentalId {
+                try await db.collection("rentals").document(rentalId)
+                    .updateData(["isRead": true])
+            }
+            await loadCurrentUser(forceServer: true)
+        } catch {
+            print("Failed to mark notification as read: \(error)")
+        }
     }
 }
+
+struct Notification: Identifiable, Codable {
+    let id: String
+    let title: String
+    let body: String
+    let timestamp: Date
+    let isRead: Bool
+    let rentalId: String?
+}
+
+
+//class UserProfileViewModel: ObservableObject {
+//    @Published var user: DBUser?
+//    @Published var authUser: AuthDataResultModel? // CHANGE: Use AuthDataResultModel
+//    @Published var notifications: [Notification] = []
+//    @Published var unreadCount: Int = 0
+//    
+//    private let db = Firestore.firestore()
+//    private var authListenerHandle: AuthStateDidChangeListenerHandle?
+//    
+//    init() {
+//        setupAuthListener()
+//    }
+//    
+//    deinit {
+//        // CHANGE: Remove auth listener to prevent memory leaks
+//        if let handle = authListenerHandle {
+//            Auth.auth().removeStateDidChangeListener(handle)
+//        }
+//    }
+//    
+//    private func setupAuthListener() {
+//        // CHANGE: Use Firebase Auth state listener instead of authStatePublisher
+//        authListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
+//            guard let self = self else { return }
+//            if let firebaseUser = firebaseUser {
+//                let authUser = AuthDataResultModel(user: firebaseUser)
+//                Task {
+//                    await MainActor.run { self.authUser = authUser }
+//                    await self.loadCurrentUser(userId: authUser.uid, forceServer: true)
+//                    print("Auth state changed: UID=\(authUser.uid), email=\(authUser.email ?? "nil")")
+//                }
+//            } else {
+//                Task {
+//                    await MainActor.run {
+//                        self.authUser = nil
+//                        self.user = nil
+//                        self.notifications = []
+//                        self.unreadCount = 0
+//                    }
+//                    print("Auth state changed: User signed out")
+//                }
+//            }
+//        }
+//    }
+//    
+//    func loadCurrentUser(userId: String? = nil, forceServer: Bool = false) async {
+//        guard let uid = userId ?? Auth.auth().currentUser?.uid else {
+//            print("No authenticated user")
+//            await MainActor.run { self.user = nil }
+//            return
+//        }
+//        do {
+//            let dbUser = try await UserManager.shared.getUser(userID: uid, forceServer: forceServer)
+//            print("Loaded user: firstName=\(dbUser.firstName ?? "nil"), photoUrl=\(dbUser.photoUrl ?? "nil")")
+//            await MainActor.run { self.user = dbUser }
+//            
+//            if dbUser.photoUrl == nil {
+//                let storageRef = Storage.storage().reference().child("profile_images/\(uid).jpg")
+//                do {
+//                    let url = try await storageRef.downloadURL()
+//                    print("Fetched photoUrl from Storage: \(url.absoluteString)")
+//                    try await UserManager.shared.updateUser(
+//                        userId: uid,
+//                        firstName: dbUser.firstName,
+//                        lastName: dbUser.lastName,
+//                        phone: dbUser.phone,
+//                        address: dbUser.address,
+//                        companyName: dbUser.companyName,
+//                        profession: dbUser.profession,
+//                        photoUrl: url.absoluteString
+//                    )
+//                    await MainActor.run { self.user?.photoUrl = url.absoluteString }
+//                    print("Updated Firestore with photoUrl: \(url.absoluteString)")
+//                } catch {
+//                    print("No photo exists in Storage or access denied: \(error)")
+//                }
+//            }
+//        } catch {
+//            print("Failed to load user: \(error)")
+//            await MainActor.run { self.user = nil }
+//        }
+//    }
+//    
+//    func updateUserProfile(
+//        firstName: String?,
+//        lastName: String?,
+//        phone: String?,
+//        address: String?,
+//        companyName: String?,
+//        profession: String?,
+//        photoUrl: String?
+//    ) async throws {
+//        guard let uid = Auth.auth().currentUser?.uid else {
+//            throw NSError(domain: "UserProfileViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "No authenticated user"])
+//        }
+//        try await UserManager.shared.updateUser(
+//            userId: uid,
+//            firstName: firstName,
+//            lastName: lastName,
+//            phone: phone,
+//            address: address,
+//            companyName: companyName,
+//            profession: profession,
+//            photoUrl: photoUrl
+//        )
+//        await loadCurrentUser(userId: uid, forceServer: true)
+//    }
+//    
+//    func markNotificationAsRead(id: String, rentalId: String?) async {
+//        guard let uid = Auth.auth().currentUser?.uid else { return }
+//        do {
+//            try await db.collection("users").document(uid)
+//                .collection("notifications").document(id)
+//                .updateData(["isRead": true])
+//            if let rentalId = rentalId {
+//                try await db.collection("rentals").document(rentalId)
+//                    .updateData(["isRead": true])
+//            }
+//            await loadCurrentUser(forceServer: true)
+//        } catch {
+//            print("Failed to mark notification as read: \(error)")
+//        }
+//    }
+//}
+//
+//struct Notification: Identifiable, Codable {
+//    let id: String
+//    let title: String
+//    let body: String
+//    let timestamp: Date
+//    let isRead: Bool
+//    let rentalId: String?
+//}
+
+
+
