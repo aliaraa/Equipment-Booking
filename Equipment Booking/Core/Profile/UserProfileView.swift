@@ -23,6 +23,7 @@ struct UserProfileView: View {
     @State private var navigateToNotifications = false
     @State private var showResetPasswordAlert = false
     @State private var resetPasswordMessage: String?
+    @State private var hasLoaded: Bool = false
     
     private var greeting: String {
         if let firstName = viewModel.user?.firstName, !firstName.isEmpty {
@@ -240,10 +241,15 @@ struct UserProfileView: View {
                     isActive: $navigateToEditProfile) { EmptyView() }
             )
             .onAppear {
-                print("UserProfileView onAppear")
-                Task {
-                    await viewModel.loadCurrentUser(forceServer: true)
-                }
+                if !hasLoaded {
+                    hasLoaded = true
+                    Task {
+                        await viewModel.loadCurrentUser(forceServer: true)
+                    }
+                        }
+//                print("UserProfileView onAppear")
+//                viewModel.loadCurrentUser(fetchServer: true)
+                
             }
             .alert(isPresented: $showResetPasswordAlert) {
                 Alert(

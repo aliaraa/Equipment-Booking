@@ -11,6 +11,53 @@ import UIKit
 import FirebaseAuth
 import FirebaseStorage
 import Photos
+import FirebaseFirestore
+
+struct Async_Image: View {
+    let url: URL
+    let photoUrl: String
+    
+    var body: some View {
+        if let cachedImage = ProfileImageCache.shared.getImage(forKey: photoUrl) {
+            Image(uiImage: cachedImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 100, height: 100)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                .shadow(radius: 6)
+                .onAppear { print("Using cached image: \(photoUrl)") }
+        } else {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    ProgressView()
+                        .onAppear { print("AsyncImage loading: \(photoUrl)") }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 100, height: 100)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                        .shadow(radius: 6)
+                        .onAppear { print("AsyncImage loaded: \(photoUrl)") }
+                case .failure(let error):
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .frame(width: 100, height: 100)
+                        .foregroundColor(.gray)
+                        .onAppear { print("AsyncImage failed: \(photoUrl), error: \(error)") }
+                @unknown default:
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .frame(width: 100, height: 100)
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+    }
+}
 
 struct UserProfileEditView: View {
     @EnvironmentObject private var viewModel: UserProfileViewModel
@@ -30,6 +77,8 @@ struct UserProfileEditView: View {
     @State private var isLoadingImage: Bool = false
     @State private var showErrorAlert: Bool = false
     @State private var errorMessage: String? = nil
+    @State private var canAccessPhotos: Bool = false
+    @State private var hasLoadedData: Bool = false
     
     var body: some View {
         Group {
@@ -41,24 +90,111 @@ struct UserProfileEditView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                         
                         VStack(spacing: 12) {
-                            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                            if canAccessPhotos {
+                                PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                                    ZStack {
+                                        if let profileImage = profileImage {
+                                            profileImage
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 100, height: 100)
+                                                .clipShape(Circle())
+                                                .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                                                .shadow(radius: 6)
+                                        } else if let photoUrl = viewModel.user?.photoUrl, !photoUrl.isEmpty, let url = URL(string: photoUrl) {
+                                            Async_Image(url: url, photoUrl: photoUrl)
+                                        } else {
+                                            Image(systemName: "person.crop.circle.fill")
+                                                .resizable()
+                                                .frame(width: 100, height: 100)
+                                                .foregroundColor(.gray)
+                                                .onAppear { print("No photoUrl, using placeholder") }
+                                        }
+                                        if isLoadingImage {
+                                            ProgressView()
+                                                .progressViewStyle(CircularProgressViewStyle())
+                                                .scaleEffect(1.5)
+                                        }
+                                    }
+                                    .overlay(
+                                        Image(systemName: "camera.fill")
+                                            .foregroundColor(.white)
+                                            .font(.system(size: 16))
+                                            .padding(6)
+                                            .background(Circle().fill(Color.blue.opacity(0.8)))
+                                            .offset(x: 35, y: 35)
+                                    )
+                                }
+                                .onAppear { print("PhotosPicker initialized") }
+                                .onChange(of: selectedPhoto) { newItem in
+                                    Task {
+                                        isLoadingImage = true
+                                        defer { isLoadingImage = false }
+                                        do {
+                                            guard let item = newItem else {
+                                                profileImage = nil
+                                                isSaveButtonActive = checkForChanges()
+                                                print("Cleared selected photo")
+                                                return
+                                            }
+                                            let status = await requestPhotoLibraryAccess()
+                                            switch status {
+                                            case .authorized, .limited:
+                                                print("Photo access granted: \(status.rawValue) (\(status.description))")
+                                            case .denied:
+                                                throw NSError(domain: "UserProfileEdit", code: -7, userInfo: [NSLocalizedDescriptionKey: "Photo library access denied"])
+                                            case .restricted:
+                                                throw NSError(domain: "UserProfileEdit", code: -7, userInfo: [NSLocalizedDescriptionKey: "Photo library access restricted by system settings"])
+                                            case .notDetermined:
+                                                print("Unexpected notDetermined status after request")
+                                                throw NSError(domain: "UserProfileEdit", code: -7, userInfo: [NSLocalizedDescriptionKey: "Photo library access not determined"])
+                                            @unknown default:
+                                                throw NSError(domain: "UserProfileEdit", code: -7, userInfo: [NSLocalizedDescriptionKey: "Unknown photo library access status"])
+                                            }
+                                            guard let data = try await item.loadTransferable(type: Data.self) else {
+                                                throw NSError(domain: "UserProfileEdit", code: -8, userInfo: [NSLocalizedDescriptionKey: "Failed to load image data"])
+                                            }
+                                            print("Loaded image data: \(data.count) bytes")
+                                            guard let uiImage = UIImage(data: data) else {
+                                                throw NSError(domain: "UserProfileEdit", code: -9, userInfo: [NSLocalizedDescriptionKey: "Invalid image format"])
+                                            }
+                                            guard uiImage.size.width > 0, uiImage.size.height > 0 else {
+                                                throw NSError(domain: "UserProfileEdit", code: -10, userInfo: [NSLocalizedDescriptionKey: "Image has invalid dimensions"])
+                                            }
+                                            guard let imageType = data.imageType, ["jpeg", "png"].contains(imageType) else {
+                                                throw NSError(domain: "UserProfileEdit", code: -11, userInfo: [NSLocalizedDescriptionKey: "Unsupported image type: \(data.imageType ?? "unknown")"])
+                                            }
+                                            profileImage = Image(uiImage: uiImage)
+                                            isSaveButtonActive = true
+                                            print("Valid photo selected: type=\(imageType), size=\(uiImage.size)")
+                                        } catch {
+                                            print("Photo selection error: \(error)")
+                                            errorMessage = {
+                                                if error.localizedDescription.contains("access denied") {
+                                                    return "Please enable photo access in Settings > Privacy > Photos."
+                                                } else if error.localizedDescription.contains("restricted") {
+                                                    return "Photo access is restricted by system settings."
+                                                } else {
+                                                    return "Failed to load photo: \(error.localizedDescription)"
+                                                }
+                                            }()
+                                            showErrorAlert = true
+                                            profileImage = nil
+                                            selectedPhoto = nil
+                                            isSaveButtonActive = checkForChanges()
+                                        }
+                                    }
+                                }
+                            } else {
                                 ZStack {
-                                    if let profileImage = profileImage {
-                                        profileImage
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 100, height: 100)
-                                            .clipShape(Circle())
-                                            .overlay(Circle().stroke(Color.white, lineWidth: 3))
-                                            .shadow(radius: 6)
-                                    } else if let photoUrl = viewModel.user?.photoUrl, !photoUrl.isEmpty, let url = URL(string: photoUrl) {
+                                    if let photoUrl = viewModel.user?.photoUrl, !photoUrl.isEmpty, let url = URL(string: photoUrl) {
                                         Async_Image(url: url, photoUrl: photoUrl)
                                     } else {
                                         Image(systemName: "person.crop.circle.fill")
                                             .resizable()
                                             .frame(width: 100, height: 100)
                                             .foregroundColor(.gray)
-                                            .onAppear { print("No photoUrl, using placeholder") }
+                                            .onAppear { print("No photoUrl, using placeholder (no photo access)") }
                                     }
                                     if isLoadingImage {
                                         ProgressView()
@@ -67,71 +203,17 @@ struct UserProfileEditView: View {
                                     }
                                 }
                                 .overlay(
-                                    Image(systemName: "camera.fill")
-                                        .foregroundColor(.white)
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundColor(.yellow)
                                         .font(.system(size: 16))
                                         .padding(6)
-                                        .background(Circle().fill(Color.blue.opacity(0.8)))
+                                        .background(Circle().fill(Color.gray.opacity(0.8)))
                                         .offset(x: 35, y: 35)
+                                        .onTapGesture {
+                                            errorMessage = "Please enable photo access in Settings > Privacy > Photos to change your profile picture."
+                                            showErrorAlert = true
+                                        }
                                 )
-                            }
-                            .onChange(of: selectedPhoto) { newItem in
-                                Task {
-                                    isLoadingImage = true
-                                    defer { isLoadingImage = false }
-                                    do {
-                                        guard let item = newItem else {
-                                            profileImage = nil
-                                            isSaveButtonActive = checkForChanges()
-                                            print("Cleared selected photo")
-                                            return
-                                        }
-                                        let status = await requestPhotoLibraryAccess()
-                                        switch status {
-                                        case .authorized, .limited:
-                                            print("Photo access granted: \(status.rawValue) (\(status.description))")
-                                        case .denied:
-                                            throw NSError(domain: "UserProfileEdit", code: -7, userInfo: [NSLocalizedDescriptionKey: "Photo library access denied"])
-                                        case .restricted:
-                                            throw NSError(domain: "UserProfileEdit", code: -7, userInfo: [NSLocalizedDescriptionKey: "Photo library access restricted by system settings"])
-                                        case .notDetermined:
-                                            throw NSError(domain: "UserProfileEdit", code: -7, userInfo: [NSLocalizedDescriptionKey: "Photo library access not determined"])
-                                        @unknown default:
-                                            throw NSError(domain: "UserProfileEdit", code: -7, userInfo: [NSLocalizedDescriptionKey: "Unknown photo library access status"])
-                                        }
-                                        guard let data = try await item.loadTransferable(type: Data.self) else {
-                                            throw NSError(domain: "UserProfileEdit", code: -8, userInfo: [NSLocalizedDescriptionKey: "Failed to load image data"])
-                                        }
-                                        print("Loaded image data: \(data.count) bytes")
-                                        guard let uiImage = UIImage(data: data) else {
-                                            throw NSError(domain: "UserProfileEdit", code: -9, userInfo: [NSLocalizedDescriptionKey: "Invalid image format"])
-                                        }
-                                        guard uiImage.size.width > 0, uiImage.size.height > 0 else {
-                                            throw NSError(domain: "UserProfileEdit", code: -10, userInfo: [NSLocalizedDescriptionKey: "Image has invalid dimensions"])
-                                        }
-                                        guard let imageType = data.imageType, ["jpeg", "png"].contains(imageType) else {
-                                            throw NSError(domain: "UserProfileEdit", code: -11, userInfo: [NSLocalizedDescriptionKey: "Unsupported image type: \(data.imageType ?? "unknown")"])
-                                        }
-                                        profileImage = Image(uiImage: uiImage)
-                                        isSaveButtonActive = true
-                                        print("Valid photo selected: type=\(imageType), size=\(uiImage.size)")
-                                    } catch {
-                                        print("Photo selection error: \(error)")
-                                        errorMessage = {
-                                            if error.localizedDescription.contains("access denied") {
-                                                return "Please enable photo access in Settings > Privacy > Photos."
-                                            } else if error.localizedDescription.contains("restricted") {
-                                                return "Photo access is restricted by system settings."
-                                            } else {
-                                                return "Failed to load photo: \(error.localizedDescription)"
-                                            }
-                                        }()
-                                        showErrorAlert = true
-                                        profileImage = nil
-                                        selectedPhoto = nil
-                                        isSaveButtonActive = checkForChanges()
-                                    }
-                                }
                             }
                             
                             Text(viewModel.user?.email ?? "No email")
@@ -229,8 +311,14 @@ struct UserProfileEditView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             print("UserProfileEditView onAppear: viewModel=\(viewModel != nil), cartManager=\(cartManager != nil), authViewModel=\(authViewModel != nil)")
-            DispatchQueue.asyncOnce(token: "loadUserData") {
+            if !hasLoadedData {
+                hasLoadedData = true
                 loadUserData()
+                Task {
+                    let status = await requestPhotoLibraryAccess()
+                    canAccessPhotos = status == .authorized || status == .limited || status == .notDetermined
+                    print("Initial photo access check: canAccessPhotos=\(canAccessPhotos), status=\(status.description)")
+                }
             }
         }
         .alert("Profile Save Error", isPresented: $showErrorAlert, actions: {
@@ -279,7 +367,7 @@ struct UserProfileEditView: View {
                     lastName = user.lastName ?? ""
                     phone = user.phone ?? ""
                     address = user.address ?? ""
-                    companyName = user.firstName ?? ""
+                    companyName = user.companyName ?? ""
                     profession = user.profession ?? ""
                     print("EditView loaded: firstName=\(user.firstName ?? "nil"), img_url=\(user.photoUrl ?? "nil")")
                 } else {
@@ -310,8 +398,10 @@ struct UserProfileEditView: View {
                             return "Please enable photo access in Settings > Privacy > Photos."
                         } else if error.localizedDescription.contains("restricted") {
                             return "Photo access is restricted by system settings."
-                        } else if error.localizedDescription.contains("Firebase") {
-                            return "Failed to upload image. Please check Firebase permissions or try again."
+                        } else if error.localizedDescription.contains("Permission denied") {
+                            return "Failed to upload image. Please check Firebase Storage permissions or try again."
+                        } else if error.localizedDescription.contains("Not authenticated") {
+                            return "Please log in again to save profile changes."
                         } else {
                             return "Failed to save profile: \(error.localizedDescription)"
                         }
@@ -331,6 +421,27 @@ struct UserProfileEditView: View {
                     return
                 }
                 print("Authenticated user UID: \(userId)")
+                
+                // Verify user is still authenticated
+                guard let currentUser = Auth.auth().currentUser, !currentUser.isAnonymous else {
+                    print("Save failed: User not authenticated or is anonymous")
+                    saveError = NSError(domain: "UserProfileEdit", code: -5, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
+                    return
+                }
+                
+                // Debug: Verify authentication token
+                let token = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
+                    currentUser.getIDTokenForcingRefresh(true) { token, error in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else if let token = token {
+                            continuation.resume(returning: token)
+                        } else {
+                            continuation.resume(throwing: NSError(domain: "UserProfileEdit", code: -6, userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve token"]))
+                        }
+                    }
+                }
+                print("Refreshed auth token: \(token.prefix(20))..., bucket: \(Storage.storage().reference().bucket)")
                 
                 var photoUrl: String? = viewModel.user?.photoUrl
                 if let selectedPhoto = selectedPhoto {
@@ -353,10 +464,11 @@ struct UserProfileEditView: View {
                         return
                     }
                     let storageRef = Storage.storage().reference().child("profile_images/\(userId).jpg")
-                    print("Storage path: \(storageRef.fullPath)")
+                    print("Storage path: \(storageRef.fullPath), bucket: \(storageRef.bucket)")
                     let metadata = StorageMetadata()
                     metadata.contentType = "image/jpeg"
                     
+                    // Attempt upload with retry logic
                     var lastError: Error?
                     for attempt in 1...3 {
                         do {
@@ -377,7 +489,7 @@ struct UserProfileEditView: View {
                                 saveError = lastError
                                 return
                             }
-                            try await Task.sleep(nanoseconds: 1_000_000_000)
+                            try await Task.sleep(nanoseconds: 1_000_000_000) // 1-second delay
                         }
                     }
                     
@@ -443,77 +555,6 @@ extension PHPhotoLibrary {
     }
 }
 
-
-// CHANGE: Define Async_Image inline
-struct Async_Image: View {
-    let url: URL
-    let photoUrl: String
-    
-    var body: some View {
-        if let cachedImage = ProfileImageCache.shared.getImage(forKey: photoUrl) {
-            Image(uiImage: cachedImage)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 100, height: 100)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white, lineWidth: 3))
-                .shadow(radius: 6)
-                .onAppear { print("Using cached image: \(photoUrl)") }
-        } else {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .empty:
-                    ProgressView()
-                        .onAppear { print("AsyncImage loading: \(photoUrl)") }
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 100, height: 100)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white, lineWidth: 3))
-                        .shadow(radius: 6)
-                        .onAppear { print("AsyncImage loaded: \(photoUrl)") }
-                case .failure(let error):
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(.gray)
-                        .onAppear { print("AsyncImage failed: \(photoUrl), error: \(error)") }
-                @unknown default:
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(.gray)
-                }
-            }
-        }
-    }
-}
-
-//struct Async_Image: View {
-//    let url: URL
-//    
-//    var body: some View {
-//        AsyncImage(url: url) { phase in
-//            switch phase {
-//            case .empty:
-//                ProgressView()
-//            case .success(let image):
-//                image
-//                    .resizable()
-//                    .scaledToFill()
-//            case .failure:
-//                Image(systemName: "person.crop.circle.fill")
-//                    .foregroundColor(.gray)
-//            @unknown default:
-//                Image(systemName: "person.crop.circle.fill")
-//                    .foregroundColor(.gray)
-//            }
-//        }
-//    }
-//}
-
 struct ProfileTextField: View {
     let icon: String
     let placeholder: String
@@ -567,8 +608,3 @@ extension DispatchQueue {
     UserProfileEditView()
         .environmentObject(UserProfileViewModel())
 }
-
-
-
-
-
