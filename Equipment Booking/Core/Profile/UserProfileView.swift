@@ -9,6 +9,7 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
+
 struct UserProfileView: View {
     @EnvironmentObject private var viewModel: UserProfileViewModel
     @EnvironmentObject var authViewModel: AuthenticationViewModel
@@ -16,6 +17,9 @@ struct UserProfileView: View {
     @Environment(\.dismiss) var dismiss
     @Binding var selectedTab: String?
     
+    // NEW: State for delete account confirmation dialog
+    @State private var showDeleteAccountAlert = false
+    @State private var deleteAccountError: String? = nil
     @State private var navigateToEditProfile = false
     @State private var navigateToContactUs = false
     @State private var navigateToPrivacyPolicy = false
@@ -46,7 +50,7 @@ struct UserProfileView: View {
                         
                         VStack(spacing: 0) {
                             if let photoUrl = viewModel.user?.photoUrl, !photoUrl.isEmpty {
-                                // CHANGE: Use cached image if available
+                                // Use cached image if available
                                 if let cachedImage = ProfileImageCache.shared.getImage(forKey: photoUrl) {
                                     Image(uiImage: cachedImage)
                                         .resizable()
@@ -153,6 +157,10 @@ struct UserProfileView: View {
                                 ProfileMenuItem(icon: "key.fill", text: "Reset Password") {
                                     resetPassword()
                                 }
+                                // NEW: Delete Account menu item
+                                ProfileMenuItem(icon: "trash.fill", text: "Delete Account") {
+                                    showDeleteAccountAlert = true
+                                }
                             }
                             .padding(.horizontal, 20)
                             
@@ -246,10 +254,7 @@ struct UserProfileView: View {
                     Task {
                         await viewModel.loadCurrentUser(forceServer: true)
                     }
-                        }
-//                print("UserProfileView onAppear")
-//                viewModel.loadCurrentUser(fetchServer: true)
-                
+                }
             }
             .alert(isPresented: $showResetPasswordAlert) {
                 Alert(
@@ -259,6 +264,34 @@ struct UserProfileView: View {
                         signOut()
                     }
                 )
+            }
+            // NEW: Confirmation dialog for account deletion
+            .alert("Delete Account", isPresented: $showDeleteAccountAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    Task {
+                        do {
+                            try await viewModel.deleteAccount()
+                            authViewModel.checkAuthenticationStatus()
+                            selectedTab = "search"
+                            dismiss()
+                        } catch {
+                            deleteAccountError = "Failed to delete account: \(error.localizedDescription)"
+                            showDeleteAccountAlert = true
+                        }
+                    }
+                }
+            } message: {
+                Text("Are you sure you want to delete your account? This action cannot be undone, and you will lose access to your account.")
+            }
+            // NEW: Error alert for deletion failures
+            .alert("Deletion Error", isPresented: Binding<Bool>(
+                get: { deleteAccountError != nil },
+                set: { if !$0 { deleteAccountError = nil } }
+            )) {
+                Button("OK") { }
+            } message: {
+                Text(deleteAccountError ?? "An unknown error occurred.")
             }
         }
     }
@@ -384,6 +417,7 @@ struct NotificationsView: View {
 //    @State private var navigateToNotifications = false
 //    @State private var showResetPasswordAlert = false
 //    @State private var resetPasswordMessage: String?
+//    @State private var hasLoaded: Bool = false
 //    
 //    private var greeting: String {
 //        if let firstName = viewModel.user?.firstName, !firstName.isEmpty {
@@ -405,37 +439,57 @@ struct NotificationsView: View {
 //                            .clipShape(RoundedRectangle(cornerRadius: 20))
 //                        
 //                        VStack(spacing: 0) {
-//                            if let photoUrl = viewModel.user?.photoUrl, let url = URL(string: photoUrl) {
-//                                AsyncImage(url: url) { phase in
-//                                    switch phase {
-//                                    case .empty:
-//                                        ProgressView()
-//                                            .onAppear { print("AsyncImage loading: \(photoUrl)") }
-//                                    case .success(let image):
-//                                        image
-//                                            .resizable()
-//                                            .scaledToFill()
-//                                            .frame(width: 100, height: 100)
-//                                            .clipShape(Circle())
-//                                            .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
-//                                            .shadow(color: .gray.opacity(0.2), radius: 2)
-//                                            .onAppear { print("AsyncImage loaded: \(photoUrl)") }
-//                                    case .failure(let error):
-//                                        Image(systemName: "person.crop.circle.fill")
-//                                            .resizable()
-//                                            .frame(width: 100, height: 100)
-//                                            .foregroundColor(.blue)
-//                                            .background(Color(.systemGray6))
-//                                            .clipShape(Circle())
-//                                            .onAppear { print("AsyncImage failed: \(photoUrl), error: \(error)") }
-//                                    @unknown default:
-//                                        Image(systemName: "person.crop.circle.fill")
-//                                            .resizable()
-//                                            .frame(width: 100, height: 100)
-//                                            .foregroundColor(.blue)
-//                                            .background(Color(.systemGray6))
-//                                            .clipShape(Circle())
+//                            if let photoUrl = viewModel.user?.photoUrl, !photoUrl.isEmpty {
+//                                // CHANGE: Use cached image if available
+//                                if let cachedImage = ProfileImageCache.shared.getImage(forKey: photoUrl) {
+//                                    Image(uiImage: cachedImage)
+//                                        .resizable()
+//                                        .scaledToFill()
+//                                        .frame(width: 100, height: 100)
+//                                        .clipShape(Circle())
+//                                        .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
+//                                        .shadow(color: .gray.opacity(0.2), radius: 2)
+//                                        .onAppear { print("Using cached image: \(photoUrl)") }
+//                                } else if let url = URL(string: photoUrl) {
+//                                    AsyncImage(url: url) { phase in
+//                                        switch phase {
+//                                        case .empty:
+//                                            ProgressView()
+//                                                .onAppear { print("AsyncImage loading: \(photoUrl)") }
+//                                        case .success(let image):
+//                                            image
+//                                                .resizable()
+//                                                .scaledToFill()
+//                                                .frame(width: 100, height: 100)
+//                                                .clipShape(Circle())
+//                                                .overlay(Circle().stroke(Color.blue.opacity(0.5), lineWidth: 2))
+//                                                .shadow(color: .gray.opacity(0.2), radius: 2)
+//                                                .onAppear { print("AsyncImage loaded: \(photoUrl)") }
+//                                        case .failure(let error):
+//                                            Image(systemName: "person.crop.circle.fill")
+//                                                .resizable()
+//                                                .frame(width: 100, height: 100)
+//                                                .foregroundColor(.blue)
+//                                                .background(Color(.systemGray6))
+//                                                .clipShape(Circle())
+//                                                .onAppear { print("AsyncImage failed: \(photoUrl), error: \(error)") }
+//                                        @unknown default:
+//                                            Image(systemName: "person.crop.circle.fill")
+//                                                .resizable()
+//                                                .frame(width: 100, height: 100)
+//                                                .foregroundColor(.blue)
+//                                                .background(Color(.systemGray6))
+//                                                .clipShape(Circle())
+//                                        }
 //                                    }
+//                                } else {
+//                                    Image(systemName: "person.crop.circle.fill")
+//                                        .resizable()
+//                                        .frame(width: 100, height: 100)
+//                                        .foregroundColor(.blue)
+//                                        .background(Color(.systemGray6))
+//                                        .clipShape(Circle())
+//                                        .onAppear { print("Invalid photoUrl: \(photoUrl)") }
 //                                }
 //                            } else {
 //                                Image(systemName: "person.crop.circle.fill")
@@ -581,16 +635,15 @@ struct NotificationsView: View {
 //                    isActive: $navigateToEditProfile) { EmptyView() }
 //            )
 //            .onAppear {
-//                print("UserProfileView onAppear")
-//                // CHANGE: Clear cache to avoid stale images
-//                if let photoUrl = viewModel.user?.photoUrl {
-//                    ProfileImageCache.shared.removeImage(forKey: photoUrl)
-//                    print("Cleared image cache for: \(photoUrl)")
-//                }
-//                // CHANGE: Force load user data
-//                Task {
-//                    await viewModel.loadCurrentUser(forceServer: true)
-//                }
+//                if !hasLoaded {
+//                    hasLoaded = true
+//                    Task {
+//                        await viewModel.loadCurrentUser(forceServer: true)
+//                    }
+//                        }
+////                print("UserProfileView onAppear")
+////                viewModel.loadCurrentUser(fetchServer: true)
+//                
 //            }
 //            .alert(isPresented: $showResetPasswordAlert) {
 //                Alert(
