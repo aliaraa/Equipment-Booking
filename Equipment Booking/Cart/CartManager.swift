@@ -14,7 +14,7 @@ import Foundation  // Added for Date and UUID
 
 class CartManager: ObservableObject {
     @Published var cartItems: [CartItem] = []
-    let isReadOnly: Bool // ✅ Added for unauthenticated users to prevent unauthorized user to add items
+    @Published var isReadOnly: Bool // ✅ Added for unauthenticated users to prevent unauthorized user to add items
     
     func totalCost() -> Double {
         cartItems.reduce(0) { total, item in

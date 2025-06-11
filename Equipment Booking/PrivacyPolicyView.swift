@@ -13,8 +13,11 @@ struct PrivacyPolicyView: View {
             VStack(spacing: 20) {
                 // Header
                 VStack(spacing: 8) {
+                    Text("EquipRent Privacy Policy")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
                     
-                    Text("Your privacy matters to us. Learn how we collect, use, and protect your information.")
+                    Text("EquipRent (\"we,\" \"us\") respects your privacy. This Privacy Policy explains how we collect, use, and protect your data when you use our app.")
                         .font(.system(size: 16, design: .rounded))
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.leading)
@@ -22,29 +25,85 @@ struct PrivacyPolicyView: View {
                 .padding(.top, 20)
                 .padding(.horizontal, 16)
                 
-                // Innehåll
+                // Content
                 ScrollView {
                     VStack(spacing: 16) {
+                        // NEW: Dedicated Last Updated Date Section
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Last Updated: May 27, 2025")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundColor(.primary)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 1)
+                        
+                        // Policy Sections
                         PolicySection(
-                            title: "Information We Collect",
-                            content: "We collect personal information such as your name, email address, and rental preferences when you use our app. This helps us provide a tailored experience."
+                            title: "1. Data We Collect",
+                            content: """
+                            - **Personal Info**: Email and name (via Google Sign-In or email login) to manage your account.
+                            - **Usage Data**: App interactions (e.g., searches, bookings) to improve our service (via Firebase Analytics).
+                            - **Device Info**: Device type and OS version for compatibility.
+                            """
                         )
                         PolicySection(
-                            title: "How We Use Your Data",
-                            content: "Your data is used to process bookings, improve our services, and communicate with you. We may also use it for analytics to enhance user experience."
+                            title: "2. How We Use Your Data",
+                            content: """
+                            - To provide app features (e.g., booking cranes, managing rentals).
+                            - To personalize your experience (e.g., showing your profile).
+                            - To analyze usage and improve EquipRent.
+                            - To comply with legal obligations.
+                            """
                         )
                         PolicySection(
-                            title: "Data Protection",
-                            content: "We implement security measures to protect your information from unauthorized access, including encryption and secure servers."
+                            title: "3. Data Sharing",
+                            content: """
+                            - We use Firebase (Google) for authentication and analytics, which may process data per their policies.
+                            - We don’t share your data with third parties except as required by law.
+                            """
                         )
                         PolicySection(
-                            title: "Sharing Your Information",
-                            content: "We do not sell your personal data. It may be shared with service providers who assist us in operating the app, under strict confidentiality agreements."
+                            title: "4. Data Security",
+                            content: """
+                            - We use encryption to protect your data.
+                            - Firebase follows industry-standard security practices.
+                            """
                         )
                         PolicySection(
-                            title: "Your Rights",
-                            content: "You have the right to access, update, or delete your personal information. Contact us at support@equipmentbooking.com to exercise these rights."
+                            title: "5. Your Rights",
+                            content: """
+                            - Access, update, or delete your data via your profile or by emailing support@equiprent.com.
+                            - EU users: GDPR rights apply (e.g., data portability).
+                            - Users can delete their account from Firebase Authentication via Profile > Delete Account. This removes access to the account but preserves user and rental data in our database for record-keeping.
+                            """
                         )
+                        PolicySection(
+                            title: "6. Contact Us",
+                            content: """
+                            - **Email**: equipmantester@gmail.com
+                            - **See our Support page**: https://sites.google.com/view/equiprent-assist
+                            """
+                        )
+                        
+                        // Link to online policy page
+                        Link(destination: URL(string: "https://sites.google.com/view/equip-rent-privacy/home")!) {
+                            Text("View Online Privacy Policy")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.blue)
+                                .cornerRadius(12)
+                                .shadow(color: .gray.opacity(0.2), radius: 2, x: 0, y: 1)
+                        }
+                        .padding(.top, 8)
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 20)
@@ -64,7 +123,7 @@ struct PrivacyPolicyView: View {
     }
 }
 
-// Hjälpkomponent för policycsektioner
+// Helper component for policy sections
 struct PolicySection: View {
     let title: String
     let content: String
