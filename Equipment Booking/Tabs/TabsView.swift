@@ -49,17 +49,23 @@ struct TabsView: View {
             }
             .tag("search" as String?)
             
-            // Cart tab (visible only for authenticated users)
-            if authViewModel.isAuthenticated {
-                NavigationStack {
+            // Cart Tab (Visible for All)
+            NavigationStack {
+                if authViewModel.isAuthenticated {
                     CartView()
+                } else {
+                    Text("Please sign in to view your cart")
+                        .font(.title2)
+                        .foregroundColor(.gray)
+                        .padding()
                 }
-                .tabItem {
-                    Label("Cart", systemImage: "cart")
-                }
-                .badge(cartManager.cartItems.count)
-                .tag("cart" as String?)
             }
+            .tabItem {
+                Label("Cart", systemImage: "cart")
+                    .opacity(authViewModel.isAuthenticated ? 1.0 : 0.5) // Grey out for unauthenticated
+            }
+            .badge(cartManager.cartItems.count)
+            .tag("cart" as String?)
             
             // Status tab (always visible)
             NavigationStack {

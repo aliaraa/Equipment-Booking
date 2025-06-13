@@ -19,6 +19,8 @@ struct CartView: View {
     @StateObject private var rentalManager = RentalManager.shared
     @Environment(\.dismiss) var dismiss
     @State private var showConfirmation = false
+    @State private var showError: Bool = false
+    @State private var errorMessage: String = ""
     
     var body: some View {
         NavigationStack {
@@ -79,8 +81,10 @@ struct CartView: View {
                                             cartManager.clearCart()
                                             showConfirmation = true
                                         } catch {
-                                            print("Error confirming rental: \(error)")
+                                            errorMessage = "Failed to confirm booking: \(error.localizedDescription)"
+                                            showError = true
                                         }
+
                                     }
                                 } else {
                                     showSignIn?.wrappedValue = true
@@ -108,6 +112,12 @@ struct CartView: View {
             } message: {
                 Text("Your rental has been successfully booked.")
                     .font(.system(size: 16, weight: .regular, design: .rounded))
+            }
+            // Add alert:
+            .alert("Error", isPresented: $showError) {
+                Button("OK") {}
+            } message: {
+                Text(errorMessage)
             }
         }
     }
@@ -480,4 +490,4 @@ struct CartRow: View {
 //        .environmentObject(CartManager())
 //        .environmentObject(EquipmentDataManager())
 //}
-
+//

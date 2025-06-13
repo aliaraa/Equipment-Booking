@@ -29,9 +29,9 @@ struct ContactUsView: View {
                 
                 // Kontaktinformation
                 VStack(spacing: 16) {
-                    ContactInfoCard(icon: "envelope.fill", title: "Email", detail: "support@equipmentbooking.com")
-                    ContactInfoCard(icon: "phone.fill", title: "Phone", detail: "+1 (555) 123-4567")
-                    ContactInfoCard(icon: "house.fill", title: "Address", detail: "123 Equipment St, Tech City")
+                    ContactInfoCard(icon: "envelope.fill", title: "Email", detail: "equipmantester@gmail.com")
+                    ContactInfoCard(icon: "phone.fill", title: "Phone", detail: "+46739984937")
+//                    ContactInfoCard(icon: "house.fill", title: "Address", detail: "123 Equipment St, Tech City")
                 }
                 .padding(.horizontal, 16)
                 
