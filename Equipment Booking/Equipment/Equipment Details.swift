@@ -6,6 +6,11 @@
 
 import SwiftUI
 
+// Improved layout for iPhone 14
+// - Increase VStack spacing to 24 pt and section padding to 20 pt.
+// - Use 16 pt fonts for secondary text and 18 pt for primary text.
+// - Ensure buttons are at least 44x44 pt.
+
 struct Equipment_Details: View {
     let tool: Tool
     @EnvironmentObject var cartManager: CartManager
@@ -26,18 +31,18 @@ struct Equipment_Details: View {
     @State private var nextAvailableDate: Date = Date()
     @State private var showConfirmation: Bool = false
     @State private var showSignInAlert: Bool = false
-
+    
     private var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
         return formatter
     }
-
+    
     private var isAddToCartEnabled: Bool {
         availableQuantity >= quantity && selectReturnDate != nil && selectPickupDate <= selectReturnDate ?? Date.distantFuture
     }
-
+    
     private func handleDateSelection(_ date: Date) {
         if isPickingDate {
             selectPickupDate = date
@@ -49,7 +54,7 @@ struct Equipment_Details: View {
         }
         isShowingDatePicker = false
     }
-
+    
     private func updateAvailability() {
         guard let returnDate = selectReturnDate else {
             availableQuantity = 0
@@ -77,10 +82,10 @@ struct Equipment_Details: View {
             }
         }
     }
-
+    
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 24) { // Increased spacing
                 ToolImageSection(imageURL: tool.imageURL!)
                 ToolDetailsSection(
                     name: tool.name,
@@ -116,15 +121,15 @@ struct Equipment_Details: View {
                     }
                 )
             }
-            .padding(.top, 16) // Avoid navigation bar overlap
-            .padding(.bottom, verticalSizeClass == .compact ? 80 : 60) // Extra padding for tab bar
+            .padding(.top, 16)
+            .padding(.bottom, 80)
         }
-        .ignoresSafeArea(.keyboard) // Fix keyboard overlap
+        .ignoresSafeArea(.keyboard)
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Equipment Details")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
-            Color.clear.frame(height: 50) // Ensure button is above tab bar
+            Color.clear.frame(height: 50)
         }
         .sheet(isPresented: $isShowingDatePicker) {
             DatePickerSheet(
@@ -136,13 +141,8 @@ struct Equipment_Details: View {
             )
         }
         .alert("Sign In Required", isPresented: $showSignInAlert) {
-            Button("Sign In") {
-                print("Sign In tapped in Equipment_Details alert")
-                showSignIn?.wrappedValue = true
-            }
-            Button("Cancel", role: .cancel) {
-                showSignInAlert = false
-            }
+            Button("Sign In") { showSignIn?.wrappedValue = true }
+            Button("Cancel", role: .cancel) { showSignInAlert = false }
         } message: {
             Text("You need to sign in to add items to your cart.")
         }
@@ -168,8 +168,136 @@ struct Equipment_Details: View {
     }
 }
 
-// MARK: - Subviews
-
+struct QuantityPickerSection: View {
+    @Binding var quantity: Int
+    let availableQuantity: Int
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quantity")
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+            HStack(spacing: 16) {
+                Button(action: { if quantity > 1 { quantity -= 1 } }) {
+                    Image(systemName: "minus")
+                        .font(.system(size: 16, weight: .medium))
+                        .frame(width: 44, height: 44) // Ensure touch target
+                        .foregroundColor(.white)
+                        .background(Color.accentColor)
+                        .cornerRadius(22)
+                }
+                Text("\(quantity)")
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .frame(width: 50, alignment: .center)
+                Button(action: { if quantity < availableQuantity { quantity += 1 } }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .medium))
+                        .frame(width: 44, height: 44) // Ensure touch target
+                        .foregroundColor(.white)
+                        .background(Color.accentColor)
+                        .cornerRadius(22)
+                }
+                Spacer()
+            }
+        }
+        .padding(20) // Increased padding
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .padding(.horizontal, 16)
+    }
+}
+    
+//    var body: some View {
+//        ScrollView {
+//            VStack(spacing: 20) {
+//                ToolImageSection(imageURL: tool.imageURL!)
+//                ToolDetailsSection(
+//                    name: tool.name,
+//                    description: tool.description,
+//                    price: tool.price,
+//                    availableQuantity: availableQuantity,
+//                    availabilityMessage: availabilityMessage
+//                )
+//                QuantityPickerSection(
+//                    quantity: $quantity,
+//                    availableQuantity: availableQuantity
+//                )
+//                BookingDatesSection(
+//                    selectPickupDate: $selectPickupDate,
+//                    selectReturnDate: $selectReturnDate,
+//                    isShowingDatePicker: $isShowingDatePicker,
+//                    isPickingDate: $isPickingDate,
+//                    dateFormatter: dateFormatter
+//                )
+//                AddToCartButtonSection(
+//                    isAuthenticated: authViewModel.isAuthenticated,
+//                    isAddToCartEnabled: isAddToCartEnabled,
+//                    selectReturnDate: selectReturnDate,
+//                    showConfirmation: $showConfirmation,
+//                    showSignInAlert: $showSignInAlert,
+//                    onAddToCart: {
+//                        cartManager.addToCart(
+//                            tool,
+//                            quantity: quantity,
+//                            pickupDate: selectPickupDate,
+//                            returnDate: selectReturnDate!
+//                        )
+//                    }
+//                )
+//            }
+//            .padding(.top, 16) // Avoid navigation bar overlap
+//            .padding(.bottom, verticalSizeClass == .compact ? 80 : 60) // Extra padding for tab bar
+//        }
+//        .ignoresSafeArea(.keyboard) // Fix keyboard overlap
+//        .background(Color(.systemGroupedBackground))
+//        .navigationTitle("Equipment Details")
+//        .navigationBarTitleDisplayMode(.inline)
+//        .safeAreaInset(edge: .bottom) {
+//            Color.clear.frame(height: 50) // Ensure button is above tab bar
+//        }
+//        .sheet(isPresented: $isShowingDatePicker) {
+//            DatePickerSheet(
+//                isPickingDate: isPickingDate,
+//                selectPickupDate: $selectPickupDate,
+//                selectReturnDate: $selectReturnDate,
+//                nextAvailableDate: nextAvailableDate,
+//                onApply: handleDateSelection
+//            )
+//        }
+//        .alert("Sign In Required", isPresented: $showSignInAlert) {
+//            Button("Sign In") {
+//                print("Sign In tapped in Equipment_Details alert")
+//                showSignIn?.wrappedValue = true
+//            }
+//            Button("Cancel", role: .cancel) {
+//                showSignInAlert = false
+//            }
+//        } message: {
+//            Text("You need to sign in to add items to your cart.")
+//        }
+//        .alert("Added to Cart", isPresented: $showConfirmation) {
+//            Button("OK") { dismiss() }
+//        } message: {
+//            Text("\(quantity) x \(tool.name) added to your cart.")
+//        }
+//        .task {
+//            do {
+//                nextAvailableDate = try await equipmentManager.getNextAvailableDate(forToolId: tool.id)
+//                selectPickupDate = nextAvailableDate
+//                selectReturnDate = Calendar.current.date(byAdding: .day, value: 7, to: selectPickupDate) ?? selectPickupDate
+//                updateAvailability()
+//            } catch {
+//                print("Error initializing: \(error)")
+//                availableQuantity = totalQuantity
+//                availabilityMessage = "Error initializing availability."
+//            }
+//        }
+//        .onChange(of: selectPickupDate) { _ in updateAvailability() }
+//        .onChange(of: selectReturnDate) { _ in updateAvailability() }
+//    }
+//}
+//
+//// MARK: - Subviews
+//
 struct ToolImageSection: View {
     let imageURL: String
 
@@ -234,50 +362,52 @@ struct ToolDetailsSection: View {
         .padding(.horizontal, 16)
     }
 }
+//
+//struct QuantityPickerSection: View {
+//    @Binding var quantity: Int
+//    let availableQuantity: Int
+//
+//    var body: some View {
+//        VStack(alignment: .leading, spacing: 12) {
+//            Text("Quantity")
+//                .font(.system(size: 20, weight: .semibold, design: .rounded))
+//                .foregroundColor(.primary)
+//
+//            HStack(spacing: 16) {
+//                Button(action: { if quantity > 1 { quantity -= 1 } }) {
+//                    Image(systemName: "minus")
+//                        .font(.system(size: 16, weight: .medium))
+//                        .frame(width: 40, height: 40)
+//                        .foregroundColor(.white)
+//                        .background(Color.accentColor)
+//                        .cornerRadius(20)
+//                        .shadow(color: .gray.opacity(0.2), radius: 2)
+//                }
+//                Text("\(quantity)")
+//                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+//                    .foregroundColor(.primary)
+//                    .frame(width: 50, alignment: .center)
+//                Button(action: { if quantity < availableQuantity { quantity += 1 } }) {
+//                    Image(systemName: "plus")
+//                        .font(.system(size: 16, weight: .medium))
+//                        .frame(width: 40, height: 40)
+//                        .foregroundColor(.white)
+//                        .background(Color.accentColor)
+//                        .cornerRadius(20)
+//                        .shadow(color: .gray.opacity(0.2), radius: 2)
+//                }
+//                Spacer()
+//            }
+//        }
+//        .padding(16)
+//        .background(Color(.systemBackground))
+//        .cornerRadius(12)
+//        .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
+//        .padding(.horizontal, 16)
+//    }
+//}
 
-struct QuantityPickerSection: View {
-    @Binding var quantity: Int
-    let availableQuantity: Int
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Quantity")
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .foregroundColor(.primary)
-
-            HStack(spacing: 16) {
-                Button(action: { if quantity > 1 { quantity -= 1 } }) {
-                    Image(systemName: "minus")
-                        .font(.system(size: 16, weight: .medium))
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.white)
-                        .background(Color.accentColor)
-                        .cornerRadius(20)
-                        .shadow(color: .gray.opacity(0.2), radius: 2)
-                }
-                Text("\(quantity)")
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-                    .foregroundColor(.primary)
-                    .frame(width: 50, alignment: .center)
-                Button(action: { if quantity < availableQuantity { quantity += 1 } }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .medium))
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.white)
-                        .background(Color.accentColor)
-                        .cornerRadius(20)
-                        .shadow(color: .gray.opacity(0.2), radius: 2)
-                }
-                Spacer()
-            }
-        }
-        .padding(16)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
-        .padding(.horizontal, 16)
-    }
-}
 
 struct BookingDatesSection: View {
     @Binding var selectPickupDate: Date

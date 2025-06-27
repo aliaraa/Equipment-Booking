@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct CategoryView: View {
+    
+    
     var category: String
     var title: String
     @StateObject private var dataManager = EquipmentDataManager()
