@@ -32,7 +32,8 @@ struct CartView: View {
                 VStack {
                     if cartManager.cartItems.isEmpty {
                         Text("Your cart is empty")
-                            .font(.system(size: 18, weight: .medium, design: .rounded))
+//                            .font(.system(size: 18, weight: .medium, design: .rounded))
+                            .font(Typography.body) // Use Typography for consistent styling
                             .foregroundColor(.gray)
                             .frame(maxHeight: .infinity)
                     } else {
@@ -48,7 +49,8 @@ struct CartView: View {
                     if !cartManager.cartItems.isEmpty {
                         VStack(spacing: 24) { // Increased spacing
                             Text("Total: \(cartManager.totalCost(), specifier: "%.2f") SEK")
-                                .font(.system(size: 18, weight: .semibold, design: .rounded))
+//                                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                                .font(Typography.headline) // Use Typography for consistent styling
                             
                             HStack(spacing: 20) {
                                 Button(action: {
@@ -60,7 +62,8 @@ struct CartView: View {
                                     }
                                 }) {
                                     Text("Clear Cart")
-                                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                                        .font(Typography.headline) // Use Typography for consistent styling
+//                                        .font(.system(size: 16, weight: .medium, design: .rounded))
                                         .frame(maxWidth: .infinity, minHeight: 44) // Ensure touch target
                                         .background(authViewModel.isAuthenticated ? Color.gray : Color.gray.opacity(0.5))
                                         .foregroundColor(.white)
@@ -101,6 +104,7 @@ struct CartView: View {
                     }
                 }
                 .navigationTitle("Cart")
+                .font(Typography.title) // Use Typography for consistent styling
                 .alert("Rental Confirmed", isPresented: $showConfirmation) {
                     Button("OK") { dismiss() }
                 } message: {
@@ -171,9 +175,11 @@ struct CartRow: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.tool.name)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+//                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(Typography.headline) // Use Typography for consistent styling
                     Text(item.tool.description)
-                        .font(.system(size: 14, weight: .regular, design: .rounded)) // Increased font
+//                        .font(.system(size: 14, weight: .regular, design: .rounded)) // Increased font
+                        .font(Typography.subheadline) // Use Typography for consistent styling
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
@@ -201,13 +207,15 @@ struct CartRow: View {
                     Text("Price: \(item.tool.price, specifier: "%.2f") SEK/day")
                         .font(.system(size: 14, weight: .medium, design: .rounded)) // Increased font
                     Text("Total: \(totalCost, specifier: "%.2f") SEK (\(rentalDays) days)")
-                        .font(.system(size: 14, weight: .medium, design: .rounded)) // Increased font
+                        .font(Typography.headline) // Use Typography for consistent styling
+//                        .font(.system(size: 14, weight: .medium, design: .rounded)) // Increased font
                 }
             }
             
             HStack {
                 Text("Quantity:")
-                    .font(.system(size: 16, weight: .medium, design: .rounded)) // Increased font
+//                    .font(.system(size: 16, weight: .medium, design: .rounded)) // Increased font
+                    .font(Typography.body) // Use Typography for consistent styling
                 Stepper(value: Binding(
                     get: { item.quantity },
                     set: { newValue in

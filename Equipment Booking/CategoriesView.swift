@@ -13,12 +13,14 @@ struct CategoriesView: View {
         VStack(spacing: 20) { // Added spacing
             VStack(spacing: 12) { // Stack TextFields vertically
                 TextField("Category", text: $categoryInput)
+                    .font(Typography.body)  // Use Typography for consistent styling
                     .padding()
                     .background(Color(.systemBackground))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray.opacity(0.2)))
                     .padding(.horizontal)
                 
                 TextField("Description", text: $descriptionInput)
+                    .font(Typography.body)  // Use Typography for consistent styling
                     .padding()
                     .background(Color(.systemBackground))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray.opacity(0.2)))
@@ -27,6 +29,7 @@ struct CategoriesView: View {
             
             Button(action: { addCategory() }) {
                 Text("Add")
+                    .font(Typography.headline)  // Use Typography for consistent styling
                     .frame(minWidth: 100, minHeight: 44) // Ensure touch target size
                     .padding()
                     .background(Color.blue)

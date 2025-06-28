@@ -14,11 +14,13 @@ struct PrivacyPolicyView: View {
                 // Header
                 VStack(spacing: 8) {
                     Text("EquipRent Privacy Policy")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+//                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .font(Typography.largeTitle)  // Use Typography for consistent styling
                         .foregroundColor(.primary)
                     
                     Text("EquipRent (\"we,\" \"us\") respects your privacy. This Privacy Policy explains how we collect, use, and protect your data when you use our app.")
-                        .font(.system(size: 16, design: .rounded))
+//                        .font(.system(size: 16, design: .rounded))
+                        .font(Typography.body)  // Use Typography for consistent styling
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.leading)
                 }
@@ -31,7 +33,8 @@ struct PrivacyPolicyView: View {
                         // NEW: Dedicated Last Updated Date Section
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Last Updated: May 27, 2025")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+//                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .font(Typography.subheadline)  // Use Typography for consistent styling
                                 .foregroundColor(.primary)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
@@ -95,7 +98,8 @@ struct PrivacyPolicyView: View {
                         // Link to online policy page
                         Link(destination: URL(string: "https://sites.google.com/view/equip-rent-privacy/home")!) {
                             Text("View Online Privacy Policy")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+//                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .font(Typography.headline)  // Use Typography for consistent styling
                                 .foregroundColor(.white)
                                 .padding()
                                 .frame(maxWidth: .infinity)
@@ -111,6 +115,7 @@ struct PrivacyPolicyView: View {
             }
             .background(Color(.systemBackground))
             .navigationTitle("Privacy Policy")
+            .font(Typography.title)  // Use Typography for consistent styling
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -131,11 +136,13 @@ struct PolicySection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
+//                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .font(Typography.headline)  // Use Typography for consistent styling
                 .foregroundColor(.primary)
             
             Text(content)
-                .font(.system(size: 16, design: .rounded))
+                .font(Typography.body)  // Use Typography for consistent styling
+//                .font(.system(size: 16, design: .rounded))
                 .foregroundColor(.gray)
                 .lineSpacing(4)
         }

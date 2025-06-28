@@ -168,6 +168,7 @@ struct Equipment_Details: View {
     }
 }
 
+//Apply app-wide typography styles
 struct QuantityPickerSection: View {
     @Binding var quantity: Int
     let availableQuantity: Int
@@ -175,23 +176,23 @@ struct QuantityPickerSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Quantity")
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .font(Typography.headline)
             HStack(spacing: 16) {
                 Button(action: { if quantity > 1 { quantity -= 1 } }) {
                     Image(systemName: "minus")
                         .font(.system(size: 16, weight: .medium))
-                        .frame(width: 44, height: 44) // Ensure touch target
+                        .frame(width: 44, height: 44)
                         .foregroundColor(.white)
                         .background(Color.accentColor)
                         .cornerRadius(22)
                 }
                 Text("\(quantity)")
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .font(Typography.body)
                     .frame(width: 50, alignment: .center)
                 Button(action: { if quantity < availableQuantity { quantity += 1 } }) {
                     Image(systemName: "plus")
                         .font(.system(size: 16, weight: .medium))
-                        .frame(width: 44, height: 44) // Ensure touch target
+                        .frame(width: 44, height: 44)
                         .foregroundColor(.white)
                         .background(Color.accentColor)
                         .cornerRadius(22)
@@ -199,12 +200,224 @@ struct QuantityPickerSection: View {
                 Spacer()
             }
         }
-        .padding(20) // Increased padding
+        .padding(20)
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .padding(.horizontal, 16)
     }
 }
+
+//
+struct ToolImageSection: View {
+    let imageURL: String
+
+    var body: some View {
+        ToolImageView(imageURL: imageURL)
+            .frame(height: 250)
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+    }
+}
+
+// apply app-wide typography styles
+struct ToolDetailsSection: View {
+    let name: String
+    let description: String
+    let price: Double
+    let availableQuantity: Int
+    let availabilityMessage: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(name)
+                .font(Typography.title)
+                .foregroundColor(.primary)
+
+            Text(description)
+                .font(Typography.body)
+                .foregroundColor(.secondary)
+                .lineLimit(nil)
+
+            HStack(spacing: 8) {
+                Text("Price:")
+                    .font(Typography.subheadline)
+                    .foregroundColor(.primary)
+                Text("\(price, specifier: "%.2f") SEK/day")
+                    .font(Typography.subheadline)
+                    .foregroundColor(.blue)
+            }
+
+            HStack(spacing: 8) {
+                Text("Available:")
+                    .font(Typography.subheadline)
+                    .foregroundColor(.primary)
+                Text("\(availableQuantity)")
+                    .font(Typography.subheadline)
+                    .foregroundColor(availableQuantity > 0 ? .green : .red)
+                Spacer()
+                Image(systemName: availableQuantity > 0 ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .foregroundColor(availableQuantity > 0 ? .green : .red)
+            }
+
+            if !availabilityMessage.isEmpty {
+                Text(availabilityMessage)
+                    .font(Typography.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(nil)
+            }
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
+        .padding(.horizontal, 16)
+    }
+}
+
+//Apply app-wide typography styles
+struct BookingDatesSection: View {
+    @Binding var selectPickupDate: Date
+    @Binding var selectReturnDate: Date?
+    @Binding var isShowingDatePicker: Bool
+    @Binding var isPickingDate: Bool
+    let dateFormatter: DateFormatter
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Booking Dates")
+                .font(Typography.headline)
+                .foregroundColor(.primary)
+
+            HStack(spacing: 8) {
+                Button(action: {
+                    isPickingDate = true
+                    isShowingDatePicker.toggle()
+                }) {
+                    Text("Pickup Date")
+                        .font(Typography.body)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 16)
+                        .background(Color.accentColor)
+                        .cornerRadius(8)
+                        .shadow(color: .gray.opacity(0.2), radius: 2)
+                }
+                Spacer()
+                Text(dateFormatter.string(from: selectPickupDate))
+                    .font(Typography.body)
+                    .foregroundColor(.secondary)
+            }
+
+            HStack(spacing: 8) {
+                Button(action: {
+                    isPickingDate = false
+                    isShowingDatePicker.toggle()
+                }) {
+                    Text("Return Date")
+                        .font(Typography.body)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 16)
+                        .background(Color.accentColor)
+                        .cornerRadius(8)
+                        .shadow(color: .gray.opacity(0.2), radius: 2)
+                }
+                Spacer()
+                if let returnDate = selectReturnDate {
+                    Text(dateFormatter.string(from: returnDate))
+                        .font(Typography.body)
+                        .foregroundColor(.secondary)
+                } else {
+                    Text("Select Date")
+                        .font(Typography.body)
+                        .foregroundColor(.secondary.opacity(0.6))
+                        .italic()
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
+        .padding(.horizontal, 16)
+    }
+}
+
+struct AddToCartButtonSection: View {
+    let isAuthenticated: Bool
+    let isAddToCartEnabled: Bool
+    let selectReturnDate: Date?
+    @Binding var showConfirmation: Bool
+    @Binding var showSignInAlert: Bool
+    let onAddToCart: () -> Void
+
+    var body: some View {
+        Button(action: {
+            if isAuthenticated {
+                if selectReturnDate != nil {
+                    onAddToCart()
+                    showConfirmation = true
+                }
+            } else {
+                showSignInAlert = true
+            }
+        }) {
+            Text(isAuthenticated ? "Add to Cart" : "Sign In to Add to Cart")
+                .font(Typography.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(isAddToCartEnabled && isAuthenticated ? Color.green : Color.gray)
+                .foregroundColor(.white)
+                .cornerRadius(12)
+                .shadow(color: .gray.opacity(isAddToCartEnabled && isAuthenticated ? 0.3 : 0), radius: 4, x: 0, y: 2)
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 20)
+    }
+}
+
+struct DatePickerSheet: View {
+    let isPickingDate: Bool
+    @Binding var selectPickupDate: Date
+    @Binding var selectReturnDate: Date?
+    let nextAvailableDate: Date
+    let onApply: (Date) -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            DatePicker(
+                "Select Date",
+                selection: isPickingDate ? $selectPickupDate : Binding(
+                    get: { selectReturnDate ?? Date() },
+                    set: { selectReturnDate = $0 }
+                ),
+                in: nextAvailableDate...,
+                displayedComponents: [.date]
+            )
+            .datePickerStyle(.graphical)
+            .padding()
+
+            Button(action: {
+                onApply(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
+            }) {
+                Text("Apply")
+                    .font(Typography.body)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 20)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+            }
+        }
+        .padding(20)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .gray.opacity(0.2), radius: 8)
+        .presentationDetents([.medium])
+    }
+}
+
+
     
 //    var body: some View {
 //        ScrollView {
@@ -297,106 +510,123 @@ struct QuantityPickerSection: View {
 //}
 //
 //// MARK: - Subviews
-//
-struct ToolImageSection: View {
-    let imageURL: String
 
-    var body: some View {
-        ToolImageView(imageURL: imageURL)
-            .frame(height: 250)
-            .padding(.horizontal, 16)
-            .padding(.top, 10)
-    }
-}
 
-struct ToolDetailsSection: View {
-    let name: String
-    let description: String
-    let price: Double
-    let availableQuantity: Int
-    let availabilityMessage: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(name)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
-
-            Text(description)
-                .font(.system(size: 16, weight: .regular, design: .rounded))
-                .foregroundColor(.secondary)
-                .lineLimit(nil)
-
-            HStack(spacing: 8) {
-                Text("Price:")
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .foregroundColor(.primary)
-                Text("\(price, specifier: "%.2f") SEK/day")
-                    .font(.system(size: 16, weight: .regular, design: .rounded))
-                    .foregroundColor(.blue)
-            }
-
-            HStack(spacing: 8) {
-                Text("Available:")
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .foregroundColor(.primary)
-                Text("\(availableQuantity)")
-                    .font(.system(size: 16, weight: .regular, design: .rounded))
-                    .foregroundColor(availableQuantity > 0 ? .green : .red)
-                Spacer()
-                Image(systemName: availableQuantity > 0 ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundColor(availableQuantity > 0 ? .green : .red)
-            }
-
-            if !availabilityMessage.isEmpty {
-                Text(availabilityMessage)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .lineLimit(nil)
-            }
-        }
-        .padding(16)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
-        .padding(.horizontal, 16)
-    }
-}
-//
-//struct QuantityPickerSection: View {
-//    @Binding var quantity: Int
+//struct ToolDetailsSection: View {
+//    let name: String
+//    let description: String
+//    let price: Double
 //    let availableQuantity: Int
+//    let availabilityMessage: String
 //
 //    var body: some View {
 //        VStack(alignment: .leading, spacing: 12) {
-//            Text("Quantity")
+//            Text(name)
+//                .font(.system(size: 24, weight: .bold, design: .rounded))
+//                .foregroundColor(.primary)
+//
+//            Text(description)
+//                .font(.system(size: 16, weight: .regular, design: .rounded))
+//                .foregroundColor(.secondary)
+//                .lineLimit(nil)
+//
+//            HStack(spacing: 8) {
+//                Text("Price:")
+//                    .font(.system(size: 16, weight: .medium, design: .rounded))
+//                    .foregroundColor(.primary)
+//                Text("\(price, specifier: "%.2f") SEK/day")
+//                    .font(.system(size: 16, weight: .regular, design: .rounded))
+//                    .foregroundColor(.blue)
+//            }
+//
+//            HStack(spacing: 8) {
+//                Text("Available:")
+//                    .font(.system(size: 16, weight: .medium, design: .rounded))
+//                    .foregroundColor(.primary)
+//                Text("\(availableQuantity)")
+//                    .font(.system(size: 16, weight: .regular, design: .rounded))
+//                    .foregroundColor(availableQuantity > 0 ? .green : .red)
+//                Spacer()
+//                Image(systemName: availableQuantity > 0 ? "checkmark.circle.fill" : "xmark.circle.fill")
+//                    .foregroundColor(availableQuantity > 0 ? .green : .red)
+//            }
+//
+//            if !availabilityMessage.isEmpty {
+//                Text(availabilityMessage)
+//                    .font(.system(size: 14, weight: .regular, design: .rounded))
+//                    .foregroundColor(.secondary)
+//                    .lineLimit(nil)
+//            }
+//        }
+//        .padding(16)
+//        .background(Color(.systemBackground))
+//        .cornerRadius(12)
+//        .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
+//        .padding(.horizontal, 16)
+//    }
+//}
+//
+
+
+
+//struct BookingDatesSection: View {
+//    @Binding var selectPickupDate: Date
+//    @Binding var selectReturnDate: Date?
+//    @Binding var isShowingDatePicker: Bool
+//    @Binding var isPickingDate: Bool
+//    let dateFormatter: DateFormatter
+//
+//    var body: some View {
+//        VStack(alignment: .leading, spacing: 12) {
+//            Text("Booking Dates")
 //                .font(.system(size: 20, weight: .semibold, design: .rounded))
 //                .foregroundColor(.primary)
 //
-//            HStack(spacing: 16) {
-//                Button(action: { if quantity > 1 { quantity -= 1 } }) {
-//                    Image(systemName: "minus")
-//                        .font(.system(size: 16, weight: .medium))
-//                        .frame(width: 40, height: 40)
+//            HStack(spacing: 8) {
+//                Button(action: {
+//                    isPickingDate = true
+//                    isShowingDatePicker.toggle()
+//                }) {
+//                    Text("Pickup Date")
+//                        .font(.system(size: 16, weight: .medium, design: .rounded))
 //                        .foregroundColor(.white)
+//                        .padding(.vertical, 10)
+//                        .padding(.horizontal, 16)
 //                        .background(Color.accentColor)
-//                        .cornerRadius(20)
-//                        .shadow(color: .gray.opacity(0.2), radius: 2)
-//                }
-//                Text("\(quantity)")
-//                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-//                    .foregroundColor(.primary)
-//                    .frame(width: 50, alignment: .center)
-//                Button(action: { if quantity < availableQuantity { quantity += 1 } }) {
-//                    Image(systemName: "plus")
-//                        .font(.system(size: 16, weight: .medium))
-//                        .frame(width: 40, height: 40)
-//                        .foregroundColor(.white)
-//                        .background(Color.accentColor)
-//                        .cornerRadius(20)
+//                        .cornerRadius(8)
 //                        .shadow(color: .gray.opacity(0.2), radius: 2)
 //                }
 //                Spacer()
+//                Text(dateFormatter.string(from: selectPickupDate))
+//                    .font(.system(size: 16, weight: .regular, design: .rounded))
+//                    .foregroundColor(.secondary)
+//            }
+//
+//            HStack(spacing: 8) {
+//                Button(action: {
+//                    isPickingDate = false
+//                    isShowingDatePicker.toggle()
+//                }) {
+//                    Text("Return Date")
+//                        .font(.system(size: 16, weight: .medium, design: .rounded))
+//                        .foregroundColor(.white)
+//                        .padding(.vertical, 10)
+//                        .padding(.horizontal, 16)
+//                        .background(Color.accentColor)
+//                        .cornerRadius(8)
+//                        .shadow(color: .gray.opacity(0.2), radius: 2)
+//                }
+//                Spacer()
+//                if let returnDate = selectReturnDate {
+//                    Text(dateFormatter.string(from: returnDate))
+//                        .font(.system(size: 16, weight: .regular, design: .rounded))
+//                        .foregroundColor(.secondary)
+//                } else {
+//                    Text("Select Date")
+//                        .font(.system(size: 16, weight: .regular, design: .rounded))
+//                        .foregroundColor(.secondary.opacity(0.6))
+//                        .italic()
+//                }
 //            }
 //        }
 //        .padding(16)
@@ -407,146 +637,76 @@ struct ToolDetailsSection: View {
 //    }
 //}
 
-
-
-struct BookingDatesSection: View {
-    @Binding var selectPickupDate: Date
-    @Binding var selectReturnDate: Date?
-    @Binding var isShowingDatePicker: Bool
-    @Binding var isPickingDate: Bool
-    let dateFormatter: DateFormatter
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Booking Dates")
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .foregroundColor(.primary)
-
-            HStack(spacing: 8) {
-                Button(action: {
-                    isPickingDate = true
-                    isShowingDatePicker.toggle()
-                }) {
-                    Text("Pickup Date")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundColor(.white)
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
-                        .background(Color.accentColor)
-                        .cornerRadius(8)
-                        .shadow(color: .gray.opacity(0.2), radius: 2)
-                }
-                Spacer()
-                Text(dateFormatter.string(from: selectPickupDate))
-                    .font(.system(size: 16, weight: .regular, design: .rounded))
-                    .foregroundColor(.secondary)
-            }
-
-            HStack(spacing: 8) {
-                Button(action: {
-                    isPickingDate = false
-                    isShowingDatePicker.toggle()
-                }) {
-                    Text("Return Date")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundColor(.white)
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
-                        .background(Color.accentColor)
-                        .cornerRadius(8)
-                        .shadow(color: .gray.opacity(0.2), radius: 2)
-                }
-                Spacer()
-                if let returnDate = selectReturnDate {
-                    Text(dateFormatter.string(from: returnDate))
-                        .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundColor(.secondary)
-                } else {
-                    Text("Select Date")
-                        .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundColor(.secondary.opacity(0.6))
-                        .italic()
-                }
-            }
-        }
-        .padding(16)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.1), radius: 6, x: 0, y: 2)
-        .padding(.horizontal, 16)
-    }
-}
-
-struct AddToCartButtonSection: View {
-    let isAuthenticated: Bool
-    let isAddToCartEnabled: Bool
-    let selectReturnDate: Date?
-    @Binding var showConfirmation: Bool
-    @Binding var showSignInAlert: Bool
-    let onAddToCart: () -> Void
-
-    var body: some View {
-        Button(action: {
-            if isAuthenticated {
-                if selectReturnDate != nil {
-                    onAddToCart()
-                    showConfirmation = true
-                }
-            } else {
-                showSignInAlert = true
-            }
-        }) {
-            Text(isAuthenticated ? "Add to Cart" : "Sign In to Add to Cart")
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(isAddToCartEnabled && isAuthenticated ? Color.green : Color.gray)
-                .foregroundColor(.white)
-                .cornerRadius(12)
-                .shadow(color: .gray.opacity(isAddToCartEnabled && isAuthenticated ? 0.3 : 0), radius: 4, x: 0, y: 2)
-        }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 20)
-    }
-}
-
-struct DatePickerSheet: View {
-    let isPickingDate: Bool
-    @Binding var selectPickupDate: Date
-    @Binding var selectReturnDate: Date?
-    let nextAvailableDate: Date
-    let onApply: (Date) -> Void
-
-    var body: some View {
-        VStack(spacing: 12) {
-            DatePicker(
-                "Select Date",
-                selection: isPickingDate ? $selectPickupDate : Binding(
-                    get: { selectReturnDate ?? Date() },
-                    set: { selectReturnDate = $0 }
-                ),
-                in: nextAvailableDate...,
-                displayedComponents: [.date]
-            )
-            .datePickerStyle(.graphical)
-            .padding()
-
-            Button(action: {
-                onApply(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
-            }) {
-                Text("Apply")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 20)
-                    .background(Color.blue)
-                    .cornerRadius(8)
-            }
-        }
-        .padding(20)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .gray.opacity(0.2), radius: 8)
-        .presentationDetents([.medium])
-    }
-}
+//struct AddToCartButtonSection: View {
+//    let isAuthenticated: Bool
+//    let isAddToCartEnabled: Bool
+//    let selectReturnDate: Date?
+//    @Binding var showConfirmation: Bool
+//    @Binding var showSignInAlert: Bool
+//    let onAddToCart: () -> Void
+//
+//    var body: some View {
+//        Button(action: {
+//            if isAuthenticated {
+//                if selectReturnDate != nil {
+//                    onAddToCart()
+//                    showConfirmation = true
+//                }
+//            } else {
+//                showSignInAlert = true
+//            }
+//        }) {
+//            Text(isAuthenticated ? "Add to Cart" : "Sign In to Add to Cart")
+//                .font(.system(size: 18, weight: .semibold, design: .rounded))
+//                .frame(maxWidth: .infinity)
+//                .padding(.vertical, 14)
+//                .background(isAddToCartEnabled && isAuthenticated ? Color.green : Color.gray)
+//                .foregroundColor(.white)
+//                .cornerRadius(12)
+//                .shadow(color: .gray.opacity(isAddToCartEnabled && isAuthenticated ? 0.3 : 0), radius: 4, x: 0, y: 2)
+//        }
+//        .padding(.horizontal, 16)
+//        .padding(.bottom, 20)
+//    }
+//}
+//
+//struct DatePickerSheet: View {
+//    let isPickingDate: Bool
+//    @Binding var selectPickupDate: Date
+//    @Binding var selectReturnDate: Date?
+//    let nextAvailableDate: Date
+//    let onApply: (Date) -> Void
+//
+//    var body: some View {
+//        VStack(spacing: 12) {
+//            DatePicker(
+//                "Select Date",
+//                selection: isPickingDate ? $selectPickupDate : Binding(
+//                    get: { selectReturnDate ?? Date() },
+//                    set: { selectReturnDate = $0 }
+//                ),
+//                in: nextAvailableDate...,
+//                displayedComponents: [.date]
+//            )
+//            .datePickerStyle(.graphical)
+//            .padding()
+//
+//            Button(action: {
+//                onApply(isPickingDate ? selectPickupDate : (selectReturnDate ?? Date()))
+//            }) {
+//                Text("Apply")
+//                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+//                    .foregroundColor(.white)
+//                    .padding(.vertical, 10)
+//                    .padding(.horizontal, 20)
+//                    .background(Color.blue)
+//                    .cornerRadius(8)
+//            }
+//        }
+//        .padding(20)
+//        .background(Color(.systemBackground))
+//        .cornerRadius(12)
+//        .shadow(color: .gray.opacity(0.2), radius: 8)
+//        .presentationDetents([.medium])
+//    }
+//}

@@ -25,7 +25,8 @@ struct ToolRow: View {
             
             VStack(alignment: .leading, spacing: 10) {
                 Text(tool.name)
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .font(Typography.headline) // Use a consistent font style
+//                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundColor(.primary)
                     .padding(.horizontal, 12)
                 
@@ -33,7 +34,8 @@ struct ToolRow: View {
                     .padding(.horizontal, 12)
                 
                 Text(tool.description)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(Typography.body) // Use a consistent font style
+//                    .font(.system(size: 14, weight: .regular, design: .rounded))
                     .foregroundColor(.secondary)
                     .lineLimit(3)
                     .truncationMode(.tail)
@@ -41,7 +43,8 @@ struct ToolRow: View {
                 
                 HStack(spacing: 12) {
                     Text("Price: \(String(format: "%.2f", tool.price)) SEK/day")
-                        .font(.system(size: 13, weight: .medium))
+//                        .font(.system(size: 13, weight: .medium))
+                        .font(Typography.subheadline) // Use a consistent font style
                         .foregroundColor(.blue)
                         .padding(.vertical, 4)
                         .padding(.horizontal, 8)
@@ -51,7 +54,8 @@ struct ToolRow: View {
                     Spacer()
                     
                     Text("Available: \(availableQuantity) of \(totalQuantity)")
-                        .font(.system(size: 13, weight: .medium))
+//                        .font(.system(size: 13, weight: .medium))
+                        .font(Typography.subheadline) // Use a consistent font style
                         .foregroundColor(availableQuantity > 0 ? .green.opacity(0.8) : .red.opacity(0.8))
                         .padding(.vertical, 4)
                         .padding(.horizontal, 8)

@@ -21,6 +21,7 @@ struct CustomTextField: View {
                 .autocapitalization(.none)
                 .keyboardType(.emailAddress)
         }
+        .font(Typography.body) // Use Typography for consistent styling
         .padding()
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.yellow, lineWidth: 2))
         .background(Color.clear)
@@ -54,6 +55,7 @@ struct CustomSecureField: View {
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.yellow, lineWidth: 2))
         .background(Color.clear)
         .foregroundColor(Color(UIColor.darkGray))
+        .font(Typography.body) // Use Typography for consistent styling
     }
 }
 
@@ -68,6 +70,7 @@ struct CustomProfileTextField: View {
     var body: some View {
         HStack {
             TextField(placeholder, text: $text, onEditingChanged: { _ in onEditingChanged() })
+                .font(Typography.body) // Use Typography for consistent styling
                 .disabled(!isEditable)
                 .textFieldStyle(PlainTextFieldStyle())
                 .padding(.vertical, 8)

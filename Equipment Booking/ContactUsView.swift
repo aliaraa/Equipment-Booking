@@ -11,6 +11,7 @@ import SwiftUI
 //Increase Vstack pacing to 24pt for the form section
 // Add more padding to ContactInfoCard's Hstack
 //Ensure button has 44x44 pt touch target.
+// applied app-wide Typography styles for consistency
 
 struct ContactUsView: View {
     @State private var name: String = ""
@@ -20,11 +21,11 @@ struct ContactUsView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView { // Wrap in ScrollView for long content
-                VStack(spacing: 24) { // Increased spacing
+            ScrollView {
+                VStack(spacing: 24) {
                     VStack(spacing: 8) {
                         Text("Reach out with any questions or feedback.")
-                            .font(.system(size: 16, design: .rounded))
+                            .font(Typography.body)
                             .foregroundColor(.gray)
                             .multilineTextAlignment(.leading)
                     }
@@ -37,7 +38,7 @@ struct ContactUsView: View {
                     }
                     .padding(.horizontal, 16)
                     
-                    VStack(spacing: 16) { // Increased spacing
+                    VStack(spacing: 16) {
                         ProfileTextField(
                             icon: "person.fill",
                             placeholder: "Your Name",
@@ -53,17 +54,18 @@ struct ContactUsView: View {
                             onEditingChanged: checkForChanges
                         )
                         TextEditor(text: $message)
-                            .frame(minHeight: 120, maxHeight: 200) // Dynamic height
+                            .frame(minHeight: 120, maxHeight: 200)
                             .padding(8)
                             .background(Color(white: 0.98))
                             .cornerRadius(12)
                             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.2)))
+                            .font(Typography.body)
                             .onChange(of: message) { _ in checkForChanges() }
                         
                         Button(action: sendMessage) {
                             Text("Send")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .frame(maxWidth: .infinity, minHeight: 44) // Ensure touch target
+                                .font(Typography.headline)
+                                .frame(maxWidth: .infinity, minHeight: 44)
                                 .padding(.vertical, 14)
                                 .background(isSendButtonActive ? Color.blue : Color.gray.opacity(0.5))
                                 .foregroundColor(.white)
@@ -78,6 +80,13 @@ struct ContactUsView: View {
             .background(Color(.systemBackground))
             .navigationTitle("Contact Us")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Contact Us")
+                        .font(Typography.title)
+                        .foregroundColor(.primary)
+                }
+            }
         }
     }
     
@@ -100,23 +109,27 @@ struct ContactInfoCard: View {
     let detail: String
     
     var body: some View {
-        HStack(spacing: 16) { // Increased spacing
+        HStack(spacing: 16) {
             Image(systemName: icon)
                 .foregroundColor(.blue.opacity(0.8))
                 .font(.system(size: 20, weight: .medium))
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(Typography.headline)
                 Text(detail)
-                    .font(.system(size: 14, design: .rounded))
+                    .font(Typography.subheadline)
                     .foregroundColor(.gray)
             }
             Spacer()
         }
-        .padding(16) // Increased padding
+        .padding(16)
         .background(Color(.systemBackground))
         .cornerRadius(12)
     }
+}
+
+#Preview {
+    ContactUsView()
 }
 
 //struct ContactUsView: View {
@@ -250,7 +263,3 @@ struct ContactInfoCard: View {
 //}
 
 
-
-#Preview {
-    ContactUsView()
-}

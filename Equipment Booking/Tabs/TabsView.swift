@@ -46,6 +46,7 @@ struct TabsView: View {
             }
             .tabItem {
                 Label("Search", systemImage: "magnifyingglass")
+                    .font(Typography.body) // Use Typography for consistent styling
             }
             .tag("search" as String?)
             
@@ -62,6 +63,7 @@ struct TabsView: View {
             }
             .tabItem {
                 Label("Cart", systemImage: "cart")
+                    .font(Typography.body) // Use Typography for consistent styling
                     .opacity(authViewModel.isAuthenticated ? 1.0 : 0.5) // Grey out for unauthenticated
             }
             .badge(cartManager.cartItems.count)
@@ -82,6 +84,7 @@ struct TabsView: View {
             .tabItem {
                 Label("Status", systemImage: "person.crop.circle")
                     // NEW: Optional grey-out for unauthenticated users
+                    .font(Typography.body) // Use Typography for consistent styling
                     .opacity(authViewModel.isAuthenticated ? 1.0 : 0.5)
             }
             .tag("status" as String?)
@@ -98,6 +101,7 @@ struct TabsView: View {
             }
         } message: {
             Text("You need to sign in or register to view your profile.")
+                .font(Typography.body) // Use Typography for consistent styling
         }
         .onAppear {
             print("TabsView appeared with selectedTab: \(selectedTab ?? "nil")")

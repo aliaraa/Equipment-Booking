@@ -13,11 +13,13 @@ struct CategoryBoxView: View {
         
             VStack {
                 Text(category.title)
-                    .font(.title)
+                    .font(Typography.headline)  // Use Typography for consistent styling
+//                    .font(.title)
                     .multilineTextAlignment(.center)
                 Spacer()
                 Text(category.description)
-                    .font(.subheadline)
+                    .font(Typography.subheadline)  // Use Typography for consistent styling
+//                    .font(.subheadline)
                     .foregroundColor(Color.gray)
                     .multilineTextAlignment(.center)
                 Spacer()
