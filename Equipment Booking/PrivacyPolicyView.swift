@@ -18,6 +18,24 @@ struct PrivacyPolicyView: View {
                         .font(Typography.largeTitle)  // Use Typography for consistent styling
                         .foregroundColor(.primary)
                     
+                    // NEW: Dedicated Last Updated Date Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Last Updated: May 27, 2025")
+//                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .font(Typography.subheadline)  // Use Typography for consistent styling
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 1)
+                    
+                    
                     Text("EquipRent (\"we,\" \"us\") respects your privacy. This Privacy Policy explains how we collect, use, and protect your data when you use our app.")
 //                        .font(.system(size: 16, design: .rounded))
                         .font(Typography.body)  // Use Typography for consistent styling
@@ -30,34 +48,26 @@ struct PrivacyPolicyView: View {
                 // Content
                 ScrollView {
                     VStack(spacing: 16) {
-                        // NEW: Dedicated Last Updated Date Section
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Last Updated: May 27, 2025")
-//                                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .font(Typography.subheadline)  // Use Typography for consistent styling
-                                .foregroundColor(.primary)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(8)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .shadow(color: .gray.opacity(0.1), radius: 2, x: 0, y: 1)
-                        
+                                               
                         // Policy Sections
                         PolicySection(
-                            title: "1. Data We Collect",
+                            title: "Educational Purpose and Pricing Disclaimer",
+                            content: """
+                            This app is designed solely for educational and demonstration purposes. The equipment listed, including all tools and their associated prices, is virtual and not available for actual rental or purchase. Prices displayed within the app (e.g., SEK/day) are for illustrative purposes only and do not represent real-world transactions. No payments are processed through this app, and no financial transactions are required or supported.
+                            """
+                        )
+                        
+                        
+                        PolicySection(
+                            title: "Data We Collect",
                             content: """
                             - **Personal Info**: Email and name (via Google Sign-In or email login) to manage your account.
                             - **Usage Data**: App interactions (e.g., searches, bookings) to improve our service (via Firebase Analytics).
-                            - **Device Info**: Device type and OS version for compatibility.
+                            - **Device Info**: Device type and OS version for compatibility, and FCM tokens for push notifications and compatibility.
                             """
                         )
                         PolicySection(
-                            title: "2. How We Use Your Data",
+                            title: "How We Use Your Data",
                             content: """
                             - To provide app features (e.g., booking cranes, managing rentals).
                             - To personalize your experience (e.g., showing your profile).
@@ -66,14 +76,14 @@ struct PrivacyPolicyView: View {
                             """
                         )
                         PolicySection(
-                            title: "3. Data Sharing",
+                            title: "Data Sharing",
                             content: """
-                            - We use Firebase (Google) for authentication and analytics, which may process data per their policies.
-                            - We don’t share your data with third parties except as required by law.
+                            - We use Firebase (Google) for authentication and analytics, which may process data per their policies.Please review Firebase's privacy policy for more information on how your data is handled.
+                            - We don’t share your data with third parties.
                             """
                         )
                         PolicySection(
-                            title: "4. Data Security",
+                            title: "Data Security",
                             content: """
                             - We use encryption to protect your data.
                             - Firebase follows industry-standard security practices.
@@ -84,7 +94,7 @@ struct PrivacyPolicyView: View {
                             content: """
                             - Access, update, or delete your data via your profile or by emailing support@equiprent.com.
                             - EU users: GDPR rights apply (e.g., data portability).
-                            - Users can delete their account from Firebase Authentication via Profile > Delete Account. This removes access to the account but preserves user and rental data in our database for record-keeping.
+                            - Users can delete their account from Firebase Authentication via Profile > Delete Account. This removes access to the account but preserves user and rental data in our database for record-keeping. All records will be anonymized after 30 days.
                             """
                         )
                         PolicySection(
@@ -119,7 +129,7 @@ struct PrivacyPolicyView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("Privacy Policy")
+                    Text("")
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
                 }

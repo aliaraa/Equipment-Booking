@@ -10,6 +10,7 @@ import GoogleSignIn
 import GoogleSignInSwift
 import AuthenticationServices
 
+
 struct UserAuthenticationView: View {
     @EnvironmentObject var authViewModel: AuthenticationViewModel
     @EnvironmentObject var userProfileViewModel: UserProfileViewModel
@@ -18,14 +19,11 @@ struct UserAuthenticationView: View {
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var emailErrorMessage: String?
-    @Binding var showSignInView: Bool
     @State private var showPassword: Bool = false
     @State private var showForgotPassword: Bool = false
     @State private var errorMessage: String? = nil
     @State private var navigateToSignUp: Bool = false
     @State private var showInlineSignUp: Bool = false
-    @State private var navigateToTabsView: Bool = false
-    @State private var selectedTab: String? = "search"
     
     @FocusState private var focusedField: Field?
     
@@ -41,11 +39,11 @@ struct UserAuthenticationView: View {
         NavigationStack {
             VStack(spacing: 20) {
                 Text("Log in")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                    .font(Typography.largeTitle)
                     .foregroundColor(.yellow)
                 
                 CustomTextField(icon: "envelope", placeholder: "Email", text: $authViewModel.email)
+                    .font(Typography.body)
                     .focused($focusedField, equals: .email)
                     .onChange(of: focusedField) { newFocus in
                         if newFocus != .email {
@@ -57,16 +55,18 @@ struct UserAuthenticationView: View {
                 
                 if let emailErrorMessage = emailErrorMessage {
                     Text(emailErrorMessage)
+                        .font(Typography.subheadline)
                         .foregroundColor(.red)
-                        .font(.subheadline)
                 }
                 
                 CustomSecureField(icon: "lock", placeholder: "Password", text: $authViewModel.password, isSecure: !showPassword, toggle: { showPassword.toggle() })
+                    .font(Typography.body)
                     .focused($focusedField, equals: .password)
                 
                 if let errorMessage = errorMessage {
                     VStack {
                         Text(errorMessage)
+                            .font(Typography.subheadline)
                             .foregroundColor(.red)
                             .padding(.bottom, 5)
                         
@@ -75,6 +75,7 @@ struct UserAuthenticationView: View {
                                 Button("New User? Sign Up") {
                                     navigateToSignUp = true
                                 }
+                                .font(Typography.body)
                                 .foregroundColor(.blue)
                                 
                                 Spacer()
@@ -82,6 +83,7 @@ struct UserAuthenticationView: View {
                                 Button("Forgot Password?") {
                                     showForgotPassword = true
                                 }
+                                .font(Typography.body)
                                 .foregroundColor(.blue)
                             }
                         }
@@ -94,10 +96,6 @@ struct UserAuthenticationView: View {
                             try await authViewModel.signIn()
                             errorMessage = nil
                             await userProfileViewModel.loadCurrentUser()
-                            selectedTab = "search"
-                            print("Sign-in: selectedTab set to \(selectedTab ?? "nil")")
-                            navigateToTabsView = true
-                            showSignInView = false
                             dismiss()
                         } catch let error as NSError {
                             handleSignInError(error)
@@ -105,7 +103,7 @@ struct UserAuthenticationView: View {
                     }
                 } label: {
                     Text("Sign In")
-                        .font(.headline)
+                        .font(Typography.headline)
                         .foregroundColor(.white)
                         .frame(height: 55)
                         .frame(maxWidth: .infinity)
@@ -120,7 +118,7 @@ struct UserAuthenticationView: View {
                         .foregroundColor(.gray)
                         .padding(.horizontal, 8)
                     Text("or")
-                        .font(.subheadline)
+                        .font(Typography.subheadline)
                         .foregroundColor(.gray)
                         .padding(.horizontal, 8)
                     Rectangle()
@@ -136,10 +134,6 @@ struct UserAuthenticationView: View {
                             do {
                                 try await authViewModel.signInGoogle()
                                 await userProfileViewModel.loadCurrentUser()
-                                selectedTab = "search"
-                                print("Google Sign-in: selectedTab set to \(selectedTab ?? "nil")")
-                                navigateToTabsView = true
-                                showSignInView = false
                                 dismiss()
                             } catch {
                                 print("Google Sign-In Error: \(error)")
@@ -150,7 +144,6 @@ struct UserAuthenticationView: View {
                     }
                     .frame(height: 55)
                     
-                    // FIXED: Reference SignInWithAppleHelper from AuthenticationViewModel
                     SignInWithAppleButtonViewRepresentable(type: .default, style: .black) { request in
                         let nonce = AuthenticationViewModel.SignInWithAppleHelper.randomNonceString()
                         authViewModel.currentNonce = nonce
@@ -164,10 +157,6 @@ struct UserAuthenticationView: View {
                                 }
                                 try await authViewModel.signInWithApple(result: result, nonce: nonce)
                                 await userProfileViewModel.loadCurrentUser()
-                                selectedTab = "search"
-                                print("Apple Sign-in: selectedTab set to \(selectedTab ?? "nil")")
-                                navigateToTabsView = true
-                                showSignInView = false
                                 dismiss()
                             } catch {
                                 print("Apple Sign-In Error: \(error)")
@@ -183,6 +172,7 @@ struct UserAuthenticationView: View {
                     Button("Don't have an account? Sign Up") {
                         navigateToSignUp = true
                     }
+                    .font(Typography.body)
                     .foregroundColor(.blue)
                     .padding(.top, 10)
                 }
@@ -190,19 +180,18 @@ struct UserAuthenticationView: View {
                 Spacer()
             }
             .padding()
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Log in")
+                        .font(Typography.title)
+                        .foregroundColor(.primary)
+                }
+            }
             .background(
-                Group {
-                    NavigationLink(destination: SignUpView().environmentObject(authViewModel), isActive: $navigateToSignUp) {
-                        EmptyView()
-                    }
-                    NavigationLink(destination: TabsView(selectedTab: $selectedTab)
-                        .environmentObject(authViewModel)
-                        .environmentObject(cartManager)
-                        .environmentObject(userProfileViewModel),
-                        isActive: $navigateToTabsView) {
-                        EmptyView()
-                    }
+                NavigationLink(destination: SignUpView().environmentObject(authViewModel), isActive: $navigateToSignUp) {
+                    EmptyView()
                 }
             )
             .sheet(isPresented: $showForgotPassword) {
@@ -236,7 +225,6 @@ struct UserAuthenticationView: View {
     }
 }
 
-// SignInWithAppleButtonViewRepresentable
 struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
     let type: ASAuthorizationAppleIDButton.ButtonType
     let style: ASAuthorizationAppleIDButton.Style
@@ -296,8 +284,9 @@ struct SignInWithAppleButtonViewRepresentable: UIViewRepresentable {
 }
 
 #Preview {
-    UserAuthenticationView(showSignInView: .constant(true))
+    UserAuthenticationView()
         .environmentObject(AuthenticationViewModel())
         .environmentObject(UserProfileViewModel())
         .environmentObject(CartManager())
 }
+
