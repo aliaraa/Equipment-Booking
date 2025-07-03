@@ -2,7 +2,7 @@ import SwiftUI
 import Firebase
 import FirebaseFirestore
 
-// Improved CartView and CartRow UI for iPhone 14 size
+// Improved SearchView for iPhone 14 size
 // - Increased VStack spacing to 24pt and CategoryCard spacing to 20pt
 // - Reduced search button size to 44x44 pt and added padding
 // - Dynamic card heights
@@ -81,12 +81,6 @@ struct CategoryCard: View {
         
     }
 }
-
-#Preview {
-    Search()
-        .environmentObject(CartManager())
-}
-
 
 #Preview {
     Search()
