@@ -8,8 +8,11 @@
 import Foundation
 
 // Equipment item fetched from Firebase, updated to ensure availability fields are mutable
+// Updated structure to include a "keywords" field for Firestore serialization
+
+
 struct Tool: Identifiable, Codable {
-    let id: String  // Equipment ID from Firebase
+    let id: String
     let name: String
     let category: String
     let mainCategory: String
@@ -20,12 +23,12 @@ struct Tool: Identifiable, Codable {
     let imageURL: String?
     let status: String
     let price: Double
-    var numberOfItems: Int  // Made mutable for availability updates
-    var isAvailable: Bool   // Made mutable for availability updates
+    var numberOfItems: Int
+    var isAvailable: Bool
+    let keywords: [String]? // New field for server-side search
     
     // Failable initializer from Firebase data
     init?(from data: [String: Any]) {
-        // Require critical fields; return nil if missing
         guard let id = data["equip_id"] as? String,
               let name = data["name"] as? String,
               let category = data["category"] as? String,
@@ -37,6 +40,7 @@ struct Tool: Identifiable, Codable {
               let price = data["price"] as? Double,
               let numberOfItems = data["number_of_items"] as? Int,
               let isAvailable = data["available"] as? Bool else {
+            print("Failed to parse document: \(data)")
             return nil
         }
         
@@ -53,6 +57,7 @@ struct Tool: Identifiable, Codable {
         self.price = price
         self.numberOfItems = numberOfItems
         self.isAvailable = isAvailable
+        self.keywords = data["keywords"] as? [String]
     }
     
     // Manual initializer for testing or local creation
@@ -69,7 +74,8 @@ struct Tool: Identifiable, Codable {
         status: String,
         price: Double,
         numberOfItems: Int,
-        isAvailable: Bool
+        isAvailable: Bool,
+        keywords: [String]? = nil
     ) {
         self.id = id
         self.name = name
@@ -84,6 +90,7 @@ struct Tool: Identifiable, Codable {
         self.price = price
         self.numberOfItems = numberOfItems
         self.isAvailable = isAvailable
+        self.keywords = keywords
     }
     
     // CodingKeys for Firebase serialization
@@ -101,7 +108,7 @@ struct Tool: Identifiable, Codable {
         case price
         case numberOfItems = "number_of_items"
         case isAvailable = "available"
+        case keywords
     }
 }
-
 

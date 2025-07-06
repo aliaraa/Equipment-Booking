@@ -10,51 +10,52 @@ import SwiftUI
 // Improved to also be used to display filtered results based on search text
 
 struct CategoryView: View {
-    var category: String?
-    var tools: [Tool]?
+    var category: String? // Used for category-specific views
+    var tools: [Tool]? // Used for search results
     var title: String
+    var searchText: String? // Search query from Search view
     @StateObject private var dataManager = EquipmentDataManager()
     @EnvironmentObject var cartManager: CartManager
-    @State private var searchText = ""
+    @State private var localSearchText = ""
     
     var displayedTools: [Tool] {
-        if let tools = tools {
-            // For search results, use provided tools and apply search filter
-            return searchText.isEmpty ? tools : tools.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        if let tools = tools, searchText != nil {
+            // For search results, use provided tools (already filtered by keywords)
+            return tools
         } else if let category = category {
-            // For category view, filter by category and search text
+            // For category view, filter by category
             return dataManager.toolData.filter { tool in
-                (tool.category == category) &&
-                (searchText.isEmpty || tool.name.localizedCaseInsensitiveContains(searchText))
+                tool.category == category
             }
         }
         return []
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                TextField("Search...", text: $searchText)
-                    .padding(.horizontal, 12)
-                    .frame(height: 50)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.2), lineWidth: 1))
-                    .font(Typography.body) // Use a consistent font style
-//                    .font(.system(size: 16, weight: .regular, design: .rounded))
-                
-                Button(action: {}) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 50, height: 50)
-                        .background(searchText.isEmpty ? Color.gray : Color.blue)
+        VStack(spacing: 24) {
+            if tools == nil { // Show search field only for category views
+                HStack(spacing: 12) {
+                    TextField("Search in \(title)", text: $localSearchText)
+                        .padding(.horizontal, 12)
+                        .frame(height: 50)
+                        .background(Color(.systemGray6))
                         .cornerRadius(12)
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.2)))
+                        .font(Typography.body)
+                        .accessibilityLabel("Search equipment in \(title) category")
+                        .onChange(of: localSearchText) { newValue in
+                            Task {
+                                do {
+                                    try await dataManager.fetchEquipmentFromFirebase(searchText: newValue, category: category)
+                                } catch {
+                                    print("Error fetching tools: \(error)")
+                                }
+                            }
+                        }
                 }
-                .disabled(true) // Disable button as search is handled by TextField
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 10)
             
             List(displayedTools) { tool in
                 ToolRow(tool: tool)
@@ -62,23 +63,39 @@ struct CategoryView: View {
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             }
             .listStyle(PlainListStyle())
+            .overlay {
+                if displayedTools.isEmpty {
+                    Text(tools == nil ? "No equipment found in \(title)" : "No search results")
+                        .font(Typography.body)
+                        .foregroundColor(.secondary)
+                        .padding()
+                }
+            }
         }
         .navigationTitle(title)
-        .font(Typography.title) // Use a consistent font style
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text(title)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(Typography.title)
                     .foregroundColor(.primary)
             }
         }
         .background(Color(.systemBackground))
+        .onAppear {
+            // Fetch tools for category views if not search results
+            if tools == nil, let category = category {
+                Task {
+                    do {
+                        print("Fetching tools for category: \(category)")
+                        try await dataManager.fetchEquipmentFromFirebase(category: category)
+                    } catch {
+                        print("Error fetching tools for category \(category): \(error)")
+                    }
+                }
+            }
+        }
     }
 }
 
 
-#Preview {
-    CategoryView(category: "Construction", title: "Construction")
-        .environmentObject(CartManager())
-}

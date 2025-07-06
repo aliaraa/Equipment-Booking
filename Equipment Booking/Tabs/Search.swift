@@ -8,30 +8,42 @@ import FirebaseFirestore
 // - Dynamic card heights
 // - redirected navigation to category view for search results display
 
+// Update 1 - Enhanced filteredTools to include all tools attributes (description, category, manufacturer, etc...)
+
+
+//  Searches name, description, category, mainCategory, subCategory, and manufacturer using a combined searchableFields array.
+//  Splits searchText into words (queryWords) and uses allSatisfy to ensure every query word matches at least one field, enabling flexible matching (e.g., “power tool” matches “power” in name and “tool” in description).
+//  Trims whitespace and converts to lowercase for consistency.
+
+
 struct Search: View {
     @StateObject private var dataManager = EquipmentDataManager()
     @State private var searchText = ""
-    
-    var filteredTools: [Tool] {
-        if searchText.isEmpty { return dataManager.toolData }
-        return dataManager.toolData.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-    }
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
                 HStack(spacing: 12) {
-                    TextField("Search...", text: $searchText)
+                    TextField("Search by name, description or category", text: $searchText)
                         .padding(.horizontal, 12)
                         .frame(height: 44)
                         .background(Color(.systemGray6))
                         .cornerRadius(12)
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.2)))
-                        .font(Typography.body) // Use Typography for consistent styling
-//                       .font(.system(size: 16, weight: .regular, design: .rounded))
+                        .font(Typography.body)
+                        .accessibilityLabel("Search equipment by name, description, or category")
+                        .onChange(of: searchText) { newValue in
+                            Task {
+                                do {
+                                    try await dataManager.fetchEquipmentFromFirebase(searchText: newValue)
+                                } catch {
+                                    print("Error fetching tools: \(error)")
+                                }
+                            }
+                        }
                     
                     NavigationLink(
-                        destination: CategoryView(tools: filteredTools, title: "Search Results")
+                        destination: CategoryView(tools: dataManager.toolData, title: "Search Results", searchText: searchText)
                     ) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 18, weight: .semibold))
@@ -56,7 +68,13 @@ struct Search: View {
             .background(Color(.systemBackground))
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            .font(Typography.title) // Use Typography for consistent styling
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Search")
+                        .font(Typography.title)
+                        .foregroundColor(.primary)
+                }
+            }
         }
     }
 }
@@ -69,8 +87,7 @@ struct CategoryCard: View {
     var body: some View {
         NavigationLink(destination: destination) {
             Text(category)
-//                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .font(Typography.headline) // Use Typography for consistent styling
+                .font(Typography.headline)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, minHeight: 80)
                 .background(color)
@@ -78,11 +95,6 @@ struct CategoryCard: View {
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.2)))
         }
         .padding(.vertical, 4)
-        
     }
 }
 
-#Preview {
-    Search()
-        .environmentObject(CartManager())
-}
